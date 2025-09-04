@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 export function SidebarNav() {
   const { user, logout } = useAuth();
@@ -46,11 +47,14 @@ export function SidebarNav() {
   return (
     <>
       <SidebarMenu>{renderMenuItems(allMenuItems)}</SidebarMenu>
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col gap-1 p-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start">
-              <ShieldQuestion className="mr-2 h-4 w-4" />
+            <Button
+              variant="ghost"
+              className="w-full justify-start group-data-[collapsible=icon]:justify-center"
+            >
+              <ShieldQuestion />
               <span className="group-data-[collapsible=icon]:hidden">
                 Legal
               </span>
@@ -58,21 +62,29 @@ export function SidebarNav() {
           </PopoverTrigger>
           <PopoverContent className="w-56 p-2" side="right" align="start">
             <div className="flex flex-col space-y-1">
-                <Button variant="ghost" size="sm" className="w-full justify-start">EULA</Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start">Privacy Policy</Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start">Terms & Conditions</Button>
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                EULA
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                Privacy Policy
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                Terms & Conditions
+              </Button>
             </div>
           </PopoverContent>
         </Popover>
 
-        <Button
-          variant="ghost"
+        <Separator className="my-1" />
+
+        <SidebarMenuButton
           onClick={logout}
-          className="w-full justify-start"
+          className="w-full justify-start group-data-[collapsible=icon]:justify-center"
+          tooltip={{ children: 'Logout', side: 'right' }}
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-        </Button>
+        </SidebarMenuButton>
       </div>
     </>
   );
