@@ -24,7 +24,8 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { useAuth, type UserRole, type User } from '@/contexts/auth-context';
+import { useAuth } from '@/hooks/use-auth';
+import type { UserRole, User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
