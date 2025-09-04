@@ -71,8 +71,8 @@ export default function TeacherDashboard({ user }: { user: User }) {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {todaySchedule.map(item => (
-                            <div key={item.class} className="flex items-start gap-3">
+                        {todaySchedule.map((item, index) => (
+                            <div key={`${item.class}-${index}`} className="flex items-start gap-3">
                                 <Clock className="h-5 w-5 text-primary mt-1" />
                                 <div>
                                     <p className="text-sm font-medium">{item.class}</p>
