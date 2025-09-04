@@ -1,19 +1,14 @@
 
 import { ForgotPasswordForm } from '@/components/forgot-password-form';
 import { Logo } from '@/components/logo';
-import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 
 export default function ForgotPasswordPage() {
   return (
-    <div className="relative min-h-screen w-full">
-      <Image
-        src="https://picsum.photos/1200/1600?q=41"
-        alt="EduCentral security"
-        fill
-        className="object-cover"
-        data-ai-hint="digital security lock"
-      />
+    <div 
+      className="relative min-h-screen w-full bg-cover bg-center"
+      style={{ backgroundImage: "url('https://picsum.photos/1200/1600?q=41')" }}
+    >
       <div className="absolute inset-0 bg-black/50" />
       <div className="relative z-10 flex min-h-screen w-full items-center justify-center p-6 sm:p-12">
         <Card className="w-full max-w-md bg-background/80 backdrop-blur-sm">
