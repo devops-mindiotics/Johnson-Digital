@@ -5,26 +5,48 @@ import SchoolAdminDashboard from '@/components/dashboards/school-admin';
 import TeacherDashboard from '@/components/dashboards/teacher';
 import StudentDashboard from '@/components/dashboards/student';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardHeader } from '@/components/dashboard-header';
+import { DashboardFooter } from '@/components/dashboard-footer';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
 
   if (isLoading || !user) {
-    return <DashboardSkeleton />;
+    return (
+      <div className="flex flex-col h-full">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <DashboardSkeleton />
+        </main>
+        <DashboardFooter />
+      </div>
+    );
   }
 
-  switch (user.role) {
-    case 'Super Admin':
-      return <SuperAdminDashboard user={user} />;
-    case 'School Admin':
-      return <SchoolAdminDashboard user={user} />;
-    case 'Teacher':
-      return <TeacherDashboard user={user} />;
-    case 'Student':
-      return <StudentDashboard user={user} />;
-    default:
-      return <div>Invalid user role.</div>;
+  const renderDashboard = () => {
+    switch (user.role) {
+        case 'Super Admin':
+          return <SuperAdminDashboard user={user} />;
+        case 'School Admin':
+          return <SchoolAdminDashboard user={user} />;
+        case 'Teacher':
+          return <TeacherDashboard user={user} />;
+        case 'Student':
+          return <StudentDashboard user={user} />;
+        default:
+          return <div>Invalid user role.</div>;
+      }
   }
+
+  return (
+    <div className="flex flex-col h-full">
+      <DashboardHeader />
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        {renderDashboard()}
+      </main>
+      <DashboardFooter />
+    </div>
+  );
 }
 
 function DashboardSkeleton() {
