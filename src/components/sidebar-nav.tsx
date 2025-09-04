@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookText, LogOut, ShieldQuestion } from 'lucide-react';
+import { LogOut, ShieldQuestion } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -11,14 +11,10 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { menuConfig, commonMenuItems, type MenuItem } from '@/lib/menu-config';
 import {
-  SidebarHeader,
-  SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Logo } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 
 export function SidebarNav() {
@@ -49,16 +45,8 @@ export function SidebarNav() {
 
   return (
     <>
-      <SidebarHeader className="border-b">
-        <Link href="/dashboard" aria-label="Home">
-          <Logo iconOnly className="group-data-[collapsible=icon]:block hidden" />
-          <Logo className="group-data-[collapsible=icon]:hidden block" />
-        </Link>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>{renderMenuItems(allMenuItems)}</SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter className="border-t">
+      <SidebarMenu>{renderMenuItems(allMenuItems)}</SidebarMenu>
+      <div className="mt-auto">
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="ghost" className="w-full justify-start">
@@ -85,7 +73,7 @@ export function SidebarNav() {
           <LogOut className="mr-2 h-4 w-4" />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </Button>
-      </SidebarFooter>
+      </div>
     </>
   );
 }

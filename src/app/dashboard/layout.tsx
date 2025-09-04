@@ -2,11 +2,13 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader as GenericSidebarHeader, SidebarContent, SidebarFooter as GenericSidebarFooter } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Logo } from '@/components/logo';
+import Link from 'next/link';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -36,7 +38,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <div className="h-screen w-full bg-background overflow-hidden">
         <Sidebar collapsible="icon">
-          <SidebarNav />
+          <GenericSidebarHeader className="border-b">
+            <Link href="/dashboard" aria-label="Home">
+              <Logo iconOnly className="group-data-[collapsible=icon]:block hidden" />
+              <Logo className="group-data-[collapsible=icon]:hidden block" />
+            </Link>
+          </GenericSidebarHeader>
+          <SidebarContent>
+            <SidebarNav />
+          </SidebarContent>
+          <GenericSidebarFooter>
+             {/* Can add footer items here */}
+          </GenericSidebarFooter>
         </Sidebar>
         <SidebarInset>
           <div className="flex flex-col h-full">

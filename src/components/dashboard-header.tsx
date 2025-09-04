@@ -1,11 +1,9 @@
 'use client';
 import Link from 'next/link';
 import {
-  ChevronDown,
   LogOut,
   Settings,
   User as UserIcon,
-  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
