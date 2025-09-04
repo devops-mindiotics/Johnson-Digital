@@ -12,6 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, BookUser } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 
 const diaryEntries = {
     '2024-08-20': [
@@ -32,6 +33,8 @@ type DiaryEntry = {
 
 export default function DiaryPage() {
   const [date, setDate] = useState<Date | undefined>(new Date('2024-08-20'));
+  const { user } = useAuth();
+  const canAddEntry = user?.role === 'Teacher' || user?.role === 'School Admin';
 
   const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
   const entriesForDate: DiaryEntry[] = (diaryEntries as Record<string, DiaryEntry[]>)[selectedDateStr] || [];
@@ -65,9 +68,11 @@ export default function DiaryPage() {
                                 Notes, events, and homework for the selected day.
                             </CardDescription>
                         </div>
-                        <Button>
-                            <PlusCircle className="mr-2" /> Add Entry
-                        </Button>
+                        {canAddEntry && (
+                            <Button>
+                                <PlusCircle className="mr-2" /> Add Entry
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent>
