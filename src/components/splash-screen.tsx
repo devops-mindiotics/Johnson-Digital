@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -19,6 +20,7 @@ export function SplashScreen() {
       <div className="animate-pulse">
         <Logo />
       </div>
+      <p className="font-semibold text-muted-foreground">from Johnson Digital</p>
     </div>
   );
 }

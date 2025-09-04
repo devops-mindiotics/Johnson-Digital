@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -121,15 +122,7 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
-                    <Link
-                      href="/forgot-password"
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      Forgot Password?
-                    </Link>
-                  </div>
+                  <FormLabel>Password</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
@@ -156,6 +149,16 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
+            <div className="text-right">
+                <Button variant="link" asChild className="p-0 h-auto">
+                    <Link
+                    href="/forgot-password"
+                    className="text-sm font-medium text-primary hover:underline"
+                    >
+                    Forgot Password?
+                    </Link>
+                </Button>
+            </div>
             <Button
               type="submit"
               className="w-full"
