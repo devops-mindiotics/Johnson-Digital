@@ -2,22 +2,12 @@
 import { LoginForm } from '@/components/login-form';
 import { Logo } from '@/components/logo';
 import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
 
 export default function LoginPage() {
   return (
-    <div className="relative min-h-screen w-full">
-      <Image
-        src="https://picsum.photos/1600/1200?q=42"
-        alt="Students collaborating in a classroom"
-        data-ai-hint="students classroom"
-        width={1600}
-        height={1200}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-black/60" />
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-6 sm:p-12">
-        <Card className="w-full max-w-md bg-background/80 backdrop-blur-sm">
+    <div className="relative min-h-screen w-full bg-background flex items-center justify-center">
+      <div className="relative z-10 flex min-h-screen w-full items-center justify-center p-6 sm:p-12">
+        <Card className="w-full max-w-md">
            <CardContent className="p-6 sm:p-8">
              <div className="space-y-6">
                 <div className="text-center">
