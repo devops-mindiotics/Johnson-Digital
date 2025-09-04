@@ -11,7 +11,7 @@ export default function LoginPage() {
        <Image 
           src="https://picsum.photos/1200/1600?q=40" 
           alt="EduCentral platform" 
-          layout="fill"
+          fill
           className="object-cover"
           data-ai-hint="digital learning students" 
       />

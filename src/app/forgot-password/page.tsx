@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
       <Image
         src="https://picsum.photos/1200/1600?q=41"
         alt="EduCentral security"
-        layout="fill"
+        fill
         className="object-cover"
         data-ai-hint="digital security lock"
       />
