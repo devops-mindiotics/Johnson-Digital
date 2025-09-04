@@ -5,22 +5,12 @@ import SchoolAdminDashboard from '@/components/dashboards/school-admin';
 import TeacherDashboard from '@/components/dashboards/teacher';
 import StudentDashboard from '@/components/dashboards/student';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DashboardHeader } from '@/components/dashboard-header';
-import { DashboardFooter } from '@/components/dashboard-footer';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
 
   if (isLoading || !user) {
-    return (
-      <div className="flex flex-col h-full">
-        <DashboardHeader />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-            <DashboardSkeleton />
-        </main>
-        <DashboardFooter />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   const renderDashboard = () => {
@@ -38,15 +28,7 @@ export default function DashboardPage() {
       }
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      <DashboardHeader />
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-        {renderDashboard()}
-      </main>
-      <DashboardFooter />
-    </div>
-  );
+  return renderDashboard();
 }
 
 function DashboardSkeleton() {
