@@ -1,4 +1,5 @@
 
+'use client';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,6 +15,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { PlusCircle } from 'lucide-react';
+import { AddClassDialog } from '@/components/add-class-dialog';
 
 export default function ClassesPage() {
   return (
@@ -26,10 +28,7 @@ export default function ClassesPage() {
                 Configure and manage classes, sections, and subject mappings.
                 </CardDescription>
             </div>
-            <Button>
-                <PlusCircle className="mr-2" />
-                Add Class
-            </Button>
+            <AddClassDialog />
         </div>
       </CardHeader>
       <CardContent>
