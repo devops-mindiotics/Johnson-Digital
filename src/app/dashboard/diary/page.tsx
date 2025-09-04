@@ -10,6 +10,13 @@ import {
 } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PlusCircle, BookUser } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
@@ -24,6 +31,9 @@ const diaryEntries = {
     ]
 };
 
+const teacherClasses = ['Class 10A', 'Class 9B', 'Class 8C'];
+const teacherSubjects = ['Mathematics', 'History', 'Science'];
+
 type DiaryEntry = {
     id: number;
     type: string;
@@ -34,14 +44,14 @@ type DiaryEntry = {
 export default function DiaryPage() {
   const [date, setDate] = useState<Date | undefined>(new Date('2024-08-20'));
   const { user } = useAuth();
-  const canAddEntry = user?.role === 'Teacher' || user?.role === 'School Admin';
+  const isTeacher = user?.role === 'Teacher' || user?.role === 'School Admin';
 
   const selectedDateStr = date ? format(date, 'yyyy-MM-dd') : '';
   const entriesForDate: DiaryEntry[] = (diaryEntries as Record<string, DiaryEntry[]>)[selectedDateStr] || [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 space-y-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Select Date</CardTitle>
@@ -55,6 +65,38 @@ export default function DiaryPage() {
                     />
                 </CardContent>
             </Card>
+            {isTeacher && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Select Context</CardTitle>
+                        <CardDescription>Choose class and subject to add or view entries.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <label className="text-sm font-medium">Class</label>
+                            <Select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a class" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teacherClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                         <div>
+                            <label className="text-sm font-medium">Subject</label>
+                            <Select>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a subject" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teacherSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
         </div>
         <div className="lg:col-span-2">
             <Card>
@@ -68,7 +110,7 @@ export default function DiaryPage() {
                                 Notes, events, and homework for the selected day.
                             </CardDescription>
                         </div>
-                        {canAddEntry && (
+                        {isTeacher && (
                             <Button>
                                 <PlusCircle className="mr-2" /> Add Entry
                             </Button>
