@@ -50,96 +50,101 @@ export default function DiaryPage() {
   const entriesForDate: DiaryEntry[] = (diaryEntries as Record<string, DiaryEntry[]>)[selectedDateStr] || [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-1 space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Select Date</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 flex justify-center">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        className="rounded-md"
-                    />
-                </CardContent>
-            </Card>
-            {isTeacher && (
-                 <Card>
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-1">
+                <Card>
                     <CardHeader>
-                        <CardTitle>Select Context</CardTitle>
-                        <CardDescription>Choose class and subject to add or view entries.</CardDescription>
+                        <CardTitle>Select Date</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div>
-                            <label className="text-sm font-medium">Class</label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a class" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teacherClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                         <div>
-                            <label className="text-sm font-medium">Subject</label>
-                            <Select>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a subject" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teacherSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                    <CardContent className="p-0 flex justify-center">
+                        <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            className="rounded-md"
+                        />
                     </CardContent>
                 </Card>
+            </div>
+            {isTeacher && (
+                 <div className="lg:col-span-2">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Select Context</CardTitle>
+                            <CardDescription>Choose class and subject to add or view entries.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label className="text-sm font-medium mb-2 block">Class</label>
+                                <Select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a class" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teacherClasses.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div>
+                                <label className="text-sm font-medium mb-2 block">Subject</label>
+                                <Select>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a subject" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teacherSubjects.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                           </div>
+                        </CardContent>
+                    </Card>
+                 </div>
             )}
         </div>
-        <div className="lg:col-span-2">
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>
-                                Diary for {date ? format(date, 'PPP') : 'N/A'}
-                            </CardTitle>
-                            <CardDescription>
-                                Notes, events, and homework for the selected day.
-                            </CardDescription>
-                        </div>
-                        {isTeacher && (
-                            <Button>
-                                <PlusCircle className="mr-2" /> Add Entry
-                            </Button>
-                        )}
+        
+        <Card>
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>
+                            Diary for {date ? format(date, 'PPP') : 'N/A'}
+                        </CardTitle>
+                        <CardDescription>
+                            Notes, events, and homework for the selected day.
+                        </CardDescription>
                     </div>
-                </CardHeader>
-                <CardContent>
-                   <div className="space-y-4">
-                        {entriesForDate.length > 0 ? (
-                            entriesForDate.map((entry) => (
-                                <div key={entry.id} className="flex items-start gap-4 p-4 rounded-lg border bg-background">
-                                    <div className="bg-primary/10 text-primary p-3 rounded-full">
-                                       <BookUser className="h-6 w-6" />
-                                    </div>
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{entry.type}: <span className="font-normal">{entry.subject}</span></p>
-                                        <p className="text-sm text-muted-foreground">{entry.details}</p>
-                                    </div>
+                    {isTeacher && (
+                        <Button>
+                            <PlusCircle className="mr-2" /> Add Entry
+                        </Button>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent>
+               <div className="space-y-4">
+                    {entriesForDate.length > 0 ? (
+                        entriesForDate.map((entry) => (
+                            <div key={entry.id} className="flex items-start gap-4 p-4 rounded-lg border bg-background">
+                                <div className="bg-primary/10 text-primary p-3 rounded-full">
+                                   <BookUser className="h-6 w-6" />
                                 </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-12 text-muted-foreground">
-                                <p>No entries for this date.</p>
+                                <div className="flex-grow">
+                                    <p className="font-semibold">{entry.type}: <span className="font-normal">{entry.subject}</span></p>
+                                    <p className="text-sm text-muted-foreground">{entry.details}</p>
+                                </div>
                             </div>
-                        )}
-                   </div>
-                </CardContent>
-            </Card>
-        </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <p>No entries for this date.</p>
+                        </div>
+                    )}
+               </div>
+            </CardContent>
+        </Card>
     </div>
   );
 }
