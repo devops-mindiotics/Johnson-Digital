@@ -2,7 +2,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader as GenericSidebarHeader, SidebarContent, SidebarFooter as GenericSidebarFooter } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader as GenericSidebarHeader, SidebarContent, SidebarFooter as GenericSidebarFooter } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="h-screen w-full bg-background overflow-hidden">
+      <div className="flex h-screen w-full bg-background overflow-hidden">
         <Sidebar collapsible="icon">
           <GenericSidebarHeader className="border-b">
             <Link href="/dashboard" aria-label="Home">
@@ -51,13 +51,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
              {/* Can add footer items here */}
           </GenericSidebarFooter>
         </Sidebar>
-        <SidebarInset>
-          <div className="flex flex-col h-full">
+        <div className="flex flex-1 flex-col overflow-hidden">
             <DashboardHeader />
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
             <DashboardFooter />
-          </div>
-        </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
