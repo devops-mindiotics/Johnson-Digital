@@ -1,7 +1,8 @@
+
 'use client';
 
 import { type ReactNode, createContext, useState, useEffect, useCallback } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export type UserRole = 'Super Admin' | 'School Admin' | 'Teacher' | 'Student';
 export interface User {
@@ -22,21 +23,16 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-function AuthHandler({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('educentral-user');
       if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        if (pathname === '/login' || pathname === '/') {
-          router.replace('/dashboard');
-        }
+        setUser(JSON.parse(storedUser));
       }
     } catch (error) {
       console.error('Failed to parse user from localStorage', error);
@@ -44,7 +40,7 @@ function AuthHandler({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [router, pathname]);
+  }, []);
 
   const login = useCallback((userData: User) => {
     setUser(userData);
@@ -63,8 +59,4 @@ function AuthHandler({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-    return <AuthHandler>{children}</AuthHandler>
 }
