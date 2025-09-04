@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import type { UserRole, User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
@@ -79,8 +78,6 @@ export function LoginForm() {
 
   return (
     <>
-    <Card>
-      <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -168,14 +165,12 @@ export function LoginForm() {
             </Button>
           </form>
         </Form>
-      </CardContent>
-    </Card>
-    <p className="px-4 text-center text-xs text-muted-foreground">
-        By signing in, you agree to our EULA, Privacy Policy and Terms & Conditions.
-    </p>
-    <p className="text-center text-xs text-muted-foreground">
-        Powered by MindIoTIcs
-    </p>
+      <p className="pt-4 px-4 text-center text-xs text-muted-foreground">
+          By signing in, you agree to our EULA, Privacy Policy and Terms & Conditions.
+      </p>
+      <p className="text-center text-xs text-muted-foreground">
+          Powered by MindIoTIcs
+      </p>
     </>
   );
 }

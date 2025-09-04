@@ -16,7 +16,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft } from 'lucide-react';
 
@@ -68,8 +67,7 @@ export function ForgotPasswordForm() {
   };
 
   return (
-    <Card>
-      <CardContent className="p-6">
+    <>
         {step === 'mobile' && (
           <Form {...mobileForm}>
             <form onSubmit={mobileForm.handleSubmit(handleMobileSubmit)} className="space-y-4">
@@ -151,7 +149,6 @@ export function ForgotPasswordForm() {
             </Link>
           </Button>
         </div>
-      </CardContent>
-    </Card>
+    </>
   );
 }
