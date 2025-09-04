@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard-header';
+import { DashboardFooter } from '@/components/dashboard-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -38,8 +39,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <SidebarNav />
         </Sidebar>
         <SidebarInset>
-          <DashboardHeader />
-          <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+          <div className="flex flex-col min-h-screen">
+            <DashboardHeader />
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+            <DashboardFooter />
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>
