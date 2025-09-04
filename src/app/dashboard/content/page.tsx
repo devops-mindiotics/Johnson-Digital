@@ -18,6 +18,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Presentation,
 } from 'lucide-react';
 import {
   Collapsible,
@@ -47,7 +48,7 @@ const contentData = [
         name: 'Geometry',
         contents: [
           { type: 'Video', name: 'Understanding Angles', icon: Youtube },
-          { type: 'PPT', name: 'Theorems of Circles', icon: FileDown },
+          { type: 'PPT', name: 'Theorems of Circles', icon: Presentation },
         ],
       },
     ],
