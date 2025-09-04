@@ -15,9 +15,27 @@ import {
 import Image from 'next/image';
 
 const banners = [
-    { src: "https://picsum.photos/1200/400?q=4", alt: "Exam schedule", dataAiHint: "exam schedule" },
-    { src: "https://picsum.photos/1200/400?q=5", alt: "Science fair", dataAiHint: "science fair" },
-    { src: "https://picsum.photos/1200/400?q=6", alt: "Holiday notification", dataAiHint: "holiday notification" },
+    { 
+        src: "https://picsum.photos/1200/400?q=31", 
+        alt: "Annual Science Fair", 
+        dataAiHint: "science fair project",
+        title: "Annual Science Fair is Here!",
+        description: "Showcase your amazing projects. Submissions open until Aug 25th."
+    },
+    { 
+        src: "https://picsum.photos/1200/400?q=32", 
+        alt: "Sports Day",
+        dataAiHint: "school sports race",
+        title: "Get Ready for Sports Day!",
+        description: "Join us for a day of fun, games, and friendly competition on September 5th."
+    },
+    { 
+        src: "https://picsum.photos/1200/400?q=33", 
+        alt: "Mid-term exams",
+        dataAiHint: "students writing exam",
+        title: "Mid-Term Exams Approaching",
+        description: "Your mid-term exam schedule has been posted. Check the notice board for details."
+    },
 ];
 
 const summaryCards = [
@@ -43,9 +61,14 @@ export default function StudentDashboard({ user }: { user: User }) {
             <CarouselContent>
                 {banners.map((banner, index) => (
                     <CarouselItem key={index}>
-                    <Card>
-                        <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 overflow-hidden rounded-lg">
+                    <Card className="overflow-hidden">
+                        <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 rounded-lg">
                            <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
+                           <div className="absolute inset-0 bg-black/50" />
+                           <div className="relative text-center text-primary-foreground p-8">
+                                <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
+                                <p className="mt-2 text-sm md:text-lg max-w-xl">{banner.description}</p>
+                           </div>
                         </CardContent>
                     </Card>
                     </CarouselItem>
