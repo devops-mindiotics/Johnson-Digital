@@ -1,0 +1,45 @@
+name: Firebase Preview Channel Deploy
+
+on:
+  push:
+    branches:
+      - '**'   # run on all branches (change to a specific branch if you want)
+
+jobs:
+  preview-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and export (static)
+        run: |
+          npm run build
+          # run export only if script exists
+          if npm run | grep -q "\"export\""; then npm run export; fi
+        shell: bash
+
+      - name: Deploy to Firebase preview channel
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          npm i -g firebase-tools
+          CHANNEL=$(echo "$BRANCH" | tr '/' '-')
+          # if out/ exists (static export), deploy hosting from out, else deploy whole project (framework-aware)
+          if [ -d out ]; then
+            firebase hosting:channel:deploy "$CHANNEL" --expires 7d --token "$FIREBASE_TOKEN"
+          else
+            # fallback to framework-aware deploy (if your repo contains functions/next config)
+            firebase hosting:channel:deploy "$CHANNEL" --expires 7d --token "$FIREBASE_TOKEN"
+          fi
+        shell: bash
