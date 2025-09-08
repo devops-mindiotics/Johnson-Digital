@@ -83,12 +83,15 @@ export function DashboardHeader() {
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
-              <Link href="/dashboard/settings" passHref>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-              </Link>
+              {(user.role === 'Student' || user.role === 'Teacher') && (
+  <Link href="/dashboard/settings" passHref>
+    {/* <DropdownMenuItem> */}
+      {/* <Settings className="mr-2 h-4 w-4" /> */}
+      {/* <span>Settings</span> */}
+    {/* </DropdownMenuItem> */}
+  </Link>
+)}
+
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>

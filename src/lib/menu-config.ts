@@ -45,6 +45,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
     { label: 'Diary', href: '/dashboard/diary', icon: FileText },
     { label: 'Homework', href: '/dashboard/homework', icon: Presentation },
     { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
+
   ],
   Student: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -57,5 +58,5 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
 
 export const commonMenuItems: MenuItem[] = [
   { label: 'Profile', href: '/dashboard/profile', icon: UserCircle },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  // { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
