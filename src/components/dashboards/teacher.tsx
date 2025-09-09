@@ -90,7 +90,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Classes-Content</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Classes/Content</h3>
             <div className="text-sm text-gray-500">Select a class</div>
           </div>
 

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import type { User } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Book, CheckCircle, Clock, Megaphone } from 'lucide-react';
+import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell, Book, Calculator, Leaf } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -13,6 +13,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import Image from 'next/image';
+import Link from 'next/link';
 
 const banners = [
     { 
@@ -38,20 +39,10 @@ const banners = [
     },
 ];
 
-const summaryCards = [
-    { title: 'Pending Assignments', value: '3', icon: Book, color: 'text-orange-500' },
-    { title: 'Recent Results', value: '2', icon: CheckCircle, color: 'text-green-500' },
-];
-
-const upcomingClasses = [
-    { time: '09:00 AM', subject: 'Mathematics' },
-    { time: '10:00 AM', subject: 'History' },
-    { time: '11:00 AM', subject: 'Science Lab' },
-];
-
-const recentNotices = [
-    { title: 'Annual Sports Day Postponed', date: 'Aug 15' },
-    { title: 'Parent-Teacher Meeting Schedule', date: 'Aug 12' },
+const subjects = [
+    { name: 'English', icon: Book, color: 'text-blue-600', href: '/dashboard/english' },
+    { name: 'Mathematics', icon: Calculator, color: 'text-green-600', href: '/dashboard/mathematics' },
+    { name: 'EVS', icon: Leaf, color: 'text-yellow-600', href: '/dashboard/evs' },
 ];
 
 export default function StudentDashboard({ user }: { user: User }) {
@@ -78,238 +69,51 @@ export default function StudentDashboard({ user }: { user: User }) {
             <CarouselNext className="absolute right-4" />
         </Carousel>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Welcome back, {user.name.split(' ')[0]}!</CardTitle>
-                    <CardDescription>Here's a snapshot of your academic progress.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm font-medium">
-                            <span>Course Completion</span>
-                            <span>65%</span>
-                        </div>
-                        <Progress value={65} />
+        <Card className="lg:col-span-3">
+            <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                    <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+                        <BookOpen className="h-6 w-6 text-blue-600" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        {summaryCards.map(card => (
-                            <div key={card.title} className="flex items-center gap-4 p-4 rounded-lg bg-background">
-                                <card.icon className={`h-8 w-8 ${card.color}`} />
-                                <div>
-                                    <p className="text-2xl font-bold">{card.value}</p>
-                                    <p className="text-sm text-muted-foreground">{card.title}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <Button>View My Homework</Button>
-                </CardFooter>
-            </Card>
+                    <div className="text-sm text-blue-700">Diary</div>
+                </button>
 
-            <div className="space-y-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Upcoming Classes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                         <div className="space-y-3">
-                            {upcomingClasses.map(item => (
-                                <div key={item.subject} className="flex items-center gap-3 text-sm">
-                                    <Clock className="h-4 w-4 text-primary" />
-                                    <span className="font-medium">{item.time}</span>
-                                    <span className="text-muted-foreground">{item.subject}</span>
-                                </div>
-                            ))}
-                         </div>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Recent Notices</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
-                           {recentNotices.map(item => (
-                                <div key={item.title} className="flex items-center gap-3 text-sm">
-                                    <Megaphone className="h-4 w-4 text-primary" />
-                                    <div className="flex-grow">
-                                       <p className="font-medium truncate">{item.title}</p>
-                                       <p className="text-xs text-muted-foreground">{item.date}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                    <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
+                        <ClipboardList className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="text-sm text-green-700">Homework</div>
+                </button>
+
+                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                    <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
+                        <Bell className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div className="text-sm text-yellow-700">Notice</div>
+                </button>
+            </CardContent>
+        </Card>
+
+        <div className="text-center">
+            <h2 className="text-2xl font-bold">Nursery</h2>
+            <p className="text-muted-foreground">Choose a subject to continue learning</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {subjects.map((subject) => (
+                <Link href={subject.href} key={subject.name} className="no-underline">
+                    <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                        <CardContent className="flex flex-col items-center justify-center p-6">
+                            <subject.icon className={`h-10 w-10 mb-4 ${subject.color}`} />
+                            <h3 className="text-lg font-semibold">{subject.name}</h3>
+                        </CardContent>
+                    </Card>
+                </Link>
+            ))}
         </div>
     </div>
   );
 }
-
-// 'use client';
-// import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-// import type { User } from '@/contexts/auth-context';
-// import { Button } from '@/components/ui/button';
-// import { Progress } from '@/components/ui/progress';
-// import { Book, CheckCircle, Clock, Megaphone } from 'lucide-react';
-// import {
-//   Carousel,
-//   CarouselContent,
-//   CarouselItem,
-//   CarouselNext,
-//   CarouselPrevious,
-// } from "@/components/ui/carousel"
-// import Image from 'next/image';
-
-// const banners = [
-//     { 
-//         src: "https://picsum.photos/1200/400?q=31", 
-//         alt: "Annual Science Fair", 
-//         dataAiHint: "science fair project",
-//         title: "Annual Science Fair is Here!",
-//         description: "Showcase your amazing projects. Submissions open until Aug 25th."
-//     },
-//     { 
-//         src: "https://picsum.photos/1200/400?q=32", 
-//         alt: "Sports Day",
-//         dataAiHint: "school sports race",
-//         title: "Get Ready for Sports Day!",
-//         description: "Join us for a day of fun, games, and friendly competition on September 5th."
-//     },
-//     { 
-//         src: "https://picsum.photos/1200/400?q=33", 
-//         alt: "Mid-term exams",
-//         dataAiHint: "students writing exam",
-//         title: "Mid-Term Exams Approaching",
-//         description: "Your mid-term exam schedule has been posted. Check the notice board for details."
-//     },
-// ];
-
-// const summaryCards = [
-//     // { title: 'Pending Assignments', value: '3', icon: Book, color: 'text-orange-500' },
-//     // { title: 'Recent Results', value: '2', icon: CheckCircle, color: 'text-green-500' },
-// ];
-
-// const upcomingClasses = [
-//     { time: '09:00 AM', subject: 'Mathematics' },
-//     { time: '10:00 AM', subject: 'History' },
-//     { time: '11:00 AM', subject: 'Science Lab' },
-// ];
-
-// const recentNotices = [
-//     { title: 'Annual Sports Day Postponed', date: 'Aug 15' },
-//     { title: 'Parent-Teacher Meeting Schedule', date: 'Aug 12' },
-// ];
-
-// export default function StudentDashboard({ user }: { user: User }) {
-//   return (
-//     <div className="space-y-6">
-//        <Carousel className="w-full" opts={{ loop: true }}>
-//             <CarouselContent>
-//                 {banners.map((banner, index) => (
-//                     <CarouselItem key={index}>
-//                     <Card className="overflow-hidden">
-//                         <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 rounded-lg">
-//                            <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
-//                            <div className="absolute inset-0 bg-black/50" />
-//                            <div className="relative text-center text-primary-foreground p-8">
-//                                 <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
-//                                 <p className="mt-2 text-sm md:text-lg max-w-xl">{banner.description}</p>
-//                            </div>
-//                         </CardContent>
-//                     </Card>
-//                     </CarouselItem>
-//                 ))}
-//             </CarouselContent>
-//             <CarouselPrevious className="absolute left-4" />
-//             <CarouselNext className="absolute right-4" />
-//         </Carousel>
-
-//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-//             <Card className="lg:col-span-2">
-//                 <CardHeader>
-//                     <CardTitle>Welcome back, {user.name.split(' ')[0]}!</CardTitle>
-//                     <CardDescription>Here's a snapshot of your academic progress.</CardDescription>
-//                 </CardHeader>
-//                 <CardContent className="space-y-6">
-//                     <div className="space-y-2">
-//                         <div className="flex justify-between text-sm font-medium">
-//                             {/* <span>Course Completion</span> */}
-//                             {/* <span>65%</span> */}
-//                         </div>
-//                         {/* <Progress value={65} /> */}
-//                     </div>
-//                     <div className="grid grid-cols-2 gap-4">
-//                         {summaryCards.map(card => (
-//                             <div key={card.title} className="flex items-center gap-4 p-4 rounded-lg bg-background">
-//                                 <card.icon className={`h-8 w-8 ${card.color}`} />
-//                                 <div>
-//                                     {/* <p className="text-2xl font-bold">{card.value}</p> */}
-//                                     {/* <p className="text-sm text-muted-foreground">{card.title}</p> */}
-//                                 </div>
-//                             </div>
-//                         ))}
-//                     </div>
-//                 </CardContent>
-//                 <CardFooter>
-//                     {/* <Button>View My Homework</Button> */}
-//                 </CardFooter>
-//             </Card>
-
-//             {/* <div className="space-y-6">
-//                 <Card>
-//                     <CardHeader>
-//                         <CardTitle>Upcoming Classes</CardTitle>
-//                     </CardHeader>
-//                     <CardContent>
-//                          <div className="space-y-3">
-//                             {upcomingClasses.map(item => (
-//                                 <div key={item.subject} className="flex items-center gap-3 text-sm">
-//                                     <Clock className="h-4 w-4 text-primary" />
-//                                     <span className="font-medium">{item.time}</span>
-//                                     <span className="text-muted-foreground">{item.subject}</span>
-//                                 </div>
-//                             ))}
-//                          </div>
-//                     </CardContent>
-//                 </Card>
-//                  <Card>
-//                     <CardHeader>
-//                         <CardTitle>Recent Notices</CardTitle>
-//                     </CardHeader> */}
-//                     {/* <CardContent>
-//                         <div className="space-y-3">
-//                            {recentNotices.map(item => (
-//                                 <div key={item.title} className="flex items-center gap-3 text-sm">
-//                                     <Megaphone className="h-4 w-4 text-primary" />
-//                                     <div className="flex-grow">
-//                                        <p className="font-medium truncate">{item.title}</p>
-//                                        <p className="text-xs text-muted-foreground">{item.date}</p>
-//                                     </div>
-//                                 </div>
-//                             ))}
-//                         </div> */}
-//                     {/* </CardContent> */}
-//                 {/* </Card> */}
-//                 export default function StudentDashboard() {
-//   return (
-//     <div className="space-y-6">
-//       <h2 className="text-3xl font-bold">Welcome Student</h2>
-
-//       {/* Use QuickMenu with student role */}
-//       <QuickMenu role="student" />
-
-//       {/* Student-specific content */}
-//     </div>
-//   );
-// }
-
-//             </div>
-//         </div>
-//     // </div>
-//   );
-// }
