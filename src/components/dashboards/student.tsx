@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/carousel"
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const banners = [
     { 
@@ -46,6 +47,7 @@ const subjects = [
 ];
 
 export default function StudentDashboard({ user }: { user: User }) {
+    const router = useRouter();
   return (
     <div className="space-y-6">
        <Carousel className="w-full" opts={{ loop: true }}>
@@ -54,7 +56,7 @@ export default function StudentDashboard({ user }: { user: User }) {
                     <CarouselItem key={index}>
                     <Card className="overflow-hidden">
                         <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 rounded-lg">
-                           <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
+                           <Image src={banner.src} alt={banner.alt} fill={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
                            <div className="absolute inset-0 bg-black/50" />
                            <div className="relative text-center text-primary-foreground p-8">
                                 <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
@@ -74,21 +76,21 @@ export default function StudentDashboard({ user }: { user: User }) {
                 <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                <button onClick={() => router.push('/dashboard/diary')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
                     <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
                         <BookOpen className="h-6 w-6 text-blue-600" />
                     </div>
                     <div className="text-sm text-blue-700">Diary</div>
                 </button>
 
-                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                <button onClick={() => router.push('/dashboard/homework')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
                     <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
                         <ClipboardList className="h-6 w-6 text-green-600" />
                     </div>
                     <div className="text-sm text-green-700">Homework</div>
                 </button>
 
-                <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                <button onClick={() => router.push('/dashboard/notice-board')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
                     <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
                         <Bell className="h-6 w-6 text-yellow-600" />
                     </div>

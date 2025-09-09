@@ -3,8 +3,10 @@ import React from "react";
 import Image from 'next/image';
 import type { User } from '@/contexts/auth-context';
 import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function TeacherDashboard({ user }: { user: User }) {
+  const router = useRouter();
   const firstName = (user?.name || 'Teacher').split(' ')[0];
 
   const banners = [
@@ -62,21 +64,21 @@ export default function TeacherDashboard({ user }: { user: User }) {
 </div>
 </div>
           <div className="flex gap-4">
-            <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+            <button onClick={() => router.push('/dashboard/diary')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
               <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
                 <BookOpen className="h-6 w-6 text-blue-600" />
               </div>
               <div className="text-sm text-blue-700">Diary</div>
             </button>
 
-            <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+            <button onClick={() => router.push('/dashboard/homework')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
               <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
                 <ClipboardList className="h-6 w-6 text-green-600" />
               </div>
               <div className="text-sm text-green-700">Homework</div>
             </button>
 
-            <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+            <button onClick={() => router.push('/dashboard/notice-board')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
               <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
                 <Bell className="h-6 w-6 text-yellow-600" />
               </div>
