@@ -20,7 +20,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, PlusCircle } from 'lucide-react';
+import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, Briefcase } from 'lucide-react';
 import type { User } from '@/contexts/auth-context';
 
 const stats = [
@@ -54,14 +54,12 @@ const recentActivities = [
 export default function SchoolAdminDashboard({ user }: { user: User }) {
   return (
     <div className="space-y-6">
-        <div className="flex justify-between items-center">
-            <h2 className="text-3xl font-bold tracking-tight">Welcome, {user.name}</h2>
+        <div className="flex justify-end">
             <div className="flex gap-2">
-                <Button><PlusCircle className="mr-2"/> Add Student</Button>
-                <Button variant="outline"><PlusCircle className="mr-2"/> Add Teacher</Button>
+                {/* <Button><GraduationCap className="mr-2 h-4 w-4"/> Add Student</Button> */}
+                {/* <Button variant="outline"><Briefcase className="mr-2 h-4 w-4"/> Add Teacher</Button> */}
             </div>
         </div>
-
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {stats.map(stat => (
                 <Card key={stat.title}>
@@ -114,7 +112,7 @@ export default function SchoolAdminDashboard({ user }: { user: User }) {
 
          <Card>
             <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
+                <CardTitle>Notice Board</CardTitle>
                 <CardDescription>An overview of recent activities in the school.</CardDescription>
             </CardHeader>
             <CardContent>
