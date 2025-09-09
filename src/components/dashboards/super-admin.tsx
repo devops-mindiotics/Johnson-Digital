@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -17,8 +16,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { School, User, GraduationCap, Users } from 'lucide-react';
+import { School, User, GraduationCap, Users, ClipboardList } from 'lucide-react';
 import type { User as UserType } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 const chartData = [
   { month: 'Jan', schools: 4 },
@@ -38,6 +38,7 @@ const stats = [
 ];
 
 export default function SuperAdminDashboard({ user }: { user: UserType }) {
+  const router = useRouter();
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -54,6 +55,26 @@ export default function SuperAdminDashboard({ user }: { user: UserType }) {
             </Card>
         ))}
       </div>
+      <Card>
+        <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button onClick={() => router.push('/dashboard/schools')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+                    <School className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="text-sm text-blue-700">Add School</div>
+            </button>
+
+            <button onClick={() => router.push('/dashboard/content')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
+                <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
+                    <ClipboardList className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="text-sm text-green-700">Add Content</div>
+            </button>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Schools Onboarding</CardTitle>
