@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import type { User } from '@/contexts/auth-context';
@@ -15,6 +14,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Autoplay from "embla-carousel-autoplay"
 
 const banners = [
     { 
@@ -50,15 +50,15 @@ export default function StudentDashboard({ user }: { user: User }) {
     const router = useRouter();
   return (
     <div className="space-y-6">
-       <Carousel className="w-full" opts={{ loop: true }}>
+       <Carousel className="w-full" opts={{ loop: true, align: 'center' }} plugins={[Autoplay({ delay: 5000 })]}>
             <CarouselContent>
                 {banners.map((banner, index) => (
                     <CarouselItem key={index}>
                     <Card className="overflow-hidden">
                         <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 rounded-lg">
-                           <Image src={banner.src} alt={banner.alt} fill={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
+                           <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
                            <div className="absolute inset-0 bg-black/50" />
-                           <div className="relative text-center text-primary-foreground p-8">
+                           <div className="relative text-center text-primary-foreground p-8 flex flex-col items-center justify-center h-full">
                                 <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
                                 <p className="mt-2 text-sm md:text-lg max-w-xl">{banner.description}</p>
                            </div>
@@ -75,7 +75,7 @@ export default function StudentDashboard({ user }: { user: User }) {
             <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-3 gap-4">
                 <button onClick={() => router.push('/dashboard/diary')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
                     <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
                         <BookOpen className="h-6 w-6 text-blue-600" />

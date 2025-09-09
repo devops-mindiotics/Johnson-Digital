@@ -4,6 +4,8 @@ import Image from 'next/image';
 import type { User } from '@/contexts/auth-context';
 import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay"
 
 export default function TeacherDashboard({ user }: { user: User }) {
   const router = useRouter();
@@ -11,6 +13,8 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
   const banners = [
     { src: 'https://picsum.photos/1600/420?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
+    { src: 'https://picsum.photos/1600/420?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow' },
+    { src: 'https://picsum.photos/1600/420?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning' },
   ];
 
   const classes = [
@@ -26,28 +30,24 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen w-full bg-blue-50 flex flex-col items-center px-6 py-6 space-y-6">
-      {/* Top row: welcome */}
-
-
-
-
-
-
       {/* Banner */}
       <div className="w-full max-w-7xl">
-        <div className="relative w-full h-52 md:h-64 rounded-lg overflow-hidden shadow">
-          <Image src={banners[0].src} alt={banners[0].alt} fill className="object-cover" />
-          <div className="absolute inset-0 bg-black/35 flex items-center justify-center px-6">
-            <h3 className="text-xl md:text-3xl font-bold text-white">{banners[0].title}</h3>
-          </div>
-          {/* simple nav dots / arrows (visual only) */}
-          <button className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow">
-            <span className="text-sm">‹</span>
-          </button>
-          <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow">
-            <span className="text-sm">›</span>
-          </button>
-        </div>
+        <Carousel className="w-full" opts={{ loop: true, align: 'center' }} plugins={[Autoplay({ delay: 5000 })]}>
+          <CarouselContent>
+            {banners.map((banner, index) => (
+              <CarouselItem key={index}>
+                <div className="relative w-full h-52 md:h-64 rounded-lg overflow-hidden shadow">
+                  <Image src={banner.src} alt={banner.alt} fill className="object-cover" />
+                  <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center">
+                    <h3 className="text-xl md:text-3xl font-bold text-white">{banner.title}</h3>
+                  </div>
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="absolute left-4" />
+          <CarouselNext className="absolute right-4" />
+        </Carousel>
       </div>
 
       {/* Quick menu (Diary / Homework / Notice) - full width boxed */}
