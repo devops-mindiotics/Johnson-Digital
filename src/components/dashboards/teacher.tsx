@@ -25,11 +25,11 @@ export default function TeacherDashboard({ user }: { user: User }) {
   return (
     <div className="min-h-screen w-full bg-blue-50 flex flex-col items-center px-6 py-6 space-y-6">
       {/* Top row: welcome */}
-      <div className="w-full max-w-7xl">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">Hello, {firstName}!</h2>
-        </div>
-      </div>
+
+
+
+
+
 
       {/* Banner */}
       <div className="w-full max-w-7xl">
@@ -53,8 +53,14 @@ export default function TeacherDashboard({ user }: { user: User }) {
         <div className="bg-white rounded-xl shadow px-4 py-5">
           <div className="flex items-center justify-between mb-3">
             <div />
-            <div className="text-sm text-gray-500">Shortcuts</div>
-          </div>
+            {/* <div className="text-left whitespace-nowrap  text-black-700">Quick Access </div>
+          </div> */}
+          <div className="w-full ">
+  <div className="text-left text-black whitespace-nowrap">
+    Quick Access
+  </div>
+</div>
+</div>
           <div className="flex gap-4">
             <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
               <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
@@ -84,7 +90,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Classes Content</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Classes-Content</h3>
             <div className="text-sm text-gray-500">Select a class</div>
           </div>
 

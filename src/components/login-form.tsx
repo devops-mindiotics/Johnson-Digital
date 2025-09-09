@@ -185,13 +185,21 @@ export function LoginForm() {
       
   
 {/* <div className='relative' >  */}
+{/* <div className="relative min-h-screen"> */}
   <p className="absolute bottom- 4 right-0 text-xs text-muted-foreground font-['Nunito',sans-serif]">
-    Powered by MindIoTIcs
+
+  <Link 
+        href="https://mindiotics.com" 
+        className="italic text-blue-600 hover:underline"
+      >
+Powered by MindIoTics Tech.
+      </Link>
+
   </p>
   {/* </div> */}
 
-
-    </div>
+</div>
+    // </div>
     
   );
 }
