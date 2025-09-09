@@ -30,12 +30,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { AddClassDialog } from '@/components/add-class-dialog';
+import Link from 'next/link';
 
 const classesData = [
-  { id: '1', name: 'Class 10' },
-  { id: '2', name: 'Class 9' },
-  { id: '3', name: 'Class 8' },
-  { id: '4', name: 'Class 7' },
+    { id: 'nursery', name: 'Nursery' },
+    { id: 'lkg', name: 'LKG' },
+    { id: 'ukg', name: 'UKG' },
+    { id: 'grade-1', name: 'Grade 1' },
+    { id: 'grade-2', name: 'Grade 2' },
+    { id: 'grade-3', name: 'Grade 3' },
+    { id: 'grade-4', name: 'Grade 4' },
+    { id: 'grade-5', name: 'Grade 5' },
 ];
 
 const sectionsData = [
@@ -116,7 +121,11 @@ export default function ClassesPage() {
                   <TableBody>
                     {classesData.map((c) => (
                       <TableRow key={c.id}>
-                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell className="font-medium">
+                            <Link href={`/dashboard/classes/${c.id}`}>
+                                {c.name}
+                            </Link>
+                        </TableCell>
                         <TableCell className="text-right">
                           <ActionsMenu />
                         </TableCell>

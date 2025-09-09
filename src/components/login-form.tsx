@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -5,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -15,33 +17,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
-import type { UserRole, User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
 
 const FormSchema = z.object({
-  role: z.enum(['Super Admin', 'School Admin', 'Teacher', 'Student'], {
-    required_error: 'Please select a role.',
-  }),
-  mobile: z.string().min(10, 'Mobile number must be at least 10 digits.'),
+  email: z.string().email('Please enter a valid email address.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
-
-const mockUsers: Record<string, Omit<User, 'mobile'>> = {
-  '1111111111': { id: 'user-1', name: 'Dr. Evelyn Reed', role: 'Super Admin', profilePic: 'https://picsum.photos/100/100?q=1' },
-  '2222222222': { id: 'user-2', name: 'Mr. John Smith', role: 'School Admin', profilePic: 'https://picsum.photos/100/100?q=2' },
-  '3333333333': { id: 'user-3', name: 'Alice Johnson', role: 'Teacher', profilePic: 'https://picsum.photos/100/100?q=3' },
-  '4444444444': { id: 'user-4', name: 'Bobby Tables', role: 'Student', profilePic: 'https://picsum.photos/100/100?q=4', class: '10th Grade' },
-};
-
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -51,27 +35,26 @@ export function LoginForm() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      mobile: '',
+      email: '',
       password: '',
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    // This is a mock login. In a real app, you'd call an API.
-    const userRole = data.role as UserRole;
-    const mobileNumber = data.mobile;
-    
-    // Find a mock user that matches role and is one of the predefined numbers
-    const mockUserKey = Object.keys(mockUsers).find(key => mockUsers[key].role === userRole);
-    const mockUser = mockUserKey ? mockUsers[mockUserKey] : undefined;
-
-    if (mockUser) {
-      login({ ...mockUser, role: userRole, mobile: mobileNumber });
-    } else {
-       toast({
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      const user = userCredential.user;
+      // You might need to fetch user details from your database here
+      login({ id: user.uid, name: user.email!, role: 'Student', profilePic: '', mobile: '' });
+    } catch (error) {
+      toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Invalid credentials for the selected role.",
+        description: "Invalid credentials. Please try again.",
       });
     }
   }
@@ -82,35 +65,12 @@ export function LoginForm() {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="role"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Login Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Super Admin">Super Admin</SelectItem>
-                    <SelectItem value="School Admin">School Admin</SelectItem>
-                    <SelectItem value="Teacher">Teacher</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="mobile"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mobile Number</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your mobile number" {...field} />
+                  <Input placeholder="Enter your email" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

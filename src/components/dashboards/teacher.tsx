@@ -1,5 +1,5 @@
 'use client';
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from 'next/image';
 import type { User } from '@/contexts/auth-context';
 import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell } from 'lucide-react';
@@ -9,7 +9,18 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
   const banners = [
     { src: 'https://picsum.photos/1600/420?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
+    { src: 'https://picsum.photos/1600/420?q=32', alt: 'banner-2', title: 'Fueling Curiosity, Empowering Minds' },
+    { src: 'https://picsum.photos/1600/420?q=33', alt: 'banner-3', title: 'Unlocking Potential, One Student at a Time' },
   ];
+
+  const [currentBanner, setCurrentBanner] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [banners.length]);
 
   const classes = [
     { label: "Nursery", icon: "🌱" },
@@ -24,43 +35,37 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen w-full bg-blue-50 flex flex-col items-center px-6 py-6 space-y-6">
-      {/* Top row: welcome */}
-
-
-
-
-
-
       {/* Banner */}
       <div className="w-full max-w-7xl">
         <div className="relative w-full h-52 md:h-64 rounded-lg overflow-hidden shadow">
-          <Image src={banners[0].src} alt={banners[0].alt} fill className="object-cover" />
-          <div className="absolute inset-0 bg-black/35 flex items-center justify-center px-6">
-            <h3 className="text-xl md:text-3xl font-bold text-white">{banners[0].title}</h3>
+          {banners.map((banner, index) => (
+            <div
+              key={banner.alt}
+              className={`absolute inset-0 transition-opacity duration-1000 ${index === currentBanner ? 'opacity-100' : 'opacity-0'}`}>
+              <Image src={banner.src} alt={banner.alt} fill className="object-cover" />
+              <div className="absolute inset-0 bg-black/35 flex items-center justify-center px-6">
+                <h3 className="text-xl md:text-3xl font-bold text-white text-center">{banner.title}</h3>
+              </div>
+            </div>
+          ))}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {banners.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentBanner(index)}
+                className={`w-3 h-3 rounded-full ${index === currentBanner ? 'bg-white' : 'bg-white/50'}`}
+              />
+            ))}
           </div>
-          {/* simple nav dots / arrows (visual only) */}
-          <button className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow">
-            <span className="text-sm">‹</span>
-          </button>
-          <button className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow">
-            <span className="text-sm">›</span>
-          </button>
         </div>
       </div>
 
-      {/* Quick menu (Diary / Homework / Notice) - full width boxed */}
+      {/* Quick menu */}
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow px-4 py-5">
-          <div className="flex items-center justify-between mb-3">
-            <div />
-            {/* <div className="text-left whitespace-nowrap  text-black-700">Quick Access </div>
-          </div> */}
-          <div className="w-full ">
-  <div className="text-left text-black whitespace-nowrap">
-    Quick Access
-  </div>
-</div>
-</div>
+          <div className="w-full mb-3">
+            <div className="text-left text-black whitespace-nowrap">Quick Access</div>
+          </div>
           <div className="flex gap-4">
             <button className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
               <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
@@ -86,7 +91,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
         </div>
       </div>
 
-      {/* Classes Content - boxed and fills available width */}
+      {/* Classes Content */}
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
@@ -110,7 +115,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
         </div>
       </div>
 
-      {/* Footer / small note */}
+      {/* Footer */}
       <div className="w-full max-w-7xl text-center text-xs text-gray-400">
         © 2025 EduCentral by Johnson Digital. All Rights Reserved.
       </div>
