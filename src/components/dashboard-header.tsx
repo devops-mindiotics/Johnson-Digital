@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import {
   LogOut,
+  Plus,
   Settings,
   User as UserIcon,
 } from 'lucide-react';
@@ -25,9 +26,11 @@ import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-
+import { useRouter } from 'next/navigation';
+import { FaUserGraduate, FaChalkboardTeacher } from "react-icons/fa";
 export function DashboardHeader() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   if (!user) return null;
 
@@ -55,6 +58,73 @@ export function DashboardHeader() {
               <SelectItem value="child2">Jane Doe</SelectItem>
             </SelectContent>
           </Select>
+        )}
+
+        {user.role === 'Super Admin' && (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button 
+                        size="icon" 
+                        className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                        <Plus className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/schools')}>
+                        Add School
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/dashboard/content')}>
+                        Add Content
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        )}
+
+        {user.role === 'School Admin' && (
+          <>
+            {/* <div className="hidden md:flex items-center gap-2">
+                <Button onClick={() => router.push('/dashboard/users?role=student')}>Add Student</Button>
+                <Button onClick={() => router.push('/dashboard/users?role=teacher')}>Add Teacher</Button>
+            </div> */}
+            <div className="hidden md:flex items-center gap-2">
+  <Button 
+    onClick={() => router.push('/dashboard/users?role=student')} 
+    className="flex items-center gap-2"
+  >
+    <FaUserGraduate size={18} />
+    Add Student
+  </Button>
+
+  <Button 
+    onClick={() => router.push('/dashboard/users?role=teacher')} 
+    className="flex items-center gap-2"
+  >
+    <FaChalkboardTeacher size={18} />
+    Add Teacher
+  </Button>
+</div>
+            <div className="md:hidden">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button 
+                            size="icon" 
+                            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        >
+                            <Plus className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push('/dashboard/users?role=student')}>
+                            Add Student
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/dashboard/users?role=teacher')}>
+                            Add Teacher
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+          </>
         )}
 
         <DropdownMenu>
