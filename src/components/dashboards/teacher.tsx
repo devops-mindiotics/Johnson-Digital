@@ -12,9 +12,9 @@ export default function TeacherDashboard({ user }: { user: User }) {
   const firstName = (user?.name || 'Teacher').split(' ')[0];
 
   const banners = [
-    { src: 'https://picsum.photos/1600/420?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
-    { src: 'https://picsum.photos/1600/420?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow' },
-    { src: 'https://picsum.photos/1600/420?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning' },
+    { src: 'https://picsum.photos/1280/720?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
+    { src: 'https://picsum.photos/1280/720?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow' },
+    { src: 'https://picsum.photos/1280/720?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning' },
   ];
 
   const classes = [
@@ -27,19 +27,19 @@ export default function TeacherDashboard({ user }: { user: User }) {
     { label: "Grade 4", icon: "🧮" },
     { label: "Grade 5", icon: "🎓" },
   ];
-
   return (
     <div className="min-h-screen w-full bg-blue-50 flex flex-col items-center px-6 py-6 space-y-6">
       {/* Banner */}
-      <div className="w-full max-w-7xl">
+      <div className="w-full">
         <Carousel className="w-full" opts={{ loop: true, align: 'center' }} plugins={[Autoplay({ delay: 5000 })]}>
           <CarouselContent>
             {banners.map((banner, index) => (
               <CarouselItem key={index}>
-                <div className="relative w-full h-52 md:h-64 rounded-lg overflow-hidden shadow">
-                  <Image src={banner.src} alt={banner.alt} fill className="object-cover" />
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow md:w-[30vw] mx-auto">
+                  <Image src={banner.src} alt={banner.alt} fill className="object-contain" />
                   <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center">
                     <h3 className="text-xl md:text-3xl font-bold text-white">{banner.title}</h3>
+                    <p className="mt-2 text-sm md:text-lg text-white/90">{banner.description}</p>
                   </div>
                 </div>
               </CarouselItem>
@@ -92,7 +92,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
       <div className="w-full max-w-7xl">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Classes/Content</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Classes-Content</h3>
             <div className="text-sm text-gray-500">Select a class</div>
           </div>
 
@@ -114,7 +114,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
       {/* Footer / small note */}
       <div className="w-full max-w-7xl text-center text-xs text-gray-400">
-        © 2025 EduCentral by Johnson Digital. All Rights Reserved.
+      <p className="hidden md:block">  © 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
       </div>
     </div>
   );

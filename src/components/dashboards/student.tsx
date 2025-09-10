@@ -17,27 +17,9 @@ import { useRouter } from 'next/navigation';
 import Autoplay from "embla-carousel-autoplay"
 
 const banners = [
-    { 
-        src: "https://picsum.photos/1200/400?q=31", 
-        alt: "Annual Science Fair", 
-        dataAiHint: "science fair project",
-        title: "Annual Science Fair is Here!",
-        description: "Showcase your amazing projects. Submissions open until Aug 25th."
-    },
-    { 
-        src: "https://picsum.photos/1200/400?q=32", 
-        alt: "Sports Day",
-        dataAiHint: "school sports race",
-        title: "Get Ready for Sports Day!",
-        description: "Join us for a day of fun, games, and friendly competition on September 5th."
-    },
-    { 
-        src: "https://picsum.photos/1200/400?q=33", 
-        alt: "Mid-term exams",
-        dataAiHint: "students writing exam",
-        title: "Mid-Term Exams Approaching",
-        description: "Your mid-term exam schedule has been posted. Check the notice board for details."
-    },
+    { src: 'https://picsum.photos/1280/720?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
+    { src: 'https://picsum.photos/1280/720?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow' },
+    { src: 'https://picsum.photos/1280/720?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning' },
 ];
 
 const subjects = [
@@ -55,9 +37,9 @@ export default function StudentDashboard({ user }: { user: User }) {
                 {banners.map((banner, index) => (
                     <CarouselItem key={index}>
                     <Card className="overflow-hidden">
-                        <CardContent className="relative flex aspect-[3/1] items-center justify-center p-0 rounded-lg">
-                           <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} data-ai-hint={banner.dataAiHint} />
-                           <div className="absolute inset-0 bg-black/50" />
+ <CardContent className="relative flex w-full aspect-video items-center justify-center p-0 rounded-lg md:w-[30vw] mx-auto">
+                           <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} />
+                           <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center pointer-events-none" />
                            <div className="relative text-center text-primary-foreground p-8 flex flex-col items-center justify-center h-full">
                                 <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
                                 <p className="mt-2 text-sm md:text-lg max-w-xl">{banner.description}</p>
