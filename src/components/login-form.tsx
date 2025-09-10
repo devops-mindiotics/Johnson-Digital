@@ -31,7 +31,7 @@ const FormSchema = z.object({
   role: z.enum(['Super Admin', 'School Admin', 'Teacher', 'Student'], {
     required_error: 'Please select a role.',
   }),
-  mobile: z.string().min(10, 'Mobile number must be at least 10 digits.'),
+  mobile: z.string().min(10, 'Mobile number must be at least 10 digitsasd.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
 
