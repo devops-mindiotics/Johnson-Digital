@@ -5,6 +5,7 @@ import {
   Plus,
   Settings,
   User as UserIcon,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +42,10 @@ export function DashboardHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
       <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
+            <ArrowLeft className="h-5 w-5" />
+            <span className="sr-only">Back</span>
+        </Button>
         <SidebarTrigger />
         <h1 className="text-lg font-semibold md:text-xl">
           Hello, {user.name.split(' ')[0]}!
