@@ -1,4 +1,6 @@
-
+'use client';
+import Link from 'next/link';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -17,7 +19,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle, Search } from 'lucide-react';
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Pencil,
+  Trash2,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,123 +33,262 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const schools = [
   {
     name: 'Greenwood High',
-    admin: 'Mr. Robert Fox',
+    johnsonId: 'JSN-123',
+    board: 'CBSE',
     status: 'Active',
-    plan: 'Premium Plan',
-    users: 1200,
+    expiry: '2025-12-31',
+    date: '2023-01-15',
+    city: 'Metropolis',
+    state: 'California',
   },
   {
     name: 'Oakridge International',
-    admin: 'Ms. Emily White',
+    johnsonId: 'JSN-456',
+    board: 'ICSE',
     status: 'Active',
-    plan: 'Standard Plan',
-    users: 850,
+    expiry: '2026-06-30',
+    date: '2022-11-20',
+    city: 'Gotham',
+    state: 'New York',
   },
   {
     name: 'Northwood Academy',
-    admin: 'Mr. David Green',
+    johnsonId: 'JSN-789',
+    board: 'State Board',
     status: 'Inactive',
-    plan: 'Free Plan',
-    users: 300,
+    expiry: '2024-03-15',
+    date: '2023-05-10',
+    city: 'Star City',
+    state: 'Washington',
   },
   {
     name: 'Sunflower Prep',
-    admin: 'Mrs. Jessica Blue',
+    johnsonId: 'JSN-101',
+    board: 'CBSE',
     status: 'Active',
-    plan: 'Premium Plan',
-    users: 1500,
+    expiry: '2027-08-21',
+    date: '2021-09-01',
+    city: 'Central City',
+    state: 'Missouri',
   },
   {
     name: 'Riverdale Public School',
-    admin: 'Mr. Michael Black',
+    johnsonId: 'JSN-212',
+    board: 'ICSE',
     status: 'Trial',
-    plan: 'Standard Plan',
-    users: 600,
+    expiry: '2024-12-31',
+    date: '2023-08-30',
+    city: 'Riverdale',
+    state: 'Georgia',
   },
 ];
 
 export default function SchoolsPage() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
+  const { toast } = useToast();
+
+  const openDialog = (school) => {
+    setSchoolToDeactivate(school);
+    setDialogOpen(true);
+  };
+
+  const handleDeactivate = () => {
+    if (schoolToDeactivate) {
+      toast({
+        title: 'Success',
+        description: `${schoolToDeactivate.name} has been deactivated.`,
+      });
+      setDialogOpen(false);
+      setSchoolToDeactivate(null);
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Schools Management</CardTitle>
-            <CardDescription>
-              Manage all the schools on the platform.
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Schools Management</CardTitle>
+              <CardDescription>
+                Manage all the schools on the platform.
+              </CardDescription>
+            </div>
+            <Link href="/dashboard/schools/add">
+              <Button size="icon" className="inline-flex md:hidden">
+                <PlusCircle className="h-4 w-4" />
+                <span className="sr-only">Add School</span>
+              </Button>
+              <Button className="hidden md:inline-flex">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add School
+              </Button>
+            </Link>
           </div>
-          <Button>
-            <PlusCircle className="mr-2" />
-            Add School
-          </Button>
-        </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search schools..." className="pl-8" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>School Name</TableHead>
-              <TableHead>Admin</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Users</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+          <div className="relative mt-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search schools..." className="pl-8" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Desktop View */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>School Name</TableHead>
+                  <TableHead>Johnson ID</TableHead>
+                  <TableHead>Board</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Expiry</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {schools.map((school) => (
+                  <TableRow key={school.name}>
+                    <TableCell className="font-medium">{school.name}</TableCell>
+                    <TableCell>{school.johnsonId}</TableCell>
+                    <TableCell>{school.board}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          school.status === 'Active'
+                            ? 'default'
+                            : school.status === 'Inactive'
+                            ? 'destructive'
+                            : 'secondary'
+                        }
+                      >
+                        {school.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{school.expiry}</TableCell>
+                    <TableCell>{school.date}</TableCell>
+                    <TableCell>{school.city}</TableCell>
+                    <TableCell>{school.state}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <Link href="/dashboard/schools/edit">
+                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                          </Link>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => openDialog(school)}
+                          >
+                            Deactivate
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
             {schools.map((school) => (
-              <TableRow key={school.name}>
-                <TableCell className="font-medium">{school.name}</TableCell>
-                <TableCell>{school.admin}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      school.status === 'Active'
-                        ? 'default'
-                        : school.status === 'Inactive'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                  >
-                    {school.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{school.plan}</TableCell>
-                <TableCell>{school.users}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
+              <Card key={school.name}>
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg font-bold">{school.name}</CardTitle>
+                      <CardDescription className="text-sm">
+                        {school.johnsonId} &bull; {school.city}, {school.state}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center">
+                      <Link href="/dashboard/schools/edit">
+                        <Button size="icon" variant="ghost">
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                      </Link>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => openDialog(school)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Deactivate</span>
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
-                        Deactivate
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex items-center justify-between text-sm">
+                    <Badge
+                      variant={
+                        school.status === 'Active'
+                          ? 'default'
+                          : school.status === 'Inactive'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                    >
+                      {school.status}
+                    </Badge>
+                    <div className="text-muted-foreground">
+                      Expires on <span className="font-medium text-foreground">{school.expiry}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to deactivate {schoolToDeactivate?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will mark the school as inactive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate}>
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

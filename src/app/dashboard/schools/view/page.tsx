@@ -48,7 +48,7 @@ export default function SchoolViewPage({ params }: { params: { id: string } }) {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>School Details</CardTitle>
         <Button
-          onClick={() => router.push(`/dashboard/schools/${params.id}/edit`)}
+          onClick={() => router.push(`/dashboard/schools/edit`)}
         >
           <Edit className="mr-2 h-4 w-4" />
           Edit

@@ -1,4 +1,5 @@
-
+'use client';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -31,6 +32,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const users = [
   {
@@ -38,6 +46,7 @@ const users = [
     email: 'liam@example.com',
     role: 'Teacher',
     school: 'Greenwood High',
+    schoolId: 'JSN-123',
     status: 'Active',
     avatar: 'https://picsum.photos/100/100?q=11',
   },
@@ -46,6 +55,7 @@ const users = [
     email: 'olivia@example.com',
     role: 'Student',
     school: 'Oakridge International',
+    schoolId: 'JSN-456',
     status: 'Active',
     avatar: 'https://picsum.photos/100/100?q=12',
   },
@@ -54,6 +64,7 @@ const users = [
     email: 'noah@example.com',
     role: 'School Admin',
     school: 'Northwood Academy',
+    schoolId: 'JSN-789',
     status: 'Inactive',
     avatar: 'https://picsum.photos/100/100?q=13',
   },
@@ -62,6 +73,7 @@ const users = [
     email: 'emma@example.com',
     role: 'Teacher',
     school: 'Sunflower Prep',
+    schoolId: 'JSN-101',
     status: 'Active',
     avatar: 'https://picsum.photos/100/100?q=14',
   },
@@ -70,12 +82,37 @@ const users = [
     email: 'oliver@example.com',
     role: 'Student',
     school: 'Riverdale Public School',
+    schoolId: 'JSN-212',
     status: 'Active',
     avatar: 'https://picsum.photos/100/100?q=15',
   },
+  {
+    name: 'Liam Johnson',
+    email: 'liam2@example.com',
+    role: 'Teacher',
+    school: 'Greenwood High',
+    schoolId: 'JSN-123',
+    status: 'Active',
+    avatar: 'https://picsum.photos/100/100?q=16',
+  },
+];
+
+const schools = [
+  { name: 'Greenwood High', id: 'JSN-123' },
+  { name: 'Oakridge International', id: 'JSN-456' },
+  { name: 'Northwood Academy', id: 'JSN-789' },
+  { name: 'Sunflower Prep', id: 'JSN-101' },
+  { name: 'Riverdale Public School', id: 'JSN-212' },
+  { name: 'Greenwood High', id: 'JSN-123' },
 ];
 
 export default function UsersPage() {
+  const [selectedSchool, setSelectedSchool] = useState('all');
+
+  const filteredUsers = selectedSchool === 'all'
+      ? users
+      : users.filter((user) => user.school === selectedSchool);
+
   return (
     <Card>
       <CardHeader>
@@ -97,9 +134,24 @@ export default function UsersPage() {
             </Button>
           </div>
         </div>
-        <div className="relative mt-4">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search users by name or email..." className="pl-8" />
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search users by name or email..." className="pl-8 w-full" />
+          </div>
+          <Select onValueChange={setSelectedSchool} defaultValue="all">
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by school" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Schools</SelectItem>
+              {schools.map((school, index) => (
+                <SelectItem key={index} value={school.name}>
+                  {school.id} - {school.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent>
@@ -116,7 +168,7 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.email}>
                 <TableCell>
                   <div className="flex items-center gap-3">
