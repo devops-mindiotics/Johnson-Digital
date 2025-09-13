@@ -198,8 +198,8 @@ export default function SchoolsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <Link href="/dashboard/schools/edit">
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <Link href="/dashboard/schools/view">
+                            <DropdownMenuItem>View/Edit</DropdownMenuItem>
                           </Link>
                           <DropdownMenuItem
                             className="text-destructive"
@@ -229,10 +229,10 @@ export default function SchoolsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center">
-                      <Link href="/dashboard/schools/edit">
+                      <Link href="/dashboard/schools/view">
                         <Button size="icon" variant="ghost">
                           <Pencil className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
+                          <span className="sr-only">View/Edit</span>
                         </Button>
                       </Link>
                       <Button
