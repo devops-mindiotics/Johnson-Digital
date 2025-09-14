@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -39,8 +39,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { DashboardSkeleton } from '@/components/ui/loader';
 
-const users = [
+const mockUsers = [
   {
     name: 'Liam Johnson',
     email: 'liam@example.com',
@@ -97,7 +98,7 @@ const users = [
   },
 ];
 
-const schools = [
+const mockSchools = [
   { name: 'Greenwood High', id: 'JSN-123' },
   { name: 'Oakridge International', id: 'JSN-456' },
   { name: 'Northwood Academy', id: 'JSN-789' },
@@ -107,11 +108,25 @@ const schools = [
 ];
 
 export default function UsersPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
+
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      setUsers(mockUsers);
+      setIsLoading(false);
+    }, 2000);
+  }, []);
 
   const filteredUsers = selectedSchool === 'all'
       ? users
       : users.filter((user) => user.school === selectedSchool);
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <Card>
@@ -145,7 +160,7 @@ export default function UsersPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Schools</SelectItem>
-              {schools.map((school, index) => (
+              {mockSchools.map((school, index) => (
                 <SelectItem key={index} value={school.name}>
                   {school.id} - {school.name}
                 </SelectItem>

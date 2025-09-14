@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -44,8 +44,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { DashboardSkeleton } from '@/components/ui/loader';
 
-const schools = [
+const mockSchools = [
   {
     name: 'Greenwood High',
     johnsonId: 'JSN-123',
@@ -99,9 +100,19 @@ const schools = [
 ];
 
 export default function SchoolsPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [schools, setSchools] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      setSchools(mockSchools);
+      setIsLoading(false);
+    }, 2000);
+  }, []);
 
   const openDialog = (school) => {
     setSchoolToDeactivate(school);
@@ -118,6 +129,10 @@ export default function SchoolsPage() {
       setSchoolToDeactivate(null);
     }
   };
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <>

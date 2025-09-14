@@ -1,14 +1,14 @@
 'use client';
-import { useEffect, type ReactNode } from 'react';
+import { Suspense, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarProvider, Sidebar, SidebarHeader as GenericSidebarHeader, SidebarContent, SidebarFooter as GenericSidebarFooter } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
+import { DashboardSkeleton } from '@/components/ui/loader';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -22,15 +22,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (isLoading || !user) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="w-full max-w-7xl p-8 space-y-8">
-            <div className="flex justify-between">
-                <Skeleton className="h-10 w-1/4" />
-                <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <div className="w-full max-w-7xl">
+                <DashboardSkeleton />
             </div>
-            <Skeleton className="h-[calc(100vh-12rem)] w-full" />
         </div>
-      </div>
     );
   }
 
@@ -53,7 +49,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </Sidebar>
         <div className="flex flex-1 flex-col overflow-hidden">
             <DashboardHeader />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">{children}</main>
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+              <Suspense fallback={<DashboardSkeleton />}>
+                {children}
+              </Suspense>
+            </main>
             <DashboardFooter />
         </div>
       </div>
