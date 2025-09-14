@@ -1,9 +1,9 @@
 'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { Pencil } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 // Mock user data - in a real app, you would fetch this based on the user ID
 const user = {
@@ -42,6 +42,7 @@ const InfoField = ({ label, value }) => (
 
 export default function ViewUserPage() {
   const router = useRouter();
+  const { user: loggedInUser } = useAuth();
 
   return (
     <Card>
@@ -68,13 +69,15 @@ export default function ViewUserPage() {
             </div>
 
             {/* School Information */}
-            <div>
-                <h3 className="text-lg font-semibold mb-4">School Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="School" value={user.school} />
-                    <InfoField label="School Unique ID" value={user.schoolUniqueId} />
-                </div>
-            </div>
+            {loggedInUser && loggedInUser.role === 'Super Admin' && (
+              <div>
+                  <h3 className="text-lg font-semibold mb-4">School Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <InfoField label="School" value={user.school} />
+                      <InfoField label="School Unique ID" value={user.schoolUniqueId} />
+                  </div>
+              </div>
+            )}
 
             {/* Address Information */}
             <div>

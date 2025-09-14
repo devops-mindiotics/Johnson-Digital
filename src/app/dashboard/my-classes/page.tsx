@@ -1,4 +1,4 @@
-
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
 
 const assignedClasses = [
     { id: 'C10A', name: 'Class 10 - Section A', subject: 'Mathematics', students: 35 },
@@ -25,6 +26,8 @@ const recentSubmissions = [
 ];
 
 export default function MyClassesPage() {
+  const router = useRouter();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -45,7 +48,7 @@ export default function MyClassesPage() {
                                     <p className="text-sm text-muted-foreground">{c.students} Students</p>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button className="w-full">View Class</Button>
+                                    <Button className="w-full" onClick={() => router.push(`/dashboard/my-classes/${c.id}`)}>View Class</Button>
                                 </CardFooter>
                             </Card>
                         ))}

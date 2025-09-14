@@ -33,7 +33,7 @@ const formSchema = z.object({
   mobileNumber: z.string().max(12, 'Mobile number cannot exceed 12 digits'),
   email: z.string().email(),
   status: z.enum(['Active', 'Inactive', 'Pending']).default('Pending'),
-  schoolUniqueId: z.string().min(1, 'School Unique ID is required'),
+  schoolUniqueId: z.string().optional(),
   address: z.string(),
   city: z.string(),
   district: z.string(),
@@ -91,30 +91,30 @@ export default function AddUserPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {user?.role === 'Super Admin' && (
-                <FormField
-                  control={form.control}
-                  name="school"
-                  render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>School *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                          <SelectTrigger>
-                          <SelectValue placeholder="Select a school" />
-                          </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                          {schools.map((school, index) => (
-                          <SelectItem key={index} value={`${school.schoolId}-${school.schoolName}`}>
-                              {`${school.schoolId}-${school.schoolName}`}
-                          </SelectItem>
-                          ))}
-                      </SelectContent>
-                      </Select>
-                      <FormMessage />
-                  </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="school"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>School *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a school" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {schools.map((school, index) => (
+                            <SelectItem key={index} value={`${school.schoolId}-${school.schoolName}`}>
+                                {`${school.schoolId}-${school.schoolName}`}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                  />
               )}
                 <FormField
                 control={form.control}
@@ -300,19 +300,6 @@ export default function AddUserPage() {
                         <SelectItem value="Pending">Pending</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="schoolUniqueId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>School Unique ID *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., GH-1234" {...field} />
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
