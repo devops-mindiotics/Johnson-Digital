@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -30,7 +31,7 @@ const formSchema = z.object({
   affiliationNo: z.string(),
   schoolLogo: z.any(),
   schoolWebsite: z.string().url().optional(),
-  status: z.enum(['Active', 'Inactive', 'Pending']).default('Pending'),
+  status: z.enum(['Active', 'Inactive', 'Pending', 'Trial']).default('Pending'),
   expiryDate: z.string().min(1, 'Expiry Date is required'),
   email: z.string().email(),
   principalName: z.string().min(1, 'Principal Name is required'),
@@ -53,14 +54,52 @@ const formSchema = z.object({
   modifiedBy: z.string(),
 });
 
+const mockSchoolData = {
+  id: 'sch_1',
+  schoolName: 'Greenwood High',
+  trustSocietyName: 'Greenwood Educational Trust',
+  schoolBoard: 'CBSE',
+  affiliationNo: 'CBSE/AFF/12345',
+  schoolWebsite: 'https://www.greenwoodhigh.edu',
+  status: 'Active',
+  expiryDate: '2025-12-31',
+  email: 'admin@greenwoodhigh.edu',
+  principalName: 'Dr. Anjali Sharma',
+  principalMobile: '9876543210',
+  inchargeName: 'Mr. Rajesh Kumar',
+  inchargeMobile: '9876543211',
+  address: '123, Education Lane',
+  city: 'Metropolis',
+  district: 'Metropolis District',
+  state: 'California',
+  pincode: '560087',
+  isBranch: false,
+  parentSchool: '',
+  instagram: 'https://instagram.com/greenwoodhigh',
+  linkedIn: 'https://linkedin.com/school/greenwoodhigh',
+  johnsonSchoolId: 'JSN-123',
+  createdOn: '2023-01-15T10:00:00Z',
+  createdBy: 'Super Admin',
+  modifiedOn: '2023-10-26T14:30:00Z',
+  modifiedBy: 'Super Admin',
+};
+
 export default function SchoolEditPage({ params }: { params: { id: string } }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    // Fetch school data and set as default values
+    defaultValues: mockSchoolData,
   });
 
+  useEffect(() => {
+    // In a real application, you would fetch the school data based on the id
+    // and then reset the form with the fetched data.
+    // For now, we're using mock data.
+    form.reset(mockSchoolData);
+  }, [form, params.id]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    console.log('Updated school data:', values);
+    // Here you would typically send the updated data to your backend API
   }
 
   return (
@@ -117,7 +156,7 @@ export default function SchoolEditPage({ params }: { params: { id: string } }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>School Board *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a school board" />
@@ -153,7 +192,7 @@ export default function SchoolEditPage({ params }: { params: { id: string } }) {
                   <FormItem>
                     <FormLabel>School Logo</FormLabel>
                     <FormControl>
-                      <Input type="file" {...field} />
+                      <Input type="file" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -178,7 +217,7 @@ export default function SchoolEditPage({ params }: { params: { id: string } }) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a status" />
@@ -188,6 +227,7 @@ export default function SchoolEditPage({ params }: { params: { id: string } }) {
                         <SelectItem value="Active">Active</SelectItem>
                         <SelectItem value="Inactive">Inactive</SelectItem>
                         <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Trial">Trial</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

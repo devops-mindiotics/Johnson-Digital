@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -43,11 +43,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import { DashboardSkeleton } from '@/components/ui/loader';
 
-const mockSchools = [
+const initialSchools = [
   {
+    id: 'sch_1',
     name: 'Greenwood High',
     johnsonId: 'JSN-123',
     board: 'CBSE',
@@ -58,6 +57,7 @@ const mockSchools = [
     state: 'California',
   },
   {
+    id: 'sch_2',
     name: 'Oakridge International',
     johnsonId: 'JSN-456',
     board: 'ICSE',
@@ -68,6 +68,7 @@ const mockSchools = [
     state: 'New York',
   },
   {
+    id: 'sch_3',
     name: 'Northwood Academy',
     johnsonId: 'JSN-789',
     board: 'State Board',
@@ -78,6 +79,7 @@ const mockSchools = [
     state: 'Washington',
   },
   {
+    id: 'sch_4',
     name: 'Sunflower Prep',
     johnsonId: 'JSN-101',
     board: 'CBSE',
@@ -88,6 +90,7 @@ const mockSchools = [
     state: 'Missouri',
   },
   {
+    id: 'sch_5',
     name: 'Riverdale Public School',
     johnsonId: 'JSN-212',
     board: 'ICSE',
@@ -100,39 +103,33 @@ const mockSchools = [
 ];
 
 export default function SchoolsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [schools, setSchools] = useState([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [schoolToDeactivate, setSchoolToDeactivate] = useState(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setSchools(mockSchools);
-      setIsLoading(false);
-    }, 2000);
-  }, []);
+  const [schools, setSchools] = useState(initialSchools);
+  const [schoolToProcess, setSchoolToProcess] = useState(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [processedSchoolName, setProcessedSchoolName] = useState('');
 
   const openDialog = (school) => {
-    setSchoolToDeactivate(school);
-    setDialogOpen(true);
+    setSchoolToProcess(school);
   };
 
-  const handleDeactivate = () => {
-    if (schoolToDeactivate) {
-      toast({
-        title: 'Success',
-        description: `${schoolToDeactivate.name} has been deactivated.`,
-      });
-      setDialogOpen(false);
-      setSchoolToDeactivate(null);
+  const handleStatusChange = () => {
+    if (schoolToProcess) {
+      const newStatus =
+        schoolToProcess.status === 'Active' || schoolToProcess.status === 'Trial'
+          ? 'Inactive'
+          : 'Active';
+      const updatedSchools = schools.map((s) =>
+        s.id === schoolToProcess.id ? { ...s, status: newStatus } : s
+      );
+      setSchools(updatedSchools);
+
+      if (newStatus === 'Inactive') {
+        setProcessedSchoolName(schoolToProcess.name);
+        setSuccessDialogOpen(true);
+      }
+      setSchoolToProcess(null);
     }
   };
-
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
 
   return (
     <>
@@ -182,7 +179,7 @@ export default function SchoolsPage() {
               </TableHeader>
               <TableBody>
                 {schools.map((school) => (
-                  <TableRow key={school.name}>
+                  <TableRow key={school.id}>
                     <TableCell className="font-medium">{school.name}</TableCell>
                     <TableCell>{school.johnsonId}</TableCell>
                     <TableCell>{school.board}</TableCell>
@@ -195,6 +192,8 @@ export default function SchoolsPage() {
                             ? 'destructive'
                             : 'secondary'
                         }
+                        onClick={() => openDialog(school)}
+                        className="cursor-pointer"
                       >
                         {school.status}
                       </Badge>
@@ -213,14 +212,14 @@ export default function SchoolsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <Link href="/dashboard/schools/view">
-                            <DropdownMenuItem>View/Edit</DropdownMenuItem>
+                          <Link href={`/dashboard/schools/edit/${school.id}`}>
+                            <DropdownMenuItem>Edit</DropdownMenuItem>
                           </Link>
                           <DropdownMenuItem
-                            className="text-destructive"
+                            className={school.status === 'Inactive' ? '' : 'text-destructive'}
                             onClick={() => openDialog(school)}
                           >
-                            Deactivate
+                            {school.status === 'Inactive' ? 'Activate' : 'Deactivate'}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -234,7 +233,7 @@ export default function SchoolsPage() {
           {/* Mobile View */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {schools.map((school) => (
-              <Card key={school.name}>
+              <Card key={school.id}>
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div>
@@ -244,20 +243,20 @@ export default function SchoolsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center">
-                      <Link href="/dashboard/schools/view">
+                      <Link href={`/dashboard/schools/edit/${school.id}`}>
                         <Button size="icon" variant="ghost">
                           <Pencil className="h-4 w-4" />
-                          <span className="sr-only">View/Edit</span>
+                          <span className="sr-only">Edit</span>
                         </Button>
                       </Link>
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="text-destructive"
+                        className={school.status === 'Inactive' ? '' : 'text-destructive'}
                         onClick={() => openDialog(school)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Deactivate</span>
+                        <span className="sr-only">{school.status === 'Inactive' ? 'Activate' : 'Deactivate'}</span>
                       </Button>
                     </div>
                   </div>
@@ -272,6 +271,8 @@ export default function SchoolsPage() {
                           ? 'destructive'
                           : 'secondary'
                       }
+                      onClick={() => openDialog(school)}
+                      className="cursor-pointer"
                     >
                       {school.status}
                     </Badge>
@@ -286,20 +287,36 @@ export default function SchoolsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <AlertDialog open={!!schoolToProcess} onOpenChange={() => setSchoolToProcess(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure you want to deactivate {schoolToDeactivate?.name}?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will mark the school as inactive.
+              This action will change the status of {schoolToProcess?.name} to{' '}
+              {schoolToProcess?.status === 'Active' || schoolToProcess?.status === 'Trial'
+                ? 'Inactive'
+                : 'Active'}
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeactivate}>
-              Deactivate
+            <AlertDialogAction onClick={handleStatusChange}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Success</AlertDialogTitle>
+            <AlertDialogDescription>
+              {processedSchoolName} is deactivated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setSuccessDialogOpen(false)}>
+              Close
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
