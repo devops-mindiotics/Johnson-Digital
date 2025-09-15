@@ -116,6 +116,8 @@ export default function UsersPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [processedUserName, setProcessedUserName] = useState('');
 
   useEffect(() => {
     setTimeout(() => {
@@ -130,12 +132,17 @@ export default function UsersPage() {
 
   const handleStatusChange = () => {
     if (userToUpdate) {
+      const newStatus = userToUpdate.status === 'Active' ? 'Inactive' : 'Active';
       const updatedUsers = users.map((u) =>
         u.id === userToUpdate.id
-          ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' }
+          ? { ...u, status: newStatus }
           : u
       );
       setUsers(updatedUsers);
+      if (newStatus === 'Inactive') {
+        setProcessedUserName(userToUpdate.name);
+        setSuccessDialogOpen(true);
+      }
       setUserToUpdate(null);
     }
   };
@@ -346,6 +353,21 @@ export default function UsersPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleStatusChange}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Success</AlertDialogTitle>
+            <AlertDialogDescription>
+              {processedUserName} is deactivated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setSuccessDialogOpen(false)}>
+              Close
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
