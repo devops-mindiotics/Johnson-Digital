@@ -49,6 +49,8 @@ const formSchema = z.object({
   admissionNumber: z.string().optional(),
   dateOfBirth: z.string().optional(),
   permanentEducationNumber: z.string().optional(),
+  class: z.string().optional(),
+  series: z.string().optional(),
   // School Admin fields
   expiryDate: z.string().optional(),
 });
@@ -236,6 +238,52 @@ export default function AddUserPage() {
                         <FormControl>
                           <Input type="date" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="class"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a class" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Nursery">Nursery</SelectItem>
+                            <SelectItem value="LKG">LKG</SelectItem>
+                            <SelectItem value="UKG">UKG</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="series"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Series *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a series" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Mirac">Mirac</SelectItem>
+                            <SelectItem value="Marvel">Marvel</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

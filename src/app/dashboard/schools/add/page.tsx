@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
@@ -38,9 +39,44 @@ const classes = [
     { id: '5', label: 'V' },
   ];
 
+const seriesOptions = [
+    { id: 'mirac', label: 'Mirac' },
+    { id: 'marvel', label: 'Marvel' },
+    { id: 'other', label: 'Other' },
+];
+
+const mockSchoolList = [
+  {
+    id: 'sch_2',
+    schoolName: 'Oakridge International School',
+    johnsonSchoolId: 'JSN-124',
+  },
+  {
+    id: 'sch_3',
+    schoolName: 'Delhi Public School',
+    johnsonSchoolId: 'JSN-125',
+  },
+  {
+    id: 'sch_4',
+    schoolName: 'National Public School',
+    johnsonSchoolId: 'JSN-126',
+  },
+  {
+    id: 'sch_5',
+    schoolName: 'Oakridge International School',
+    johnsonSchoolId: 'JSN-124',
+  },
+  {
+    id: 'sch_6',
+    schoolName: 'Delhi Public School',
+    johnsonSchoolId: 'JSN-125',
+  },
+];
+
 const classConfigurationSchema = z.object({
   class: z.string().min(1, 'Class is required'),
-  sections: z.number().min(1, 'Number of sections is required'),
+  sections: z.coerce.number().min(1, 'Number of sections is required'),
+  series: z.string().min(1, 'Series is required'),
 });
 
 const formSchema = z.object({
@@ -67,17 +103,18 @@ const formSchema = z.object({
   classConfigurations: z.array(classConfigurationSchema),
   status: z.enum(['Active', 'Inactive', 'Pending', 'Trial']).default('Pending'),
   expiryDate: z.string().min(1, 'Expiry Date is required'),
-  totalTeachers: z.number().min(0, 'Total teachers must be a positive number'),
-  totalStudents: z.number().min(0, 'Total students must be a positive number'),
+  totalTeachers: z.coerce.number().min(0, 'Total teachers must be a positive number'),
+  totalStudents: z.coerce.number().min(0, 'Total students must be a positive number'),
 });
 
 export default function AddSchoolPage() {
   const router = useRouter();
+  const [schools, setSchools] = useState<{ id: string; schoolName: string; johnsonSchoolId: string; }[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       isBranch: false,
-      classConfigurations: [{ class: '', sections: 1 }],
+      classConfigurations: [{ class: '', sections: 1, series: '' }],
       status: 'Pending',
     },
   });
@@ -86,6 +123,10 @@ export default function AddSchoolPage() {
     control: form.control,
     name: "classConfigurations",
   });
+
+  useEffect(() => {
+    setSchools(mockSchoolList);
+  }, []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
@@ -255,9 +296,20 @@ export default function AddSchoolPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Parent School</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Name of parent school" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a parent school" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {schools.map((school) => (
+                            <SelectItem key={school.id} value={`${school.johnsonSchoolId}-${school.schoolName}`}>
+                              {school.johnsonSchoolId} - {school.schoolName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -307,14 +359,15 @@ export default function AddSchoolPage() {
         <Card>
             <CardHeader>
               <CardTitle>Class Configuration</CardTitle>
-              <CardDescription>Select the class and number of sections.</CardDescription>
+              <CardDescription>Select the class and number of Students.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Class</TableHead>
-                    <TableHead>Count</TableHead>
+                    <TableHead>Series</TableHead>
+                    <TableHead>Licences</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -347,11 +400,34 @@ export default function AddSchoolPage() {
                       <TableCell>
                         <FormField
                           control={form.control}
+                          name={`classConfigurations.${index}.series`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a series" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {seriesOptions.map((s) => (
+                                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <FormField
+                          control={form.control}
                           name={`classConfigurations.${index}.sections`}
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input type="number" placeholder="Students" {...field} />
+                                <Input type="number" placeholder="Sections" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -371,7 +447,7 @@ export default function AddSchoolPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => append({ class: '', sections: 1 })}
+                onClick={() => append({ class: '', sections: 1, series: '' })}
                 className="mt-4"
               >
                 Add Class

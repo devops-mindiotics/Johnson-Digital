@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -73,8 +73,8 @@ const mockSchoolData = {
   district: 'Metropolis District',
   state: 'California',
   pincode: '560087',
-  isBranch: false,
-  parentSchool: '',
+  isBranch: true, // Set to true to show the parent school dropdown
+  parentSchool: 'JSN-124-Oakridge International School', // Example parent school ID
   instagram: 'https://instagram.com/greenwoodhigh',
   linkedIn: 'https://linkedin.com/school/greenwoodhigh',
   johnsonSchoolId: 'JSN-123',
@@ -84,17 +84,36 @@ const mockSchoolData = {
   modifiedBy: 'Super Admin',
 };
 
+const mockSchoolList = [
+  {
+    id: 'sch_2',
+    schoolName: 'Oakridge International School',
+    johnsonSchoolId: 'JSN-124',
+  },
+  {
+    id: 'sch_3',
+    schoolName: 'Delhi Public School',
+    johnsonSchoolId: 'JSN-125',
+  },
+  {
+    id: 'sch_4',
+    schoolName: 'National Public School',
+    johnsonSchoolId: 'JSN-126',
+  },
+];
+
 export default function SchoolEditPage({ params }: { params: { id: string } }) {
+  const [schools, setSchools] = useState<{ id: string; schoolName: string; johnsonSchoolId: string; }[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: mockSchoolData,
   });
 
   useEffect(() => {
-    // In a real application, you would fetch the school data based on the id
-    // and then reset the form with the fetched data.
-    // For now, we're using mock data.
+    // In a real application, you would fetch the school data and the list of schools
+    // based on the id and then reset the form with the fetched data.
     form.reset(mockSchoolData);
+    setSchools(mockSchoolList);
   }, [form, params.id]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -401,9 +420,20 @@ export default function SchoolEditPage({ params }: { params: { id: string } }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Parent School</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Name of parent school" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a parent school" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {schools.map((school) => (
+                            <SelectItem key={school.id} value={`${school.johnsonSchoolId}-${school.schoolName}`}>
+                              {school.johnsonSchoolId} - {school.schoolName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

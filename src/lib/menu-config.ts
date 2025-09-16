@@ -25,7 +25,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Schools', href: '/dashboard/schools', icon: School },
     { label: 'Users', href: '/dashboard/users', icon: Users },
-    { label: 'Roles & Menus', href: '/dashboard/roles', icon: FolderKanban },
+    // { label: 'Roles & Menus', href: '/dashboard/roles', icon: FolderKanban },
     { label: 'Classes & Sections', href: '/dashboard/classes', icon: GraduationCap },
     { label: 'Content Management', href: '/dashboard/content', icon: BookCopy },
     { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },

@@ -16,11 +16,14 @@ import {
   Info,
   Instagram,
   Linkedin,
+  FileText,
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // This is a placeholder for the actual school data fetching logic
 const getSchoolData = (id: string) => {
@@ -53,6 +56,15 @@ const getSchoolData = (id: string) => {
     createdBy: 'Admin',
     modifiedOn: '2024-01-01',
     modifiedBy: 'Admin',
+    totalTeachers: 50,
+    totalStudents: 500,
+    classConfigurations: [
+      { class: 'Nursery', sections: 2, series: 'Mirac' },
+      { class: 'LKG', sections: 2, series: 'Marvel' },
+      { class: 'UKG', sections: 2, series: 'Other' },
+      { class: 'I', sections: 3, series: 'Mirac' },
+      { class: 'II', sections: 3, series: 'Marvel' },
+    ],
   };
 };
 
@@ -88,11 +100,11 @@ export default function SchoolViewPage({ params }: { params: { id: string } }) {
         </div>
 
         <div>
-            <Button onClick={() => router.push(`/dashboard/schools/edit`)} size="icon" className="md:hidden">
+            <Button onClick={() => router.push(`/dashboard/schools/${params.id}/edit`)} size="icon" className="md:hidden">
                 <Edit className="h-4 w-4" />
                 <span className="sr-only">Edit School</span>
             </Button>
-            <Button onClick={() => router.push(`/dashboard/schools/edit`)} className="hidden md:flex">
+            <Button onClick={() => router.push(`/dashboard/schools/${params.id}/edit`)} className="hidden md:flex">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit School
             </Button>
@@ -123,6 +135,44 @@ export default function SchoolViewPage({ params }: { params: { id: string } }) {
                     />
                     <DetailItem label="Is Branch" value={school.isBranch ? 'Yes' : 'No'} />
                     {school.isBranch && <DetailItem label="Parent School" value={school.parentSchool} />}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="flex flex-row items-center space-x-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <CardTitle>License Information</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <DetailItem label="Total Teachers" value={school.totalTeachers} />
+                    <DetailItem label="Total Students" value={school.totalStudents} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader className="flex flex-row items-center space-x-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <CardTitle>Class Configuration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Class</TableHead>
+                                <TableHead>Series</TableHead>
+                                <TableHead>Licences</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {school.classConfigurations.map((config, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{config.class}</TableCell>
+                                    <TableCell>{config.series}</TableCell>
+                                    <TableCell>{config.sections}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </CardContent>
             </Card>
 
