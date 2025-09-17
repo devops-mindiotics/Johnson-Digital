@@ -31,7 +31,7 @@ const chartData = [
 ];
 
 const stats = [
-    { title: 'Total Schools', value: '1,250', icon: GraduationCap, color: 'bg-green-50 text-green-600', change: '+11.5%' },
+    { title: 'Total Schools', value: '1,250', icon: School, color: 'bg-green-50 text-green-600', change: '+11.5%' },
     { title: 'School Admins', value: '2,500', icon: User, color: 'bg-blue-50 text-blue-600', change: '+8.2%' },
     { title: 'Total Teachers', value: '15,300', icon: Users, color: 'bg-blue-50 text-blue-600', change: '+15.1%' },
     { title: 'Total Students', value: '250,000', icon: GraduationCap, color: 'bg-green-50 text-green-600', change: '+21.3%' },

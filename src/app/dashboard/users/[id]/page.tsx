@@ -1,37 +1,80 @@
 'use client';
-
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Pencil } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { DashboardSkeleton } from '@/components/ui/loader';
 
-// Mock user data - in a real app, you would fetch this based on the user ID
-const user = {
-    id: 1,
-    firstName: 'Liam',
-    lastName: 'Johnson',
-    gender: 'Male',
-    mobileNumber: '9876543210',
-    email: 'liam@example.com',
-    type: 'School Admin',
-    school: 'Greenwood High',
-    status: 'Active',
-    schoolUniqueId: 'GH-1234',
-    address: '123 Main St',
-    city: 'Bangalore',
-    district: 'Bangalore Urban',
-    state: 'Karnataka',
-    pincode: '560001',
-    employeeId: 'A-123',
-    joiningDate: '2022-08-15',
-    experience: '5 years',
-    fatherName: 'Robert Johnson',
-    motherName: 'Maria Johnson',
-    admissionNumber: 'S-54321',
-    dateOfBirth: '2008-05-10',
-    permanentEducationNumber: '1234567890',
-    expiryDate: '2025-12-31',
-};
+const mockUsers = [
+    {
+        id: 'usr_5e88488a7558f62f3e36f4d7',
+        firstName: 'Aarav',
+        lastName: 'Sharma',
+        gender: 'Male',
+        mobileNumber: '+91-9876543210',
+        email: 'aarav@example.com',
+        type: 'Teacher',
+        school: 'Greenwood High',
+        status: 'Active',
+        schoolUniqueId: 'JSN-123',
+        address: '456 Park Avenue',
+        city: 'Mumbai',
+        district: 'Mumbai City',
+        state: 'Maharashtra',
+        pincode: '400001',
+        employeeId: 'T-123',
+        joiningDate: '2021-07-20',
+        experience: '5 years',
+        expiryDate: '2025-06-30',
+    },
+    {
+        id: 'usr_5e88488a7558f62f3e36f4d8',
+        firstName: 'Diya',
+        lastName: 'Patel',
+        gender: 'Female',
+        mobileNumber: '+91-9876543211',
+        email: 'diya@example.com',
+        type: 'Student',
+        school: 'Oakridge International',
+        status: 'Active',
+        schoolUniqueId: 'JSN-456',
+        address: '789 Ocean Drive',
+        city: 'Chennai',
+        district: 'Chennai',
+        state: 'Tamil Nadu',
+        pincode: '600001',
+        fatherName: 'Rajesh Patel',
+        motherName: 'Priya Patel',
+        admissionNumber: 'S-54321',
+        dateOfBirth: '2010-02-15',
+        class: '9',
+        section: 'B',
+        permanentEducationNumber: '1234567890',
+    },
+    {
+        id: 'usr_5e88488a7558f62f3e36f4d9',
+        firstName: 'Rohan',
+        lastName: 'Gupta',
+        gender: 'Male',
+        mobileNumber: '+91-9876543212',
+        email: 'rohan@example.com',
+        type: 'School Admin',
+        school: 'Northwood Academy',
+        status: 'Inactive',
+        schoolUniqueId: 'JSN-789',
+        address: '101 River Road',
+        city: 'Delhi',
+        district: 'New Delhi',
+        state: 'Delhi',
+        pincode: '110001',
+        employeeId: 'A-456',
+        joiningDate: '2020-01-10',
+        experience: '8 years',
+        expiryDate: 'N/A',
+    },
+];
 
 const InfoField = ({ label, value }) => (
     <div className="flex flex-col space-y-1">
@@ -42,6 +85,37 @@ const InfoField = ({ label, value }) => (
 
 export default function ViewUserPage() {
   const router = useRouter();
+  const params = useParams();
+  const { user: loggedInUser } = useAuth();
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const userId = params.id;
+    if (userId) {
+      const foundUser = mockUsers.find(u => u.id === userId);
+      setUser(foundUser);
+    }
+    setIsLoading(false);
+  }, [params.id]);
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
+  if (!user) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>User not found</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>The user you are looking for does not exist.</p>
+                <Button variant="outline" className="mt-4" onClick={() => router.push('/dashboard/users')}>Back to Users</Button>
+            </CardContent>
+        </Card>
+    );
+  }
 
   return (
     <Card>
@@ -68,13 +142,15 @@ export default function ViewUserPage() {
             </div>
 
             {/* School Information */}
-            <div>
-                <h3 className="text-lg font-semibold mb-4">School Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="School" value={user.school} />
-                    <InfoField label="School Unique ID" value={user.schoolUniqueId} />
-                </div>
-            </div>
+            {loggedInUser && loggedInUser.role === 'Super Admin' && (
+              <div>
+                  <h3 className="text-lg font-semibold mb-4">School Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <InfoField label="School" value={user.school} />
+                      <InfoField label="School Unique ID" value={user.schoolUniqueId} />
+                  </div>
+              </div>
+            )}
 
             {/* Address Information */}
             <div>
@@ -96,6 +172,19 @@ export default function ViewUserPage() {
                     <InfoField label="Employee ID" value={user.employeeId} />
                     <InfoField label="Joining Date" value={user.joiningDate} />
                     <InfoField label="Experience" value={user.experience} />
+                    <InfoField label="Expiry Date" value={user.expiryDate} />
+                </div>
+            </div>
+          )}
+
+          {user.type === 'School Admin' && (
+            <div>
+                <h3 className="text-lg font-semibold mb-4">School Admin Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <InfoField label="Employee ID" value={user.employeeId} />
+                    <InfoField label="Joining Date" value={user.joiningDate} />
+                    <InfoField label="Experience" value={user.experience} />
+                    <InfoField label="Expiry Date" value={user.expiryDate} />
                 </div>
             </div>
           )}
@@ -108,18 +197,9 @@ export default function ViewUserPage() {
                     <InfoField label="Mother Name" value={user.motherName} />
                     <InfoField label="Admission Number" value={user.admissionNumber} />
                     <InfoField label="Date of Birth" value={user.dateOfBirth} />
+                    <InfoField label="Class" value={user.class} />
+                    <InfoField label="Section" value={user.section} />
                     <InfoField label="Permanent Education Number (PEN)" value={user.permanentEducationNumber} />
-                </div>
-            </div>
-          )}
-
-          {user.type === 'School Admin' && (
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Admin Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="Employee ID" value={user.employeeId} />
-                    <InfoField label="Joining Date" value={user.joiningDate} />
-                    <InfoField label="Expiry Date" value={user.expiryDate} />
                 </div>
             </div>
           )}

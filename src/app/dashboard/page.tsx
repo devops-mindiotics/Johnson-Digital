@@ -4,7 +4,7 @@ import SuperAdminDashboard from '@/components/dashboards/super-admin';
 import SchoolAdminDashboard from '@/components/dashboards/school-admin';
 import TeacherDashboard from '@/components/dashboards/teacher';
 import StudentDashboard from '@/components/dashboards/student';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DashboardSkeleton } from '@/components/ui/loader';
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth();
@@ -29,21 +29,4 @@ export default function DashboardPage() {
   }
 
   return renderDashboard();
-}
-
-function DashboardSkeleton() {
-    return (
-        <div className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-32 rounded-lg" />
-                <Skeleton className="h-32 rounded-lg" />
-                <Skeleton className="h-32 rounded-lg" />
-                <Skeleton className="h-32 rounded-lg" />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Skeleton className="lg:col-span-2 h-96 rounded-lg" />
-                <Skeleton className="h-96 rounded-lg" />
-            </div>
-        </div>
-    )
 }
