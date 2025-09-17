@@ -50,12 +50,12 @@ const formSchema = z.object({
   dateOfBirth: z.string().optional(),
   permanentEducationNumber: z.string().optional(),
   class: z.string().optional(),
-  series: z.string().optional(),
+  section: z.string().optional(),
   // School Admin fields
   expiryDate: z.string().optional(),
 });
 
-export default function AddUserPage() {
+export default function AddUserPage({ searchParams }: { searchParams: { type: 'Teacher' | 'Student' | 'School Admin' } }) {
   const { user } = useAuth();
   const [schools, setSchools] = useState<{ schoolId: string; schoolName: string }[]>([]);
 
@@ -74,6 +74,7 @@ export default function AddUserPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: 'Pending',
+      type: searchParams.type,
     },
   });
 
@@ -268,20 +269,20 @@ export default function AddUserPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="series"
+                    name="section"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Series *</FormLabel>
+                        <FormLabel>Section *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a series" />
+                              <SelectValue placeholder="Select a section" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Mirac">Mirac</SelectItem>
-                            <SelectItem value="Marvel">Marvel</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
+                            <SelectItem value="C">C</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -353,7 +354,23 @@ export default function AddUserPage() {
                 )}
               />
 
-              {type === 'Teacher' && (
+              {(type === 'Teacher' || type === 'Student' || type === 'School Admin') && (
+                <FormField
+                  control={form.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Expiry Date *</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {(type === 'Teacher' || type === 'School Admin') && (
                 <>
                   <FormField
                     control={form.control}
@@ -362,7 +379,7 @@ export default function AddUserPage() {
                       <FormItem>
                         <FormLabel>Employee ID *</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., T-123" {...field} />
+                          <Input placeholder={type === 'Teacher' ? "e.g., T-123" : "e.g., A-123"} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -389,50 +406,6 @@ export default function AddUserPage() {
                         <FormLabel>Experience *</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., 5 years" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-
-              {type === 'School Admin' && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="employeeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employee ID *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., A-123" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="joiningDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Joining Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="expiryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expiry Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

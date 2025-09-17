@@ -24,7 +24,9 @@ const mockUsers = [
     role: 'Teacher',
     school: 'Greenwood High',
     schoolId: 'JSN-123',
-    class: '10-A',
+    class: '10',
+    section: 'A',
+    experience: '5 years',
     status: 'Active',
     expiresOn: '2025-06-30',
     avatar: 'https://picsum.photos/100/100?q=11',
@@ -37,7 +39,8 @@ const mockUsers = [
     role: 'Student',
     school: 'Oakridge International',
     schoolId: 'JSN-456',
-    class: '9-B',
+    class: '9',
+    section: 'B',
     status: 'Active',
     expiresOn: '2026-03-15',
     avatar: 'https://picsum.photos/100/100?q=12',
@@ -50,7 +53,6 @@ const mockUsers = [
     role: 'School Admin',
     school: 'Northwood Academy',
     schoolId: 'JSN-789',
-    class: 'N/A',
     status: 'Inactive',
     expiresOn: 'N/A',
     avatar: 'https://picsum.photos/100/100?q=13',
@@ -63,7 +65,9 @@ const mockUsers = [
     role: 'Teacher',
     school: 'Sunflower Prep',
     schoolId: 'JSN-101',
-    class: '12-C',
+    class: '12',
+    section: 'C',
+    experience: '8 years',
     status: 'Active',
     expiresOn: '2024-11-20',
     avatar: 'https://picsum.photos/100/100?q=14',
@@ -76,7 +80,8 @@ const mockUsers = [
     role: 'Student',
     school: 'Riverdale Public School',
     schoolId: 'JSN-212',
-    class: '8-A',
+    class: '8',
+    section: 'A',
     status: 'Active',
     expiresOn: '2025-09-01',
     avatar: 'https://picsum.photos/100/100?q=15',
@@ -89,7 +94,9 @@ const mockUsers = [
     role: 'Teacher',
     school: 'Greenwood High',
     schoolId: 'JSN-123',
-    class: '11-B',
+    class: '11',
+    section: 'B',
+    experience: '3 years',
     status: 'Active',
     expiresOn: '2025-06-30',
     avatar: 'https://picsum.photos/100/100?q=16',
@@ -226,7 +233,7 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 {user && user.role === 'Super Admin' && <TableHead>School</TableHead>}
                 <TableHead>Role</TableHead>
-                <TableHead>Class</TableHead>
+                <TableHead>Details</TableHead>
                 <TableHead>Expires on</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -251,7 +258,11 @@ export default function UsersPage() {
                   </TableCell>
                   {user && user.role === 'Super Admin' && <TableCell>{u.schoolId} - {u.school}</TableCell>}
                   <TableCell>{u.role}</TableCell>
-                  <TableCell>{u.class}</TableCell>
+                  <TableCell>
+                    {u.role === 'Student' && `Class: ${u.class}-${u.section}`}
+                    {u.role === 'Teacher' && `Experience: ${u.experience}`}
+                    {(u.role === 'School Admin') && 'N/A'}
+                  </TableCell>
                   <TableCell>{u.expiresOn}</TableCell>
                   <TableCell>
                     <Badge
@@ -324,8 +335,12 @@ export default function UsersPage() {
                   <div>{u.role}</div>
                 </div>
                 <div>
-                  <div className="font-semibold">Class</div>
-                  <div>{u.class}</div>
+                  <div className="font-semibold">Details</div>
+                  <div>
+                    {u.role === 'Student' && `Class: ${u.class}-${u.section}`}
+                    {u.role === 'Teacher' && `Experience: ${u.experience}`}
+                    {(u.role === 'School Admin') && 'N/A'}
+                  </div>
                 </div>
                 <div>
                   <div className="font-semibold">Expires on</div>
