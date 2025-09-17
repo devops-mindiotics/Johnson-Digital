@@ -48,7 +48,7 @@ export function DashboardHeader() {
         </Button>
         <SidebarTrigger />
         <h1 className="text-lg font-semibold md:text-xl">
-          Hello, {user.name.split(' ')[0]}!
+          Hello, Mr. {user.name}!
         </h1>
         {user.role === 'Student' && (
           <p className="hidden text-sm text-muted-foreground sm:block">

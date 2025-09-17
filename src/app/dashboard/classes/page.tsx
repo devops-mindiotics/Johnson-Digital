@@ -43,7 +43,7 @@ import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-
+import { useAuth } from '@/hooks/use-auth';
 
 const mockSchoolList = [
     { id: 'sch_1', schoolName: 'Global International School', johnsonSchoolId: 'JSN-123', licenceForStudent: 100, totalStudents: 0 },
@@ -87,12 +87,8 @@ const allSchoolSubjects = [
     { id: 'sub7', name: 'Physics', schoolId: 'sch_2' },
 ];
 
-const loggedInUser = {
-    role: 'Super Admin', // Can be 'Super Admin' or 'School Admin'
-    schoolId: 'sch_1', // Relevant for School Admin
-};
-
 export default function ClassesPage() {
+    const { user } = useAuth();
     const { toast } = useToast();
     const [schools, setSchools] = useState(mockSchoolList);
     const [allClasses, setAllClasses] = useState(initialClassesData);
@@ -110,10 +106,10 @@ export default function ClassesPage() {
     const [editingClass, setEditingClass] = useState<any | null>(null);
 
     useEffect(() => {
-        if (loggedInUser.role === 'School Admin') {
-            setSelectedSchool(loggedInUser.schoolId);
+        if (user && user.role === 'School Admin') {
+            setSelectedSchool(user.schoolId);
         }
-    }, []);
+    }, [user]);
 
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
 
@@ -219,18 +215,20 @@ export default function ClassesPage() {
         };
     });
 
+  if (!user) return <div>Loading...</div>
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Classes Management</CardTitle>
-             {loggedInUser.role === 'School Admin' && selectedSchoolDetails && (
+             {user.role === 'School Admin' && selectedSchoolDetails && (
                 <CardDescription>
                     Managing classes for {selectedSchoolDetails.schoolName}
                 </CardDescription>
             )}
-            {loggedInUser.role === 'Super Admin' && (
+            {user.role === 'Super Admin' && (
                  <CardDescription>
                     Configure and manage classes, sections, and subject mappings for all schools.
                 </CardDescription>
@@ -241,7 +239,7 @@ export default function ClassesPage() {
       <CardContent>
         <Tabs defaultValue="classes">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-                {loggedInUser.role === 'Super Admin' && (
+                {user.role === 'Super Admin' && (
                     <div className="w-full sm:w-auto">
                         <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
                             <SelectTrigger className="w-full sm:w-[350px]">
@@ -321,7 +319,7 @@ export default function ClassesPage() {
                   </Accordion>
                 ) : (
                   <div className="text-center text-muted-foreground mt-8">
-                     {loggedInUser.role === 'Super Admin' 
+                     {user.role === 'Super Admin' 
                         ? "Please select a school to see the classes."
                         : "Loading school data..."
                     }
@@ -396,7 +394,7 @@ export default function ClassesPage() {
                     </div>
                 ) : (
                   <div className="text-center text-muted-foreground mt-8">
-                    {loggedInUser.role === 'Super Admin' 
+                    {user.role === 'Super Admin' 
                         ? "Please select a school to see the subject mappings."
                         : "Loading school data..."
                     }
