@@ -10,6 +10,7 @@ import {
   GraduationCap,
   FolderKanban,
   UserCircle,
+  Image,
 } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
 
@@ -29,7 +30,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
     { label: 'Classes', href: '/dashboard/classes', icon: GraduationCap },
     { label: 'Content', href: '/dashboard/content', icon: BookCopy },
     { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-    { label: 'Banners', href: '/dashboard/banners', icon: Megaphone },
+    { label: 'Banners', href: '/dashboard/banners', icon: Image },
   ],
   'School Admin': [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -39,7 +40,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
     { label: 'Diary', href: '/dashboard/diary', icon: FileText },
     { label: 'Homework', href: '/dashboard/homework', icon: Presentation },
     { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-    { label: 'Banners', href: '/dashboard/banners', icon: Megaphone },
+    { label: 'Banners', href: '/dashboard/banners', icon: Image },
   ],
   Teacher: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },

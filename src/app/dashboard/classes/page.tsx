@@ -8,18 +8,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -38,7 +26,6 @@ import {
   } from "@/components/ui/accordion"
 import { MoreHorizontal, Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { AddSectionDialog } from '@/components/add-section-dialog';
-import { EditSubjectsDialog } from '@/components/edit-subjects-dialog';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +35,13 @@ import { useAuth } from '@/hooks/use-auth';
 const mockSchoolList = [
     { id: 'sch_1', schoolName: 'Global International School', johnsonSchoolId: 'JSN-123', licenceForStudent: 100, totalStudents: 0 },
     { id: 'sch_2', schoolName: 'Oakridge International School', johnsonSchoolId: 'JSN-124', licenceForStudent: 600, totalStudents: 550 },
+];
+
+const mockTeachers = [
+    { id: 't1', name: 'Mr. John Doe', schoolId: 'sch_1' },
+    { id: 't2', name: 'Ms. Jane Smith', schoolId: 'sch_1' },
+    { id: 't3', name: 'Mrs. Emily White', schoolId: 'sch_2' },
+    { id: 't4', name: 'Mr. Robert Brown', schoolId: 'sch_2' },
 ];
 
 const initialClassesData = [
@@ -64,37 +58,36 @@ const initialSectionsPool = [
 ];
 
 const initialSectionAssignments = [
-    { id: 'sa1', classId: 'c1', sectionPoolId: 'sp1', licenses: 30, status: 'active' as const },
-    { id: 'sa2', classId: 'c1', sectionPoolId: 'sp2', licenses: 25, status: 'active' as const },
-    { id: 'sa3', classId: 'c2', sectionPoolId: 'sp1', licenses: 30, status: 'inactive' as const },
-];
-
-let subjectsMappingData = [
-    { id: 'sm1', className: 'Class 10', subject: 'Mathematics', schoolId: 'sch_1' },
-    { id: 'sm2', className: 'Class 10', subject: 'Science', schoolId: 'sch_1' },
-    { id: 'sm3', className: 'Class 9', subject: 'English', schoolId: 'sch_1' },
-    { id: 'sm4', className: 'Class 8', subject: 'Social Studies', schoolId: 'sch_2' },
-    { id: 'sm5', className: 'Class 10', subject: 'History', schoolId: 'sch_1' },
+    { id: 'sa1', classId: 'c1', sectionPoolId: 'sp1', licenses: 30, status: 'active' as const, classTeacherId: 't1' },
+    { id: 'sa2', classId: 'c1', sectionPoolId: 'sp2', licenses: 25, status: 'active' as const, classTeacherId: 't2' },
+    { id: 'sa3', classId: 'c2', sectionPoolId: 'sp1', licenses: 30, status: 'inactive' as const, classTeacherId: null },
 ];
 
 const allSchoolSubjects = [
-    { id: 'sub1', name: 'Mathematics', schoolId: 'sch_1' },
-    { id: 'sub2', name: 'Science', schoolId: 'sch_1' },
-    { id: 'sub3', name: 'English', schoolId: 'sch_1' },
-    { id: 'sub4', name: 'History', schoolId: 'sch_1' },
-    { id: 'sub5', name: 'Geography', schoolId: 'sch_1' },
-    { id: 'sub6', name: 'Social Studies', schoolId: 'sch_2' },
-    { id: 'sub7', name: 'Physics', schoolId: 'sch_2' },
+    { id: 'sub1', name: 'Mathematics' },
+    { id: 'sub2', name: 'Science' },
+    { id: 'sub3', name: 'English' },
+    { id: 'sub4', name: 'History' },
+    { id: 'sub5', name: 'Geography' },
+    { id: 'sub6', name: 'Social Studies' },
+    { id: 'sub7', name: 'Physics' },
+];
+
+const initialSectionSubjectTeacherAssignments = [
+    { id: 'ssta1', sectionAssignmentId: 'sa1', subjectId: 'sub1', teacherId: 't1' },
+    { id: 'ssta2', sectionAssignmentId: 'sa1', subjectId: 'sub2', teacherId: 't2' },
+    { id: 'ssta3', sectionAssignmentId: 'sa2', subjectId: 'sub1', teacherId: 't1' },
 ];
 
 export default function ClassesPage() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [schools, setSchools] = useState(mockSchoolList);
+    const [teachers, setTeachers] = useState(mockTeachers);
     const [allClasses, setAllClasses] = useState(initialClassesData);
     const [sectionsPool, setSectionsPool] = useState(initialSectionsPool);
     const [sectionAssignments, setSectionAssignments] = useState(initialSectionAssignments);
-    const [subjectMappings, setSubjectMappings] = useState(subjectsMappingData);
+    const [sectionSubjectTeacherAssignments, setSectionSubjectTeacherAssignments] = useState(initialSectionSubjectTeacherAssignments);
 
     const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
     
@@ -102,14 +95,18 @@ export default function ClassesPage() {
     const [editingAssignment, setEditingAssignment] = useState<any | null>(null);
     const [currentClass, setCurrentClass] = useState<any | null>(null);
 
-    const [isEditSubjectsDialogOpen, setIsEditSubjectsDialogOpen] = useState(false);
-    const [editingClass, setEditingClass] = useState<any | null>(null);
-
     useEffect(() => {
-        if (user && user.role === 'School Admin') {
-            setSelectedSchool(user.schoolId);
+        if (user) {
+            if (user.role === 'School Admin') {
+                setSelectedSchool(user.schoolId);
+            } else if (user.role === 'Super Admin' && schools.length > 0) {
+                // For Super Admin, default to the first school in the list if none is selected
+                if (!selectedSchool) {
+                    setSelectedSchool(schools[0].id);
+                }
+            }
         }
-    }, [user]);
+    }, [user, schools, selectedSchool]);
 
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
 
@@ -163,6 +160,7 @@ export default function ClassesPage() {
                 sectionPoolId: poolId,
                 licenses: values.licenses,
                 status: 'active' as const,
+                classTeacherId: null,
             };
             setSectionAssignments([...sectionAssignments, newAssignment]);
         }
@@ -174,130 +172,128 @@ export default function ClassesPage() {
         ));
     };
 
-    const handleOpenEditSubjectsDialog = (classInfo: any) => {
-        setEditingClass(classInfo);
-        setIsEditSubjectsDialogOpen(true);
+    const handleAddSubject = (sectionAssignmentId: string) => {
+        const newSubjectAssignment = {
+            id: `ssta${Date.now()}`,
+            sectionAssignmentId,
+            subjectId: allSchoolSubjects[0].id, // Default to first subject
+            teacherId: null,
+        };
+        setSectionSubjectTeacherAssignments([...sectionSubjectTeacherAssignments, newSubjectAssignment]);
     };
 
-    const handleSaveSubjects = (newSubjects: string[]) => {
-        if (!editingClass || !selectedSchool) return;
-
-        const otherMappings = subjectMappings.filter(sm => sm.className !== editingClass.name || sm.schoolId !== selectedSchool);
-        const newMappings = newSubjects.map(subject => ({
-            id: `sm${Date.now()}${Math.random()}`,
-            className: editingClass.name,
-            subject,
-            schoolId: selectedSchool,
-        }));
-        setSubjectMappings([...otherMappings, ...newMappings]);
-        toast({ title: 'Success', description: 'Subject mappings have been updated.' });
+    const handleUpdateSubject = (id: string, subjectId: string) => {
+        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.map(ssta => 
+            ssta.id === id ? { ...ssta, subjectId } : ssta
+        ));
     };
 
-    const handleClearSubjects = (className: string) => {
-        if (!selectedSchool) return;
-        setSubjectMappings(subjectMappings.filter(sm => sm.className !== className || sm.schoolId !== selectedSchool));
-        toast({ title: 'Success', description: `All subjects for ${className} have been cleared.` });
+    const handleUpdateSubjectTeacher = (id: string, teacherId: string) => {
+        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.map(ssta => 
+            ssta.id === id ? { ...ssta, teacherId } : ssta
+        ));
     };
 
+    const handleDeleteSubject = (id: string) => {
+        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.filter(ssta => ssta.id !== id));
+    };
 
     const filteredClasses = selectedSchool ? allClasses.filter(c => c.schoolId === selectedSchool) : [];
     const schoolSectionsPool = selectedSchool ? sectionsPool.filter(sp => sp.schoolId === selectedSchool) : [];
-    const schoolSubjects = selectedSchool ? allSchoolSubjects.filter(s => s.schoolId === selectedSchool) : [];
-
-    const subjectsByClass = filteredClasses.map(c => {
-        const subjects = subjectMappings
-            .filter(sm => sm.schoolId === selectedSchool && sm.className === c.name)
-            .map(sm => sm.subject);
-        const uniqueSubjects = [...new Set(subjects)];
-        return {
-            ...c,
-            subjects: uniqueSubjects,
-        };
-    });
+    const schoolTeachers = selectedSchool ? teachers.filter(t => t.schoolId === selectedSchool) : [];
 
   if (!user) return <div>Loading...</div>
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Classes Management</CardTitle>
-             {user.role === 'School Admin' && selectedSchoolDetails && (
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
+                <CardTitle>Classes Management</CardTitle>
                 <CardDescription>
-                    Managing classes for {selectedSchoolDetails.schoolName}
+                    {user.role === 'Super Admin'
+                        ? "Configure and manage Classes, Sections, Subjects and Teachers"
+                        : `Managing classes for ${selectedSchoolDetails?.schoolName}`
+                    }
                 </CardDescription>
-            )}
-            {user.role === 'Super Admin' && (
-                 <CardDescription>
-                    Configure and manage classes, sections, and subject mappings for all schools.
-                </CardDescription>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="classes">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-                {user.role === 'Super Admin' && (
-                    <div className="w-full sm:w-auto">
-                        <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
-                            <SelectTrigger className="w-full sm:w-[350px]">
-                                <SelectValue placeholder="Select a school" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {schools.map(school => (
-                                    <SelectItem key={school.id} value={school.id}>
-                                        {school.johnsonSchoolId} - {school.schoolName}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-                <TabsList className="w-full sm:w-auto">
-                    <TabsTrigger value="classes" className="flex-1 sm:flex-initial">Classes - Sections</TabsTrigger>
-                    <TabsTrigger value="subjects" className="flex-1 sm:flex-initial">Classes - Subjects</TabsTrigger>
-                </TabsList>
             </div>
-
-          <TabsContent value="classes">
-            <Card className="border-none shadow-none">
-              <CardContent className="p-0">
-              {selectedSchool ? (
-                  <Accordion type="single" collapsible className="w-full">
-                    {filteredClasses.map((c) => (
-                      <AccordionItem value={c.id} key={c.id}>
-                        <AccordionTrigger>
-                            <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center pr-4 gap-2">
-                                <div>
-                                    <span className="font-semibold">Class - {c.name}</span>
-                                    <p className="text-sm text-muted-foreground">
-                                        (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {availableLicenses})
-                                    </p>
-                                </div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenAddSectionDialog(c);
-                                    }}
-                                    className="mt-2 sm:mt-0"
-                                >
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Section
-                                </Button>
+            {user.role === 'Super Admin' && (
+                <div className="w-full sm:w-auto">
+                    <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
+                        <SelectTrigger className="w-full sm:w-[350px]">
+                            <SelectValue placeholder="Select a school" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {schools.map(school => (
+                                <SelectItem key={school.id} value={school.id}>
+                                    {school.johnsonSchoolId} - {school.schoolName}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
+        </CardHeader>
+      <CardContent>
+        <Card className="border-none shadow-none pt-4">
+            <CardContent className="p-0">
+            {selectedSchool ? (
+                <Accordion type="single" collapsible className="w-full">
+                {filteredClasses.map((c) => (
+                    <AccordionItem value={c.id} key={c.id}>
+                    <AccordionTrigger>
+                        <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center pr-4 gap-2">
+                            <div>
+                                <span className="font-semibold">Class - {c.name}</span>
+                                <p className="text-sm text-muted-foreground">
+                                    (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {availableLicenses})
+                                </p>
                             </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <div className="space-y-2 pt-2">
-                                {sectionAssignments.filter(sa => sa.classId === c.id).map(assignment => {
-                                    const sectionInfo = sectionsPool.find(sp => sp.id === assignment.sectionPoolId);
-                                    return (
-                                        <div key={assignment.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 px-4 rounded-md border gap-2">
-                                            <div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenAddSectionDialog(c);
+                                }}
+                                className="mt-2 sm:mt-0"
+                            >
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Section
+                            </Button>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <div className="space-y-4 pt-2">
+                            {sectionAssignments.filter(sa => sa.classId === c.id).map(assignment => {
+                                const sectionInfo = sectionsPool.find(sp => sp.id === assignment.sectionPoolId);
+                                const subjectsForSection = sectionSubjectTeacherAssignments.filter(ssta => ssta.sectionAssignmentId === assignment.id);
+
+                                return (
+                                    <div key={assignment.id} className="py-2 px-4 rounded-md border">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                                 <span className="font-semibold">{sectionInfo?.name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
+                                                    <Select
+                                                        value={assignment.classTeacherId || undefined}
+                                                        onValueChange={(teacherId) => {
+                                                            const updatedAssignments = sectionAssignments.map(sa =>
+                                                                sa.id === assignment.id ? { ...sa, classTeacherId: teacherId } : sa
+                                                            );
+                                                            setSectionAssignments(updatedAssignments);
+                                                        }}
+                                                    >
+                                                        <SelectTrigger className="w-full sm:w-[250px]">
+                                                            <SelectValue placeholder="Assign Class Teacher" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {schoolTeachers.map(teacher => (
+                                                                <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-sm text-muted-foreground">Licenses: {assignment.licenses}</span>
@@ -310,100 +306,60 @@ export default function ClassesPage() {
                                                 </Button>
                                             </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                ) : (
-                  <div className="text-center text-muted-foreground mt-8">
-                     {user.role === 'Super Admin' 
+                                        <div className="mt-4">
+                                            <h4 className="font-semibold text-sm mb-2">Subjects & Teachers</h4>
+                                            <div className="space-y-2">
+                                                {subjectsForSection.map(subjectAssignment => (
+                                                    <div key={subjectAssignment.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                                        <Select value={subjectAssignment.subjectId} onValueChange={(subjectId) => handleUpdateSubject(subjectAssignment.id, subjectId)}>
+                                                            <SelectTrigger className="w-full sm:w-[200px]">
+                                                                <SelectValue placeholder="Select Subject" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {allSchoolSubjects.map(sub => (
+                                                                    <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Select value={subjectAssignment.teacherId || undefined} onValueChange={(teacherId) => handleUpdateSubjectTeacher(subjectAssignment.id, teacherId)}>
+                                                            <SelectTrigger className="w-full sm:w-[250px]">
+                                                                <SelectValue placeholder="Assign Subject Teacher" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {schoolTeachers.map(teacher => (
+                                                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteSubject(subjectAssignment.id)}>
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <Button variant="outline" size="sm" className="mt-2" onClick={() => handleAddSubject(assignment.id)}>
+                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Subject
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </AccordionContent>
+                    </AccordionItem>
+                ))}
+                </Accordion>
+            ) : (
+                <div className="text-center text-muted-foreground mt-8">
+                    {user.role === 'Super Admin' && !selectedSchool
                         ? "Please select a school to see the classes."
                         : "Loading school data..."
                     }
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="subjects" className="mt-4">
-            <Card className="border-none shadow-none">
-              <CardHeader>
-                <CardTitle>Subject Mapping</CardTitle>
-                <CardDescription>
-                  Map subjects to classes for the selected school.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedSchool ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {subjectsByClass.map((classWithSubjects) => (
-                            <Card key={classWithSubjects.id}>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-lg font-medium">{classWithSubjects.name}</CardTitle>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                            <span className="sr-only">Toggle menu</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleOpenEditSubjectsDialog(classWithSubjects)}>
-                                                <Pencil className="mr-2 h-4 w-4" /> Edit Subjects
-                                            </DropdownMenuItem>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" className="w-full justify-start text-sm text-destructive font-normal relative left-[-4px] h-8">
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Clear All
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will permanently remove all subject mappings for {classWithSubjects.name}. This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleClearSubjects(classWithSubjects.name)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                                            Confirm
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex flex-wrap gap-2">
-                                        {classWithSubjects.subjects.length > 0 ? (
-                                            classWithSubjects.subjects.map((subject) => (
-                                                <Badge key={subject} variant="outline">{subject}</Badge>
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground">No subjects mapped yet.</p>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                ) : (
-                  <div className="text-center text-muted-foreground mt-8">
-                    {user.role === 'Super Admin' 
-                        ? "Please select a school to see the subject mappings."
-                        : "Loading school data..."
-                    }
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </div>
+            )}
+            </CardContent>
+        </Card>
+
         <AddSectionDialog 
             isOpen={isSectionDialogOpen} 
             onClose={() => setIsSectionDialogOpen(false)} 
@@ -412,14 +368,6 @@ export default function ClassesPage() {
             initialData={editingAssignment}
             sectionsPool={schoolSectionsPool}
             key={`add-section-${editingAssignment?.id || currentClass?.id}`}
-        />
-        <EditSubjectsDialog
-            isOpen={isEditSubjectsDialogOpen}
-            onClose={() => setIsEditSubjectsDialogOpen(false)}
-            onSave={handleSaveSubjects}
-            classWithSubjects={editingClass}
-            allSchoolSubjects={schoolSubjects}
-            key={`edit-subjects-${editingClass?.id}`}
         />
       </CardContent>
     </Card>
