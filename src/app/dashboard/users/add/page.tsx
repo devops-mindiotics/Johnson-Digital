@@ -70,11 +70,18 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
     setSchools(mockSchoolData);
   }, []);
 
+  const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: 'Pending',
       type: searchParams.type,
+      expiryDate: getExpiryDate(),
     },
   });
 
@@ -354,21 +361,19 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                 )}
               />
 
-              {(type === 'Teacher' || type === 'Student' || type === 'School Admin') && (
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date *</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="expiryDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Expiry Date *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               {(type === 'Teacher' || type === 'School Admin') && (
                 <>
