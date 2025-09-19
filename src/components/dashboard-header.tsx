@@ -4,8 +4,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,
-  ArrowLeft,
+  User as UserIcon,ChevronLeft,ChevronRight,Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,7 +42,7 @@ export function DashboardHeader() {
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
-            <ArrowLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5" />
             <span className="sr-only">Back</span>
         </Button>
         <SidebarTrigger />
@@ -58,15 +57,38 @@ export function DashboardHeader() {
       </div>
       <div className="flex items-center gap-4">
         {user.role === 'Student' && (
-          <Select defaultValue="child1">
-            <SelectTrigger className="w-[150px] md:w-[200px]">
-              <SelectValue placeholder="Switch Child" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="child1">{user.name}</SelectItem>
-              <SelectItem value="child2">Jane Doe</SelectItem>
-            </SelectContent>
-          </Select>
+          <>
+            {/* Web view */}
+            <div className="hidden items-center gap-2 md:flex">
+              <Select defaultValue="child1">
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Switch Kid" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="child1">{user.name}</SelectItem>
+                  <SelectItem value="child2">Jane Doe</SelectItem>
+                </SelectContent>
+              </Select>
+              <Users className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Mobile view */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Users className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {/* <DropdownMenuLabel>Switch Kid</DropdownMenuLabel> */}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>{user.name}</DropdownMenuItem>
+                  <DropdownMenuItem>Jane Doe</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )}
 
         {user.role === 'Super Admin' && (
@@ -112,28 +134,25 @@ export function DashboardHeader() {
     Add Teacher
   </Button>
 </div>
-            <div className="md:hidden">
-  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <button
-      onClick={() => router.push('/dashboard/users/add?type=Student')}
-      className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border"
-    >
-      <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
-        <UserPlus className="h-6 w-6 text-blue-600" />
-      </div>
-      <div className="text-sm text-blue-700">Add Student</div>
-    </button>
 
-    <button
-      onClick={() => router.push('/dashboard/users/add?type=Teacher')}
-      className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border"
-    >
-      <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
-        <UserCheck className="h-6 w-6 text-green-600" />
-      </div>
-      <div className="text-sm text-green-700">Add Teacher</div>
-    </button>
-  </CardContent>
+<div className="flex items-center gap-2 md:hidden">
+  <Button
+    size="icon"
+    className="rounded-full bg-blue-50 hover:bg-blue-100"
+    onClick={() => router.push('/dashboard/users/add?type=Student')}
+  >
+    <UserPlus className="h-5 w-5 text-blue-600" />
+    <span className="sr-only">Add Student</span>
+  </Button>
+
+  <Button
+    size="icon"
+    className="rounded-full bg-green-50 hover:bg-green-100"
+    onClick={() => router.push('/dashboard/users/add?type=Teacher')}
+  >
+    <UserCheck className="h-5 w-5 text-green-600" />
+    <span className="sr-only">Add Teacher</span>
+  </Button>
 </div>
 
           </>

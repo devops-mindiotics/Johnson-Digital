@@ -49,8 +49,8 @@ export default function StudentDashboard({ user }: { user: User }) {
                     </CarouselItem>
                 ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute left-4" />
-            <CarouselNext className="absolute right-4" />
+            <CarouselPrevious className="absolute left-4 bg-transparent border-0 text-white hover:text-gray-200" />
+            <CarouselNext className="absolute right-4 bg-transparent border-0 text-white hover:text-gray-200" />
         </Carousel>
 
         <Card className="lg:col-span-3">

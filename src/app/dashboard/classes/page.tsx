@@ -99,7 +99,7 @@ export default function ClassesPage() {
         if (user) {
             if (user.role === 'School Admin') {
                 setSelectedSchool(user.schoolId);
-            } else if (user.role === 'Super Admin' && schools.length > 0) {
+            } else if ((user.role === 'Super Admin' || user.role ==='School Admin') && schools.length > 0) {
                 // For Super Admin, default to the first school in the list if none is selected
                 if (!selectedSchool) {
                     setSelectedSchool(schools[0].id);
@@ -210,13 +210,13 @@ export default function ClassesPage() {
             <div className="flex-1">
                 <CardTitle>Classes Management</CardTitle>
                 <CardDescription>
-                    {user.role === 'Super Admin'
+                    {(user.role === 'Super Admin' || user.role ==='School Admin')
                         ? "Configure and manage Classes, Sections, Subjects and Teachers"
                         : `Managing classes for ${selectedSchoolDetails?.schoolName}`
                     }
                 </CardDescription>
             </div>
-            {user.role === 'Super Admin' && (
+            {(user.role === 'Super Admin'  || user.role === 'School Admin')&& (
                 <div className="w-full sm:w-auto">
                     <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
                         <SelectTrigger className="w-full sm:w-[350px]">
