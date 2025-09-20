@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Card,
   CardContent,
@@ -27,22 +28,24 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
-    { contentType: 'Video', contentName: 'Alphabet Song' },
-    { contentType: 'PDF', contentName: 'Letter Tracing' },
+    { contentType: 'Video', contentName: 'Alphabet Song', status: 'Active' },
+    { contentType: 'PDF', contentName: 'Letter Tracing', status: 'Inactive' },
   ],
   'II-NCERT-Mathematics-Numbers': [
-    { contentType: 'PDF', contentName: 'Counting 1 to 100' },
+    { contentType: 'PDF', contentName: 'Counting 1 to 100', status: 'Active' },
   ],
   '10-NCERT-Science-Biology': [
-    { contentType: 'PDF', contentName: 'Cell Structure' },
+    { contentType: 'PDF', contentName: 'Cell Structure', status: 'Pending' },
   ],
   '12-NCERT-Physics-Mechanics': [
-    { contentType: 'PPT', contentName: 'Laws of Motion' },
+    { contentType: 'PPT', contentName: 'Laws of Motion', status: 'Active' },
   ],
 };
 
@@ -61,17 +64,36 @@ const getContentTypeIcon = (contentType) => {
     }
 };
 
+const StatusBadge = ({ status }) => {
+  const statusVariant = {
+    Active: 'success',
+    Inactive: 'destructive',
+    Pending: 'secondary',
+  }[status] || 'default';
+
+  return <Badge variant={statusVariant}>{status}</Badge>;
+};
+
 export default function ContentManagementPage() {
     const [contentData, setContentData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
     const handleAddContent = (newContent) => {
         const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`;
+        const newContentWithStatus = { ...newContent, status: 'Pending' };
         setContentData(prevData => ({
             ...prevData,
-            [key]: [...(prevData[key] || []), { contentType: newContent.contentType, contentName: newContent.contentName }]
+            [key]: [...(prevData[key] || []), newContentWithStatus]
         }));
         setIsAddDialogOpen(false);
+    };
+    
+    const handleUpdateContent = (lessonKey, contentIndex, updatedContent) => {
+        setContentData(prevData => {
+            const newContent = [...prevData[lessonKey]];
+            newContent[contentIndex] = { ...newContent[contentIndex], ...updatedContent };
+            return { ...prevData, [lessonKey]: newContent };
+        });
     };
 
   return (
@@ -94,15 +116,15 @@ export default function ContentManagementPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <ContentList contentData={contentData} />
+        <ContentList contentData={contentData} onUpdateContent={handleUpdateContent} />
       </CardContent>
       <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
     </Card>
   );
 }
 
-function ContentList({ contentData }) {
-    const [openKey, setOpenKey] = useState(null);
+function ContentList({ contentData, onUpdateContent }) {
+    const [openKey, setOpenKey] = useState(Object.keys(contentData)[0]);
 
     return (
         <div className="space-y-4">
@@ -144,7 +166,10 @@ function ContentList({ contentData }) {
                                                     <p className="text-sm text-muted-foreground">{content.contentType}</p>
                                                 </div>
                                             </div>
-                                            <ContentActions content={content} />
+                                            <div className="flex items-center gap-4">
+                                                <StatusBadge status={content.status} />
+                                                <ContentActions content={content} contentIndex={index} lessonKey={key} onUpdateContent={onUpdateContent} />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -173,7 +198,8 @@ function LessonActions({ lesson }) {
     )
 }
 
-function ContentActions({ content }) {
+function ContentActions({ content, contentIndex, lessonKey, onUpdateContent }) {
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -182,9 +208,17 @@ function ContentActions({ content }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <EditContentDialog content={content} trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>} />
+                <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>Edit</DropdownMenuItem>
                 <DeleteContentDialog trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete</DropdownMenuItem>} />
             </DropdownMenuContent>
+            <EditContentDialog 
+                isOpen={isEditDialogOpen} 
+                onOpenChange={setIsEditDialogOpen} 
+                content={content} 
+                contentIndex={contentIndex} 
+                lessonKey={lessonKey} 
+                onUpdateContent={onUpdateContent} 
+            />
         </DropdownMenu>
     )
 }
@@ -468,12 +502,25 @@ function DeleteLessonDialog({ trigger }) {
     );
 }
 
-function EditContentDialog({ content, trigger }) {
-  const [selectedContentType, setSelectedContentType] = useState(content.contentType);
+function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lessonKey, onUpdateContent }) {
+  const form = useForm({
+    defaultValues: {
+      contentName: content.contentName,
+      status: content.status,
+    },
+  });
+
+  useEffect(() => {
+    form.reset({ contentName: content.contentName, status: content.status });
+  }, [content, form]);
+
+  const onSubmit = (data) => {
+    onUpdateContent(lessonKey, contentIndex, data);
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Content</DialogTitle>
@@ -481,40 +528,51 @@ function EditContentDialog({ content, trigger }) {
             Fill in the details below to edit the content.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label>Content Type</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
-                <ContentTypeBox icon={<FileText className="h-7 w-7" />} label="PDF" isSelected={selectedContentType === 'PDF'} onSelect={() => setSelectedContentType('PDF')} />
-                <ContentTypeBox icon={<Presentation className="h-7 w-7" />} label="PPT" isSelected={selectedContentType === 'PPT'} onSelect={() => setSelectedContentType('PPT')} />
-                <ContentTypeBox icon={<ImageIcon className="h-7 w-7" />} label="Image" isSelected={selectedContentType === 'Image'} onSelect={() => setSelectedContentType('Image')} />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="contentName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="content-name">Content Name</Label>
-            <Select defaultValue={content.contentName}>
-                <SelectTrigger id="content-name">
-                    <SelectValue placeholder="Select a content name" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Animation Video">Animation Video</SelectItem>
-                    <SelectItem value="Content Book">Content Book</SelectItem>
-                    <SelectItem value="Work Book">Work Book</SelectItem>
-                    <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
-                    <SelectItem value="Answer Key">Answer Key</SelectItem>
-                    <SelectItem value="new">Add new name...</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
-            <div className="space-y-2">
-                 <Label htmlFor="upload">Upload</Label>
-                <Input id="upload" type="file" />
-            </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save Changes</Button>
-        </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
