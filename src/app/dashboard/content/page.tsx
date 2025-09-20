@@ -46,6 +46,21 @@ const initialContentData = {
   ],
 };
 
+const getContentTypeIcon = (contentType) => {
+    switch (contentType) {
+        case 'Video':
+            return <Video className="h-5 w-5 text-blue-500" />;
+        case 'PDF':
+            return <FileText className="h-5 w-5 text-red-500" />;
+        case 'PPT':
+            return <Presentation className="h-5 w-5 text-orange-500" />;
+        case 'Image':
+            return <ImageIcon className="h-5 w-5 text-purple-500" />;
+        default:
+            return <FileText className="h-5 w-5" />;
+    }
+};
+
 export default function ContentManagementPage() {
     const [contentData, setContentData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -60,7 +75,7 @@ export default function ContentManagementPage() {
     };
 
   return (
-    <Card className="border-0 shadow-none">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -97,40 +112,43 @@ function ContentList({ contentData }) {
 
                 return (
                     <Card key={key} className="overflow-hidden">
-                        <div 
-                            className="flex justify-between items-center p-4 cursor-pointer bg-card hover:bg-muted/50"
+                        <CardHeader 
+                            className="flex flex-row justify-between items-center p-4 cursor-pointer hover:bg-muted/50"
                             onClick={() => setOpenKey(isRowOpen ? null : key)}
                         >
-                            <div className="flex flex-col md:flex-row md:items-center md:gap-4">
-                               <span className="font-semibold text-lg">{lesson}</span>
-                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                           <div>
+                                <CardTitle className="text-lg">{lesson}</CardTitle>
+                                <CardDescription className="flex items-center gap-2 text-sm pt-1">
                                    <span>{`Class - ${classValue}`}</span>
                                    <span>&bull;</span>
                                    <span>{series}</span>
                                    <span>&bull;</span>
                                    <span>{subject}</span>
-                               </div>
-                            </div>
+                                </CardDescription>
+                           </div>
                             <div className="flex items-center gap-2">
                                 <LessonActions lesson={{ class: classValue, series, subject, lesson }} />
                                 {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                             </div>
-                        </div>
+                        </CardHeader>
                         {isRowOpen && (
-                            <div className="p-4 border-t">
-                                <h4 className="font-semibold mb-3">Contents</h4>
+                            <CardContent className="p-4 border-t">
+                                <h4 className="font-semibold mb-3 text-md">Contents</h4>
                                 <div className="space-y-3">
                                     {contents.map((content, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
-                                            <div>
-                                                <p className="font-medium">{content.contentName}</p>
-                                                <p className="text-sm text-muted-foreground">{content.contentType}</p>
+                                        <div key={index} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                                            <div className="flex items-center gap-3">
+                                                {getContentTypeIcon(content.contentType)}
+                                                <div>
+                                                    <p className="font-medium">{content.contentName}</p>
+                                                    <p className="text-sm text-muted-foreground">{content.contentType}</p>
+                                                </div>
                                             </div>
                                             <ContentActions content={content} />
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </CardContent>
                         )}
                     </Card>
                 )
@@ -186,36 +204,75 @@ function ContentTypeBox({ icon, label, isSelected, onSelect }) {
 }
 
 function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
-    const [newValues, setNewValues] = useState({ series: '', subject: '', lesson: '', contentName: '' });
+    const [newValues, setNewValues] = useState({ series: '', package: '', subject: '', lesson: '', contentName: '' });
     const [selectedContentType, setSelectedContentType] = useState('');
+    const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
+    const [showPackageDropdown, setShowPackageDropdown] = useState(false);
+    const [showContentNameInput, setShowContentNameInput] = useState(false);
+    const [showNewSeriesInput, setShowNewSeriesInput] = useState(false);
+    const [showNewPackageInput, setShowNewPackageInput] = useState(false);
+    const [showNewSubjectInput, setShowNewSubjectInput] = useState(false);
+    const [showNewLessonInput, setShowNewLessonInput] = useState(false);
+
+    const resetForm = () => {
+        setNewValues({ series: '', package: '', subject: '', lesson: '', contentName: '' });
+        setSelectedContentType('');
+        setShowSeriesDropdown(false);
+        setShowPackageDropdown(false);
+        setShowContentNameInput(false);
+        setShowNewSeriesInput(false);
+        setShowNewPackageInput(false);
+        setShowNewSubjectInput(false);
+        setShowNewLessonInput(false);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const newContent = {
             class: formData.get('class'),
-            series: formData.get('series') === 'new' ? newValues.series : formData.get('series'),
-            subject: formData.get('subject') === 'new' ? newValues.subject : formData.get('subject'),
-            lesson: formData.get('lesson') === 'new' ? newValues.lesson : formData.get('lesson'),
+            series: showSeriesDropdown ? (showNewSeriesInput ? newValues.series : formData.get('series')) : 'NA',
+            package: showPackageDropdown ? (showNewPackageInput ? newValues.package : formData.get('package')) : 'NA',
+            subject: showNewSubjectInput ? newValues.subject : formData.get('subject'),
+            lesson: showNewLessonInput ? newValues.lesson : formData.get('lesson'),
             contentType: selectedContentType,
-            contentName: formData.get('content-name') === 'new' ? newValues.contentName : formData.get('content-name'),
+            contentName: showContentNameInput ? newValues.contentName : formData.get('content-name'),
         };
         onAddContent(newContent);
-        setSelectedContentType('');
+        resetForm();
     };
 
     const handleNewValue = (field, value) => {
         if (value === 'new') {
-            const newValue = prompt(`Enter new ${field}`);
-            if (newValue) {
-                setNewValues(prev => ({ ...prev, [field]: newValue }));
+            if (field === 'contentName') {
+                setShowContentNameInput(true);
+            } else if (field === 'series') {
+                setShowNewSeriesInput(true);
+            } else if (field === 'package') {
+                setShowNewPackageInput(true);
+            } else if (field === 'subject') {
+                setShowNewSubjectInput(true);
+            } else if (field === 'lesson') {
+                setShowNewLessonInput(true);
+            }
+        } else {
+            if (field === 'contentName') {
+                setShowContentNameInput(false);
+            } else if (field === 'series') {
+                setShowNewSeriesInput(false);
+            } else if (field === 'package') {
+                setShowNewPackageInput(false);
+            } else if (field === 'subject') {
+                setShowNewSubjectInput(false);
+            } else if (field === 'lesson') {
+                setShowNewLessonInput(false);
             }
         }
     };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setSelectedContentType(''); }}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) resetForm(); }}>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Content</DialogTitle>
           <DialogDescription>
@@ -223,7 +280,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                 <div className="space-y-2">
                     <Label htmlFor="class">Class</Label>
                     <Select name="class">
@@ -243,16 +300,44 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="series">Series</Label>
-                    <Select name="series" onValueChange={(value) => handleNewValue('series', value)}>
-                        <SelectTrigger id="series">
-                            <SelectValue placeholder="Select a series" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="NCERT">NCERT</SelectItem>
-                            <SelectItem value="ABC">ABC</SelectItem>
-                            <SelectItem value="new">Add new series...</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {showSeriesDropdown ? (
+                        <Select name="series" onValueChange={(value) => handleNewValue('series', value)}>
+                            <SelectTrigger id="series">
+                                <SelectValue placeholder="Select a series" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NCERT">NCERT</SelectItem>
+                                <SelectItem value="ABC">ABC</SelectItem>
+                                <SelectItem value="new">Add new series...</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <div onClick={() => setShowSeriesDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
+                            Add Series
+                        </div>
+                    )}
+                   {showNewSeriesInput && <Input placeholder="Enter new series" onChange={(e) => setNewValues(prev => ({...prev, series: e.target.value}))} />}
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="package">Package</Label>
+                     {showPackageDropdown ? (
+                        <Select name="package" onValueChange={(value) => handleNewValue('package', value)}>
+                            <SelectTrigger id="package">
+                                <SelectValue placeholder="Select a package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Individual">Individual</SelectItem>
+                                <SelectItem value="Term">Term</SelectItem>
+                                <SelectItem value="Semester">Semester</SelectItem>
+                                <SelectItem value="new">Add new package...</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <div onClick={() => setShowPackageDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
+                            Add Package
+                        </div>
+                    )}
+                    {showNewPackageInput && <Input placeholder="Enter new package" onChange={(e) => setNewValues(prev => ({...prev, package: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="subject">Subject</Label>
@@ -268,6 +353,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add new subject...</SelectItem>
                         </SelectContent>
                     </Select>
+                     {showNewSubjectInput && <Input placeholder="Enter new subject" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="lesson">Lesson</Label>
@@ -283,8 +369,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add new lesson...</SelectItem>
                         </SelectContent>
                     </Select>
+                    {showNewLessonInput && <Input placeholder="Enter new lesson" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                     <Label>Content Type</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                         <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
@@ -300,13 +387,15 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectValue placeholder="Select a content name" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Alphabet Song">Alphabet Song</SelectItem>
-                            <SelectItem value="Letter Tracing">Letter Tracing</SelectItem>
-                            <SelectItem value="Counting 1 to 100">Counting 1 to 100</SelectItem>
-                            <SelectItem value="Cell Structure">Cell Structure</SelectItem>
-                            <SelectItem value="new">Add new name...</SelectItem>
+                            <SelectItem value="Animation Video">Animation Video</SelectItem>
+                            <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
+                            <SelectItem value="Content Book">Content Book</SelectItem>
+                            <SelectItem value="Work Book">Work Book</SelectItem>
+                            <SelectItem value="Answer Key">Answer Key</SelectItem>
+                            <SelectItem value="new">Add New</SelectItem>
                         </SelectContent>
                     </Select>
+                    {showContentNameInput && <Input placeholder="Enter new content name" onChange={(e) => setNewValues(prev => ({...prev, contentName: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="upload">Upload</Label>
