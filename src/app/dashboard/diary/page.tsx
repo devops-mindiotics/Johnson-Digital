@@ -121,7 +121,7 @@ const DiaryPage = () => {
                             <span className="hidden md:inline">Add Diary Entry</span>
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl p-6">
+                    <DialogContent className="w-[95vw] max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-md">
                         <DialogHeader>
                             <DialogTitle className="text-2xl">{editingDiary ? "Edit" : "Add"} Diary Entry</DialogTitle>
                             <DialogDescription>
