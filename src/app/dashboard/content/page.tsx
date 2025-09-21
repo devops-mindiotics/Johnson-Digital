@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   Card,
   CardContent,
@@ -27,23 +28,50 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
-    { contentType: 'Video', contentName: 'Alphabet Song' },
-    { contentType: 'PDF', contentName: 'Letter Tracing' },
+    { contentType: 'Video', contentName: 'Alphabet Song', status: 'Active' },
+    { contentType: 'PDF', contentName: 'Letter Tracing', status: 'Inactive' },
   ],
   'II-NCERT-Mathematics-Numbers': [
-    { contentType: 'PDF', contentName: 'Counting 1 to 100' },
+    { contentType: 'PDF', contentName: 'Counting 1 to 100', status: 'Active' },
   ],
   '10-NCERT-Science-Biology': [
-    { contentType: 'PDF', contentName: 'Cell Structure' },
+    { contentType: 'PDF', contentName: 'Cell Structure', status: 'Pending' },
   ],
   '12-NCERT-Physics-Mechanics': [
-    { contentType: 'PPT', contentName: 'Laws of Motion' },
+    { contentType: 'PPT', contentName: 'Laws of Motion', status: 'Active' },
   ],
+};
+
+const getContentTypeIcon = (contentType) => {
+    switch (contentType) {
+        case 'Video':
+            return <Video className="h-5 w-5 text-blue-500" />;
+        case 'PDF':
+            return <FileText className="h-5 w-5 text-red-500" />;
+        case 'PPT':
+            return <Presentation className="h-5 w-5 text-orange-500" />;
+        case 'Image':
+            return <ImageIcon className="h-5 w-5 text-purple-500" />;
+        default:
+            return <FileText className="h-5 w-5" />;
+    }
+};
+
+const StatusBadge = ({ status }) => {
+  const statusVariant = {
+    Active: 'success',
+    Inactive: 'destructive',
+    Pending: 'secondary',
+  }[status] || 'default';
+
+  return <Badge variant={statusVariant}>{status}</Badge>;
 };
 
 export default function ContentManagementPage() {
@@ -52,15 +80,24 @@ export default function ContentManagementPage() {
 
     const handleAddContent = (newContent) => {
         const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`;
+        const newContentWithStatus = { ...newContent, status: 'Pending' };
         setContentData(prevData => ({
             ...prevData,
-            [key]: [...(prevData[key] || []), { contentType: newContent.contentType, contentName: newContent.contentName }]
+            [key]: [...(prevData[key] || []), newContentWithStatus]
         }));
         setIsAddDialogOpen(false);
     };
+    
+    const handleUpdateContent = (lessonKey, contentIndex, updatedContent) => {
+        setContentData(prevData => {
+            const newContent = [...prevData[lessonKey]];
+            newContent[contentIndex] = { ...newContent[contentIndex], ...updatedContent };
+            return { ...prevData, [lessonKey]: newContent };
+        });
+    };
 
   return (
-    <Card className="border-0 shadow-none">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -79,15 +116,15 @@ export default function ContentManagementPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <ContentList contentData={contentData} />
+        <ContentList contentData={contentData} onUpdateContent={handleUpdateContent} />
       </CardContent>
       <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
     </Card>
   );
 }
 
-function ContentList({ contentData }) {
-    const [openKey, setOpenKey] = useState(null);
+function ContentList({ contentData, onUpdateContent }) {
+    const [openKey, setOpenKey] = useState(Object.keys(contentData)[0]);
 
     return (
         <div className="space-y-4">
@@ -97,40 +134,46 @@ function ContentList({ contentData }) {
 
                 return (
                     <Card key={key} className="overflow-hidden">
-                        <div 
-                            className="flex justify-between items-center p-4 cursor-pointer bg-card hover:bg-muted/50"
+                        <CardHeader 
+                            className="flex flex-row justify-between items-center p-4 cursor-pointer hover:bg-muted/50"
                             onClick={() => setOpenKey(isRowOpen ? null : key)}
                         >
-                            <div className="flex flex-col md:flex-row md:items-center md:gap-4">
-                               <span className="font-semibold text-lg">{lesson}</span>
-                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                           <div>
+                                <CardTitle className="text-lg">{lesson}</CardTitle>
+                                <CardDescription className="flex items-center gap-2 text-sm pt-1">
                                    <span>{`Class - ${classValue}`}</span>
                                    <span>&bull;</span>
                                    <span>{series}</span>
                                    <span>&bull;</span>
                                    <span>{subject}</span>
-                               </div>
-                            </div>
+                                </CardDescription>
+                           </div>
                             <div className="flex items-center gap-2">
                                 <LessonActions lesson={{ class: classValue, series, subject, lesson }} />
                                 {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                             </div>
-                        </div>
+                        </CardHeader>
                         {isRowOpen && (
-                            <div className="p-4 border-t">
-                                <h4 className="font-semibold mb-3">Contents</h4>
+                            <CardContent className="p-4 border-t">
+                                <h4 className="font-semibold mb-3 text-md">Contents</h4>
                                 <div className="space-y-3">
                                     {contents.map((content, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 rounded-md bg-muted/50">
-                                            <div>
-                                                <p className="font-medium">{content.contentName}</p>
-                                                <p className="text-sm text-muted-foreground">{content.contentType}</p>
+                                        <div key={index} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                                            <div className="flex items-center gap-3">
+                                                {getContentTypeIcon(content.contentType)}
+                                                <div>
+                                                    <p className="font-medium">{content.contentName}</p>
+                                                    <p className="text-sm text-muted-foreground">{content.contentType}</p>
+                                                </div>
                                             </div>
-                                            <ContentActions content={content} />
+                                            <div className="flex items-center gap-4">
+                                                <StatusBadge status={content.status} />
+                                                <ContentActions content={content} contentIndex={index} lessonKey={key} onUpdateContent={onUpdateContent} />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </CardContent>
                         )}
                     </Card>
                 )
@@ -155,7 +198,8 @@ function LessonActions({ lesson }) {
     )
 }
 
-function ContentActions({ content }) {
+function ContentActions({ content, contentIndex, lessonKey, onUpdateContent }) {
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -164,9 +208,17 @@ function ContentActions({ content }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <EditContentDialog content={content} trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>} />
+                <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>Edit</DropdownMenuItem>
                 <DeleteContentDialog trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete</DropdownMenuItem>} />
             </DropdownMenuContent>
+            <EditContentDialog 
+                isOpen={isEditDialogOpen} 
+                onOpenChange={setIsEditDialogOpen} 
+                content={content} 
+                contentIndex={contentIndex} 
+                lessonKey={lessonKey} 
+                onUpdateContent={onUpdateContent} 
+            />
         </DropdownMenu>
     )
 }
@@ -186,36 +238,75 @@ function ContentTypeBox({ icon, label, isSelected, onSelect }) {
 }
 
 function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
-    const [newValues, setNewValues] = useState({ series: '', subject: '', lesson: '', contentName: '' });
+    const [newValues, setNewValues] = useState({ series: '', package: '', subject: '', lesson: '', contentName: '' });
     const [selectedContentType, setSelectedContentType] = useState('');
+    const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
+    const [showPackageDropdown, setShowPackageDropdown] = useState(false);
+    const [showContentNameInput, setShowContentNameInput] = useState(false);
+    const [showNewSeriesInput, setShowNewSeriesInput] = useState(false);
+    const [showNewPackageInput, setShowNewPackageInput] = useState(false);
+    const [showNewSubjectInput, setShowNewSubjectInput] = useState(false);
+    const [showNewLessonInput, setShowNewLessonInput] = useState(false);
+
+    const resetForm = () => {
+        setNewValues({ series: '', package: '', subject: '', lesson: '', contentName: '' });
+        setSelectedContentType('');
+        setShowSeriesDropdown(false);
+        setShowPackageDropdown(false);
+        setShowContentNameInput(false);
+        setShowNewSeriesInput(false);
+        setShowNewPackageInput(false);
+        setShowNewSubjectInput(false);
+        setShowNewLessonInput(false);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
         const newContent = {
             class: formData.get('class'),
-            series: formData.get('series') === 'new' ? newValues.series : formData.get('series'),
-            subject: formData.get('subject') === 'new' ? newValues.subject : formData.get('subject'),
-            lesson: formData.get('lesson') === 'new' ? newValues.lesson : formData.get('lesson'),
+            series: showSeriesDropdown ? (showNewSeriesInput ? newValues.series : formData.get('series')) : 'NA',
+            package: showPackageDropdown ? (showNewPackageInput ? newValues.package : formData.get('package')) : 'NA',
+            subject: showNewSubjectInput ? newValues.subject : formData.get('subject'),
+            lesson: showNewLessonInput ? newValues.lesson : formData.get('lesson'),
             contentType: selectedContentType,
-            contentName: formData.get('content-name') === 'new' ? newValues.contentName : formData.get('content-name'),
+            contentName: showContentNameInput ? newValues.contentName : formData.get('content-name'),
         };
         onAddContent(newContent);
-        setSelectedContentType('');
+        resetForm();
     };
 
     const handleNewValue = (field, value) => {
         if (value === 'new') {
-            const newValue = prompt(`Enter new ${field}`);
-            if (newValue) {
-                setNewValues(prev => ({ ...prev, [field]: newValue }));
+            if (field === 'contentName') {
+                setShowContentNameInput(true);
+            } else if (field === 'series') {
+                setShowNewSeriesInput(true);
+            } else if (field === 'package') {
+                setShowNewPackageInput(true);
+            } else if (field === 'subject') {
+                setShowNewSubjectInput(true);
+            } else if (field === 'lesson') {
+                setShowNewLessonInput(true);
+            }
+        } else {
+            if (field === 'contentName') {
+                setShowContentNameInput(false);
+            } else if (field === 'series') {
+                setShowNewSeriesInput(false);
+            } else if (field === 'package') {
+                setShowNewPackageInput(false);
+            } else if (field === 'subject') {
+                setShowNewSubjectInput(false);
+            } else if (field === 'lesson') {
+                setShowNewLessonInput(false);
             }
         }
     };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setSelectedContentType(''); }}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) resetForm(); }}>
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Content</DialogTitle>
           <DialogDescription>
@@ -223,7 +314,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
                 <div className="space-y-2">
                     <Label htmlFor="class">Class</Label>
                     <Select name="class">
@@ -243,16 +334,44 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="series">Series</Label>
-                    <Select name="series" onValueChange={(value) => handleNewValue('series', value)}>
-                        <SelectTrigger id="series">
-                            <SelectValue placeholder="Select a series" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="NCERT">NCERT</SelectItem>
-                            <SelectItem value="ABC">ABC</SelectItem>
-                            <SelectItem value="new">Add new series...</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {showSeriesDropdown ? (
+                        <Select name="series" onValueChange={(value) => handleNewValue('series', value)}>
+                            <SelectTrigger id="series">
+                                <SelectValue placeholder="Select a series" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="NCERT">NCERT</SelectItem>
+                                <SelectItem value="ABC">ABC</SelectItem>
+                                <SelectItem value="new">Add new series...</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <div onClick={() => setShowSeriesDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
+                            Add Series
+                        </div>
+                    )}
+                   {showNewSeriesInput && <Input placeholder="Enter new series" onChange={(e) => setNewValues(prev => ({...prev, series: e.target.value}))} />}
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="package">Package</Label>
+                     {showPackageDropdown ? (
+                        <Select name="package" onValueChange={(value) => handleNewValue('package', value)}>
+                            <SelectTrigger id="package">
+                                <SelectValue placeholder="Select a package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Individual">Individual</SelectItem>
+                                <SelectItem value="Term">Term</SelectItem>
+                                <SelectItem value="Semester">Semester</SelectItem>
+                                <SelectItem value="new">Add new package...</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    ) : (
+                        <div onClick={() => setShowPackageDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
+                            Add Package
+                        </div>
+                    )}
+                    {showNewPackageInput && <Input placeholder="Enter new package" onChange={(e) => setNewValues(prev => ({...prev, package: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="subject">Subject</Label>
@@ -268,6 +387,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add new subject...</SelectItem>
                         </SelectContent>
                     </Select>
+                     {showNewSubjectInput && <Input placeholder="Enter new subject" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="lesson">Lesson</Label>
@@ -283,8 +403,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add new lesson...</SelectItem>
                         </SelectContent>
                     </Select>
+                    {showNewLessonInput && <Input placeholder="Enter new lesson" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                     <Label>Content Type</Label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                         <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
@@ -300,13 +421,15 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectValue placeholder="Select a content name" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Alphabet Song">Alphabet Song</SelectItem>
-                            <SelectItem value="Letter Tracing">Letter Tracing</SelectItem>
-                            <SelectItem value="Counting 1 to 100">Counting 1 to 100</SelectItem>
-                            <SelectItem value="Cell Structure">Cell Structure</SelectItem>
-                            <SelectItem value="new">Add new name...</SelectItem>
+                            <SelectItem value="Animation Video">Animation Video</SelectItem>
+                            <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
+                            <SelectItem value="Content Book">Content Book</SelectItem>
+                            <SelectItem value="Work Book">Work Book</SelectItem>
+                            <SelectItem value="Answer Key">Answer Key</SelectItem>
+                            <SelectItem value="new">Add New</SelectItem>
                         </SelectContent>
                     </Select>
+                    {showContentNameInput && <Input placeholder="Enter new content name" onChange={(e) => setNewValues(prev => ({...prev, contentName: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="upload">Upload</Label>
@@ -379,12 +502,25 @@ function DeleteLessonDialog({ trigger }) {
     );
 }
 
-function EditContentDialog({ content, trigger }) {
-  const [selectedContentType, setSelectedContentType] = useState(content.contentType);
+function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lessonKey, onUpdateContent }) {
+  const form = useForm({
+    defaultValues: {
+      contentName: content.contentName,
+      status: content.status,
+    },
+  });
+
+  useEffect(() => {
+    form.reset({ contentName: content.contentName, status: content.status });
+  }, [content, form]);
+
+  const onSubmit = (data) => {
+    onUpdateContent(lessonKey, contentIndex, data);
+    onOpenChange(false);
+  };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Content</DialogTitle>
@@ -392,40 +528,51 @@ function EditContentDialog({ content, trigger }) {
             Fill in the details below to edit the content.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label>Content Type</Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
-                <ContentTypeBox icon={<FileText className="h-7 w-7" />} label="PDF" isSelected={selectedContentType === 'PDF'} onSelect={() => setSelectedContentType('PDF')} />
-                <ContentTypeBox icon={<Presentation className="h-7 w-7" />} label="PPT" isSelected={selectedContentType === 'PPT'} onSelect={() => setSelectedContentType('PPT')} />
-                <ContentTypeBox icon={<ImageIcon className="h-7 w-7" />} label="Image" isSelected={selectedContentType === 'Image'} onSelect={() => setSelectedContentType('Image')} />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="contentName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="content-name">Content Name</Label>
-            <Select defaultValue={content.contentName}>
-                <SelectTrigger id="content-name">
-                    <SelectValue placeholder="Select a content name" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Animation Video">Animation Video</SelectItem>
-                    <SelectItem value="Content Book">Content Book</SelectItem>
-                    <SelectItem value="Work Book">Work Book</SelectItem>
-                    <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
-                    <SelectItem value="Answer Key">Answer Key</SelectItem>
-                    <SelectItem value="new">Add new name...</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
-            <div className="space-y-2">
-                 <Label htmlFor="upload">Upload</Label>
-                <Input id="upload" type="file" />
-            </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save Changes</Button>
-        </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
