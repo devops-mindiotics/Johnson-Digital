@@ -24,6 +24,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { FileUp } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const formSchema = z.object({
   file: z.any(),
@@ -32,8 +33,10 @@ const formSchema = z.object({
 
 export function SubmitHomeworkDialog({
   onSubmit,
+  isIcon,
 }: {
   onSubmit: (data: any) => void;
+  isIcon?: boolean;
 }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -42,6 +45,7 @@ export function SubmitHomeworkDialog({
       comment: '',
     },
   });
+  const isMobile = useIsMobile();
 
   const handleSubmit = (data: any) => {
     onSubmit(data);
@@ -51,9 +55,15 @@ export function SubmitHomeworkDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <FileUp className="mr-1 h-4 w-4" /> Submit
-        </Button>
+        {isIcon && isMobile ? (
+          <Button size="icon" variant="outline">
+            <FileUp className="h-4 w-4 text-blue-500" />
+          </Button>
+        ) : (
+          <Button size="sm">
+            <FileUp className="mr-1 h-4 w-4" /> Submit
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -42,9 +42,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker" 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
 
 import bannersData from "@/banners.json";
 import schoolsData from "@/schools.json";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type Banner = {
   id: string
@@ -148,6 +156,7 @@ export function BannerDataTable() {
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
   const userRole = useUserRole();
+  const isMobile = useIsMobile();
 
 
   React.useEffect(() => {
@@ -236,56 +245,86 @@ export function BannerDataTable() {
                 />
             </div>
       </div>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+      {isMobile ? (
+          <div className="space-y-4">
+              {table.getRowModel().rows.map(row => (
+                  <Card key={row.id}>
+                      <CardHeader>
+                          <CardTitle>{row.original.name}</CardTitle>
+                          <CardDescription>{row.original.school}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="grid gap-2">
+                          <div className="flex justify-between">
+                              <span className="font-semibold">Target Audience:</span>
+                              <span>{row.original.targetAudience}</span>
+                          </div>
+                          <div className="flex justify-between">
+                              <span className="font-semibold">Start Date:</span>
+                              <span>{row.original.startDate}</span>
+                          </div>
+                          <div className="flex justify-between">
+                              <span className="font-semibold">End Date:</span>
+                              <span>{row.original.endDate}</span>
+                          </div>
+                          <div className="flex justify-end mt-2">
+                            {flexRender(row.getVisibleCells().find(cell => cell.column.id === 'actions')!.column.columnDef.cell, row.getVisibleCells().find(cell => cell.column.id === 'actions')!.getContext())}
+                          </div>
+                      </CardContent>
+                  </Card>
+              ))}
+          </div>
+      ) : (
+        <div className="rounded-md border overflow-x-auto">
+            <Table>
+            <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => {
+                    return (
+                        <TableHead key={header.id}>
+                        {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                            )}
+                        </TableHead>
+                    )
+                    })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                ))}
+            </TableHeader>
+            <TableBody>
+                {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                    <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    >
+                    {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                        {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                        )}
+                        </TableCell>
+                    ))}
+                    </TableRow>
+                ))
+                ) : (
+                <TableRow>
+                    <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                    >
+                    No results.
+                    </TableCell>
+                </TableRow>
+                )}
+            </TableBody>
+            </Table>
+        </div>
+      )}
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{" "}

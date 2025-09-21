@@ -45,8 +45,10 @@ const formSchema = z.object({
 
 export function CreateHomeworkDialog({
   onSubmit,
+  isIcon = false,
 }: {
   onSubmit: (data: any) => void;
+  isIcon?: boolean;
 }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -70,9 +72,15 @@ export function CreateHomeworkDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2" /> Create Homework
-        </Button>
+        {isIcon ? (
+          <Button size="icon" variant="ghost">
+            <PlusCircle />
+          </Button>
+        ) : (
+          <Button>
+            <PlusCircle className="mr-2" /> Create Homework
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>

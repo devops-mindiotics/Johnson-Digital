@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const mockSchoolList = [
     { id: 'sch_1', schoolName: 'Global International School', johnsonSchoolId: 'JSN-123', licenceForStudent: 100, totalStudents: 0 },
@@ -82,6 +83,7 @@ const initialSectionSubjectTeacherAssignments = [
 export default function ClassesPage() {
     const { user } = useAuth();
     const { toast } = useToast();
+    const isMobile = useIsMobile();
     const [schools, setSchools] = useState(mockSchoolList);
     const [teachers, setTeachers] = useState(mockTeachers);
     const [allClasses, setAllClasses] = useState(initialClassesData);
@@ -248,18 +250,32 @@ export default function ClassesPage() {
                                     (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {availableLicenses})
                                 </p>
                             </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenAddSectionDialog(c);
-                                }}
-                                className="mt-2 sm:mt-0"
-                            >
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Section
-                            </Button>
+                            {isMobile ? (
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenAddSectionDialog(c);
+                                    }}
+                                    className="mt-2 sm:mt-0"
+                                >
+                                    <PlusCircle className="h-4 w-4" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenAddSectionDialog(c);
+                                    }}
+                                    className="mt-2 sm:mt-0"
+                                >
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Section
+                                </Button>
+                            )}
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>

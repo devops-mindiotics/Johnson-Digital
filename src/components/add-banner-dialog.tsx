@@ -35,9 +35,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const FormSchema = z.object({
     name: z.string().min(1, { message: "This field has to be filled." }),
@@ -55,6 +56,7 @@ export function AddBannerDialog() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   });
+  const isMobile = useIsMobile();
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     toast({
@@ -70,7 +72,15 @@ export function AddBannerDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Add Banner</Button>
+        {isMobile ? (
+          <Button size="icon" variant="outline">
+            <PlusCircle className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>

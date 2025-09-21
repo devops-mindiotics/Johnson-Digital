@@ -19,7 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileDown, FileUp } from 'lucide-react';
+import { FileDown, FileUp, PlusCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { CreateHomeworkDialog } from '@/components/create-homework-dialog';
@@ -167,6 +167,7 @@ export default function HomeworkPage() {
                   {user?.role === 'Student' && item.status === 'Assigned' && (
                     <SubmitHomeworkDialog
                       onSubmit={() => handleSubmitHomework(item.id)}
+                      isIcon
                     />
                   )}
                   {isTeacher && item.status === 'Submitted' && (
@@ -176,8 +177,8 @@ export default function HomeworkPage() {
                       onComplete={() => handleReviewHomework(item.id, 'Checked')}
                     />
                   )}
-                  <Button variant="outline" size="sm">
-                    <FileDown className="mr-1 h-4 w-4" /> Download
+                  <Button variant="outline" size="icon">
+                    <FileDown className="mr-1 h-4 w-4" />
                   </Button>
                   <ViewHomeworkDialog homework={item} />
                 </div>
@@ -224,7 +225,7 @@ export default function HomeworkPage() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center justify-between">
           <div>
             <CardTitle>Homework</CardTitle>
             <CardDescription>
@@ -233,9 +234,12 @@ export default function HomeworkPage() {
                 : 'View and submit your homework assignments.'}
             </CardDescription>
           </div>
-          <div className="mt-4 md:mt-0">
-            {isTeacher && <CreateHomeworkDialog onSubmit={handleCreateHomework} />}
-          </div>
+          {isTeacher &&
+            (isMobile ? (
+              <CreateHomeworkDialog onSubmit={handleCreateHomework} isIcon />
+            ) : (
+              <CreateHomeworkDialog onSubmit={handleCreateHomework} />
+            ))}
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select onValueChange={(value) => handleFilterChange('class', value)}>
