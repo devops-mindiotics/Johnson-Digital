@@ -22,12 +22,18 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      # Optional: speeds up frameworks deploy a bit
-      - name: Build
-        run: npm run build
-
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
+
+      # 🔑 Enable frameworks experiment for this job
+      - name: Enable Firebase webframeworks experiment
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: firebase experiments:enable webframeworks
+
+      # Optional: run build yourself (Firebase can build during deploy too)
+      - name: Build
+        run: npm run build
 
       # --- PR preview deploy ---
       - name: Deploy Preview (PR)
