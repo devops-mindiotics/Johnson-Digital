@@ -1,9 +1,9 @@
-name: Deploy to Firebase Hosting
+name: Deploy to Firebase Hosting (Next.js + FIREBASE_TOKEN)
 
 on:
   push:
-    branches: [ "dev_ramesh" ]   # live deploys from dev_ramesh branch
-  pull_request:                  # PR preview links
+    branches: [ "dev_ramesh" ]     # live deploys from dev_ramesh
+  pull_request:                    # preview URLs on PRs
 
 jobs:
   build_and_deploy:
@@ -17,18 +17,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'npm'
 
       - name: Install deps
         run: npm ci
 
+      # Optional: speeds up frameworks deploy a bit
       - name: Build
         run: npm run build
 
       - name: Install Firebase CLI
         run: npm i -g firebase-tools
 
-      # Preview deploys for PRs
+      # --- PR preview deploy ---
       - name: Deploy Preview (PR)
         if: github.event_name == 'pull_request'
         env:
@@ -37,7 +38,7 @@ jobs:
           firebase hosting:channel:deploy pr-${{ github.event.number }} \
             --project rameshjohnson-603a9
 
-      # Live deploy on dev_ramesh branch
+      # --- Live deploy when pushing to dev_ramesh ---
       - name: Deploy Live (dev_ramesh)
         if: github.ref == 'refs/heads/dev_ramesh'
         env:
