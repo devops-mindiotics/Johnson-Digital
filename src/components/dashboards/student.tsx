@@ -37,7 +37,7 @@ export default function StudentDashboard({ user }: { user: User }) {
                 {banners.map((banner, index) => (
                     <CarouselItem key={index}>
                     <Card className="overflow-hidden">
- <CardContent className="relative flex w-full aspect-video items-center justify-center p-0 rounded-lg md:w-[30vw] mx-auto">
+ <CardContent className="relative flex w-full aspect-video items-center justify-center p-0 rounded-lg md:w-[60vw] mx-auto">
                            <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} />
                            <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center pointer-events-none" />
                            <div className="relative text-center text-primary-foreground p-8 flex flex-col items-center justify-center h-full">
