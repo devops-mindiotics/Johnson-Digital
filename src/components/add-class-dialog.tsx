@@ -1,6 +1,4 @@
-
 'use client';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +7,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
     Form,
@@ -20,7 +17,6 @@ import {
     FormMessage,
   } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -30,8 +26,13 @@ const classSchema = z.object({
     name: z.string().min(1, 'Class name is required.'),
 });
 
-export function AddClassDialog() {
-    const [open, setOpen] = useState(false);
+interface AddClassDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    onClassAdded: (values: { name: string }) => void;
+}
+
+export function AddClassDialog({ open, onOpenChange, onClassAdded }: AddClassDialogProps) {
     const { toast } = useToast();
     const form = useForm<z.infer<typeof classSchema>>({
         resolver: zodResolver(classSchema),
@@ -41,20 +42,14 @@ export function AddClassDialog() {
     });
 
     const onSubmit = (values: z.infer<typeof classSchema>) => {
-        console.log(values);
+        onClassAdded(values);
         toast({ title: 'Class Added', description: `Class "${values.name}" has been successfully added.` });
         form.reset();
-        setOpen(false);
+        onOpenChange(false);
     }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2" />
-          Add Class
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add New Class</DialogTitle>

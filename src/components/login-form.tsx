@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +45,7 @@ const mockUsers: Record<string, Omit<User, 'mobile'>> = {
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -56,23 +57,29 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    // This is a mock login. In a real app, you'd call an API.
-    const userRole = data.role as UserRole;
-    const mobileNumber = data.mobile;
-    
-    // Find a mock user that matches role and is one of the predefined numbers
-    const mockUserKey = Object.keys(mockUsers).find(key => mockUsers[key].role === userRole);
-    const mockUser = mockUserKey ? mockUsers[mockUserKey] : undefined;
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    setIsLoading(true);
+    try {
+      // This is a mock login. In a real app, you'd call an API.
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const userRole = data.role as UserRole;
+      const mobileNumber = data.mobile;
+      
+      // Find a mock user that matches role and is one of the predefined numbers
+      const mockUserKey = Object.keys(mockUsers).find(key => mockUsers[key].role === userRole);
+      const mockUser = mockUserKey ? mockUsers[mockUserKey] : undefined;
 
-    if (mockUser) {
-      login({ ...mockUser, role: userRole, mobile: mobileNumber });
-    } else {
-       toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid credentials for the selected role.",
-      });
+      if (mockUser) {
+        login({ ...mockUser, role: userRole, mobile: mobileNumber });
+      } else {
+         toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: "Invalid credentials for the selected role.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -161,9 +168,16 @@ export function LoginForm() {
           <Button
             type="submit"
             className="w-full"
-            disabled={form.formState.isSubmitting}
+            disabled={isLoading}
           >
-            {form.formState.isSubmitting ? 'Signing In...' : 'Sign In'}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </Button>
         </form>
       </Form>

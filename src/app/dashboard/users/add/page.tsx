@@ -33,7 +33,7 @@ const formSchema = z.object({
   mobileNumber: z.string().max(12, 'Mobile number cannot exceed 12 digits'),
   email: z.string().email(),
   status: z.enum(['Active', 'Inactive', 'Pending']).default('Pending'),
-  schoolUniqueId: z.string().min(1, 'School Unique ID is required'),
+  schoolUniqueId: z.string().optional(),
   address: z.string(),
   city: z.string(),
   district: z.string(),
@@ -49,11 +49,13 @@ const formSchema = z.object({
   admissionNumber: z.string().optional(),
   dateOfBirth: z.string().optional(),
   permanentEducationNumber: z.string().optional(),
+  class: z.string().optional(),
+  section: z.string().optional(),
   // School Admin fields
   expiryDate: z.string().optional(),
 });
 
-export default function AddUserPage() {
+export default function AddUserPage({ searchParams }: { searchParams: { type: 'Teacher' | 'Student' | 'School Admin' } }) {
   const { user } = useAuth();
   const [schools, setSchools] = useState<{ schoolId: string; schoolName: string }[]>([]);
 
@@ -68,10 +70,18 @@ export default function AddUserPage() {
     setSchools(mockSchoolData);
   }, []);
 
+  const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: 'Pending',
+      type: searchParams.type,
+      expiryDate: getExpiryDate(),
     },
   });
 
@@ -91,30 +101,30 @@ export default function AddUserPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {user?.role === 'Super Admin' && (
-                <FormField
-                  control={form.control}
-                  name="school"
-                  render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>School *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                          <SelectTrigger>
-                          <SelectValue placeholder="Select a school" />
-                          </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                          {schools.map((school, index) => (
-                          <SelectItem key={index} value={`${school.schoolId}-${school.schoolName}`}>
-                              {`${school.schoolId}-${school.schoolName}`}
-                          </SelectItem>
-                          ))}
-                      </SelectContent>
-                      </Select>
-                      <FormMessage />
-                  </FormItem>
-                  )}
-                />
+                  <FormField
+                    control={form.control}
+                    name="school"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>School *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a school" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {schools.map((school, index) => (
+                            <SelectItem key={index} value={`${school.schoolId}-${school.schoolName}`}>
+                                {`${school.schoolId}-${school.schoolName}`}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                  />
               )}
                 <FormField
                 control={form.control}
@@ -240,6 +250,52 @@ export default function AddUserPage() {
                       </FormItem>
                     )}
                   />
+                   <FormField
+                    control={form.control}
+                    name="class"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Class *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a class" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Nursery">Nursery</SelectItem>
+                            <SelectItem value="LKG">LKG</SelectItem>
+                            <SelectItem value="UKG">UKG</SelectItem>
+                            <SelectItem value="1">1</SelectItem>
+                            <SelectItem value="2">2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="section"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Section *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a section" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
+                            <SelectItem value="C">C</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="permanentEducationNumber"
@@ -304,21 +360,22 @@ export default function AddUserPage() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="schoolUniqueId"
+                name="expiryDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>School Unique ID *</FormLabel>
+                    <FormLabel>Expiry Date *</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., GH-1234" {...field} />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {type === 'Teacher' && (
+              {(type === 'Teacher' || type === 'School Admin') && (
                 <>
                   <FormField
                     control={form.control}
@@ -327,7 +384,7 @@ export default function AddUserPage() {
                       <FormItem>
                         <FormLabel>Employee ID *</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g., T-123" {...field} />
+                          <Input placeholder={type === 'Teacher' ? "e.g., T-123" : "e.g., A-123"} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -354,50 +411,6 @@ export default function AddUserPage() {
                         <FormLabel>Experience *</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., 5 years" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-
-              {type === 'School Admin' && (
-                <>
-                  <FormField
-                    control={form.control}
-                    name="employeeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Employee ID *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., A-123" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="joiningDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Joining Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="expiryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expiry Date *</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

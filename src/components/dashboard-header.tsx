@@ -4,7 +4,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,
+  User as UserIcon,ChevronLeft,ChevronRight,Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,9 +41,13 @@ export function DashboardHeader() {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
       <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
+            <ChevronLeft className="h-5 w-5" />
+            <span className="sr-only">Back</span>
+        </Button>
         <SidebarTrigger />
         <h1 className="text-lg font-semibold md:text-xl">
-          Hello, {user.name.split(' ')[0]}!
+          Hello, Mr. {user.name}!
         </h1>
         {user.role === 'Student' && (
           <p className="hidden text-sm text-muted-foreground sm:block">
@@ -53,36 +57,41 @@ export function DashboardHeader() {
       </div>
       <div className="flex items-center gap-4">
         {user.role === 'Student' && (
-          <Select defaultValue="child1">
-            <SelectTrigger className="w-[150px] md:w-[200px]">
-              <SelectValue placeholder="Switch Child" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="child1">{user.name}</SelectItem>
-              <SelectItem value="child2">Jane Doe</SelectItem>
-            </SelectContent>
-          </Select>
+          <>
+            {/* Web view */}
+            <div className="hidden items-center gap-2 md:flex">
+              <Select defaultValue="child1">
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Switch Kid" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="child1">{user.name}</SelectItem>
+                  <SelectItem value="child2">Jane Doe</SelectItem>
+                </SelectContent>
+              </Select>
+              <Users className="h-5 w-5 text-muted-foreground" />
+            </div>
+            
+            {/* Mobile view */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Users className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {/* <DropdownMenuLabel>Switch Kid</DropdownMenuLabel> */}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>{user.name}</DropdownMenuItem>
+                  <DropdownMenuItem>Jane Doe</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )}
 
         {user.role === 'Super Admin' && (
-            // <DropdownMenu>
-            //     <DropdownMenuTrigger asChild>
-            //         <Button 
-            //             size="icon" 
-            //             className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-            //         >
-            //             <Plus className="h-5 w-5" />
-            //         </Button>
-            //     </DropdownMenuTrigger>
-            //     <DropdownMenuContent align="end">
-            //         <DropdownMenuItem onClick={() => router.push('/dashboard/schools')}>
-            //             Add School
-            //         </DropdownMenuItem>
-            //         <DropdownMenuItem onClick={() => router.push('/dashboard/content')}>
-            //             Add Content
-            //         </DropdownMenuItem>
-            //     </DropdownMenuContent>
-            // </DropdownMenu>
             <DropdownMenu>
   <DropdownMenuTrigger asChild>
     <Button 
@@ -93,7 +102,7 @@ export function DashboardHeader() {
     </Button>
   </DropdownMenuTrigger>
   <DropdownMenuContent align="end">
-    <DropdownMenuItem onClick={() => router.push('/dashboard/schools')}>
+    <DropdownMenuItem onClick={() => router.push('/dashboard/schools/add')}>
       <School className="mr-2 h-4 w-4 text-blue-600" />
       Add School
     </DropdownMenuItem>
@@ -108,13 +117,9 @@ export function DashboardHeader() {
 
         {user.role === 'School Admin' && (
           <>
-            {/* <div className="hidden md:flex items-center gap-2">
-                <Button onClick={() => router.push('/dashboard/users?role=student')}>Add Student</Button>
-                <Button onClick={() => router.push('/dashboard/users?role=teacher')}>Add Teacher</Button>
-            </div> */}
             <div className="hidden md:flex items-center gap-2">
   <Button 
-    onClick={() => router.push('/dashboard/users?role=student')} 
+    onClick={() => router.push('/dashboard/users/add?type=Student')}
     className="flex items-center gap-2"
   >
     <FaUserGraduate size={18} />
@@ -122,55 +127,32 @@ export function DashboardHeader() {
   </Button>
 
   <Button 
-    onClick={() => router.push('/dashboard/users?role=teacher')} 
+    onClick={() => router.push('/dashboard/users/add?type=Teacher')}
     className="flex items-center gap-2"
   >
     <FaChalkboardTeacher size={18} />
     Add Teacher
   </Button>
 </div>
-            {/* <div className="md:hidden">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button 
-                            size="icon" 
-                            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                            <Plus className="h-5 w-5" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push('/dashboard/users?role=student')}>
-                            Add Student
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push('/dashboard/users?role=teacher')}>
-                            Add Teacher
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div> */}
-            <div className="md:hidden">
-  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <button
-      onClick={() => router.push('/dashboard/users?role=student')}
-      className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border"
-    >
-      <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
-        <UserPlus className="h-6 w-6 text-blue-600" />
-      </div>
-      <div className="text-sm text-blue-700">Add Student</div>
-    </button>
 
-    <button
-      onClick={() => router.push('/dashboard/users?role=teacher')}
-      className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border"
-    >
-      <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
-        <UserCheck className="h-6 w-6 text-green-600" />
-      </div>
-      <div className="text-sm text-green-700">Add Teacher</div>
-    </button>
-  </CardContent>
+<div className="flex items-center gap-2 md:hidden">
+  <Button
+    size="icon"
+    className="rounded-full bg-blue-50 hover:bg-blue-100"
+    onClick={() => router.push('/dashboard/users/add?type=Student')}
+  >
+    <UserPlus className="h-5 w-5 text-blue-600" />
+    <span className="sr-only">Add Student</span>
+  </Button>
+
+  <Button
+    size="icon"
+    className="rounded-full bg-green-50 hover:bg-green-100"
+    onClick={() => router.push('/dashboard/users/add?type=Teacher')}
+  >
+    <UserCheck className="h-5 w-5 text-green-600" />
+    <span className="sr-only">Add Teacher</span>
+  </Button>
 </div>
 
           </>
@@ -204,10 +186,6 @@ export function DashboardHeader() {
               </Link>
               {(user.role === 'Student' || user.role === 'Teacher') && (
   <Link href="/dashboard/settings" passHref>
-    {/* <DropdownMenuItem> */}
-      {/* <Settings className="mr-2 h-4 w-4" /> */}
-      {/* <span>Settings</span> */}
-    {/* </DropdownMenuItem> */}
   </Link>
 )}
 

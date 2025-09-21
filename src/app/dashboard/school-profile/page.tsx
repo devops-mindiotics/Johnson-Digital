@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Pencil } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const schoolData = {
   name: 'Greenwood High International',
@@ -42,6 +43,7 @@ const schoolData = {
 };
 
 export default function SchoolProfilePage() {
+  const isMobile = useIsMobile();
   return (
     <div className="space-y-6">
       <Card>
@@ -59,9 +61,15 @@ export default function SchoolProfilePage() {
                         </CardDescription>
                     </div>
                 </div>
-                 <Button>
-                    <Pencil className="mr-2" /> Edit Profile
-                </Button>
+                {isMobile ? (
+                    <Button size="icon" variant="outline">
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                 ) : (
+                    <Button>
+                        <Pencil className="mr-2" /> Edit Profile
+                    </Button>
+                 )}
             </div>
         </CardHeader>
       </Card>
