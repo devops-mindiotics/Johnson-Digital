@@ -135,36 +135,54 @@ export default function ClassesPage() {
         setIsSectionDialogOpen(true);
     };
 
-    const handleSaveSection = (values: { sectionName?: string; sectionPoolId?: string; licenses: number }) => {
+    const handleSaveSection = (values: { sectionOption: 'noSection' | 'addSection'; sectionName?: string; sectionPoolId?: string; licenses: number }) => {
         if (!selectedSchool || !currentClass) return;
 
-        let poolId = values.sectionPoolId;
-        if (values.sectionName) {
-            const newPoolSection = {
-                id: `sp${Date.now()}`,
-                name: values.sectionName,
-                schoolId: selectedSchool,
-            };
-            setSectionsPool([...sectionsPool, newPoolSection]);
-            poolId = newPoolSection.id;
-        }
-
-        if (!poolId) return;
-
-        if (editingAssignment) {
-            setSectionAssignments(sectionAssignments.map(sa => 
-                sa.id === editingAssignment.id ? { ...sa, sectionPoolId: poolId, licenses: values.licenses } : sa
-            ));
+        if (values.sectionOption === 'noSection') {
+            if (editingAssignment) {
+                setSectionAssignments(sectionAssignments.map(sa => 
+                    sa.id === editingAssignment.id ? { ...sa, sectionPoolId: 'NO_SECTION_ASSIGNED', licenses: values.licenses } : sa
+                ));
+            } else {
+                const newAssignment = {
+                    id: `sa${Date.now()}`,
+                    classId: currentClass.id,
+                    sectionPoolId: 'NO_SECTION_ASSIGNED',
+                    licenses: values.licenses,
+                    status: 'active' as const,
+                    classTeacherId: null,
+                };
+                setSectionAssignments([...sectionAssignments, newAssignment]);
+            }
         } else {
-            const newAssignment = {
-                id: `sa${Date.now()}`,
-                classId: currentClass.id,
-                sectionPoolId: poolId,
-                licenses: values.licenses,
-                status: 'active' as const,
-                classTeacherId: null,
-            };
-            setSectionAssignments([...sectionAssignments, newAssignment]);
+            let poolId = values.sectionPoolId;
+            if (values.sectionName) {
+                const newPoolSection = {
+                    id: `sp${Date.now()}`,
+                    name: values.sectionName,
+                    schoolId: selectedSchool,
+                };
+                setSectionsPool([...sectionsPool, newPoolSection]);
+                poolId = newPoolSection.id;
+            }
+
+            if (!poolId) return;
+
+            if (editingAssignment) {
+                setSectionAssignments(sectionAssignments.map(sa => 
+                    sa.id === editingAssignment.id ? { ...sa, sectionPoolId: poolId, licenses: values.licenses } : sa
+                ));
+            } else {
+                const newAssignment = {
+                    id: `sa${Date.now()}`,
+                    classId: currentClass.id,
+                    sectionPoolId: poolId,
+                    licenses: values.licenses,
+                    status: 'active' as const,
+                    classTeacherId: null,
+                };
+                setSectionAssignments([...sectionAssignments, newAssignment]);
+            }
         }
     };
 
@@ -281,14 +299,15 @@ export default function ClassesPage() {
                     <AccordionContent>
                         <div className="space-y-4 pt-2">
                             {sectionAssignments.filter(sa => sa.classId === c.id).map(assignment => {
-                                const sectionInfo = sectionsPool.find(sp => sp.id === assignment.sectionPoolId);
+                                const isNoSection = assignment.sectionPoolId === 'NO_SECTION_ASSIGNED';
+                                const sectionInfo = isNoSection ? null : sectionsPool.find(sp => sp.id === assignment.sectionPoolId);
                                 const subjectsForSection = sectionSubjectTeacherAssignments.filter(ssta => ssta.sectionAssignmentId === assignment.id);
 
                                 return (
                                     <div key={assignment.id} className="py-2 px-4 rounded-md border">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                                <span className="font-semibold">{sectionInfo?.name}</span>
+                                                <span className="font-semibold">{isNoSection ? "No Sections" : sectionInfo?.name}</span>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
                                                     <Select
