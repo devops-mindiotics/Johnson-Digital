@@ -1,0 +1,47 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [ "dev_ramesh" ]   # live deploys from dev_ramesh branch
+  pull_request:                  # PR preview links
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Firebase CLI
+        run: npm i -g firebase-tools
+
+      # Preview deploys for PRs
+      - name: Deploy Preview (PR)
+        if: github.event_name == 'pull_request'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase hosting:channel:deploy pr-${{ github.event.number }} \
+            --project rameshjohnson-603a9
+
+      # Live deploy on dev_ramesh branch
+      - name: Deploy Live (dev_ramesh)
+        if: github.ref == 'refs/heads/dev_ramesh'
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          firebase deploy --only hosting \
+            --project rameshjohnson-603a9
