@@ -35,7 +35,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
           <CarouselContent>
             {banners.map((banner, index) => (
               <CarouselItem key={index}>
-                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow md:w-[30vw] mx-auto">
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow md:w-[60vw] mx-auto">
                   <Image src={banner.src} alt={banner.alt} fill className="object-contain" />
                   <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center">
                     <h3 className="text-xl md:text-3xl font-bold text-white">{banner.title}</h3>
@@ -45,8 +45,8 @@ export default function TeacherDashboard({ user }: { user: User }) {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="absolute left-4" />
-          <CarouselNext className="absolute right-4" />
+          <CarouselPrevious className="absolute left-4 bg-transparent border-0 text-white hover:text-gray-200" />
+          <CarouselNext className="absolute right-4 bg-transparent border-0 text-white hover:text-gray-200" />
         </Carousel>
       </div>
 

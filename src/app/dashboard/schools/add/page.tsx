@@ -110,12 +110,20 @@ const formSchema = z.object({
 export default function AddSchoolPage() {
   const router = useRouter();
   const [schools, setSchools] = useState<{ id: string; schoolName: string; johnsonSchoolId: string; }[]>([]);
+  
+  const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       isBranch: false,
       classConfigurations: [{ class: '', sections: 1, series: '' }],
       status: 'Pending',
+      expiryDate: getExpiryDate(),
     },
   });
 

@@ -29,25 +29,51 @@ import * as z from 'zod';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required.'),
   mobile: z.string().min(10, 'Mobile number must be 10 digits.'),
   email: z.string().email('Invalid email address.'),
+  gender: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  district: z.string().optional(),
+  state: z.string().optional(),
+  pincode: z.string().optional(),
+  profilePic: z.any().optional(),
 });
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: user?.name || '',
       mobile: user?.mobile || '',
       email: `${user?.name.toLowerCase().replace(' ', '.')}@example.com` || '',
+      gender: '',
+      address: '',
+      city: '',
+      district: '',
+      state: '',
+      pincode: '',
     },
   });
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
   const onSubmit = (values: z.infer<typeof profileSchema>) => {
+    if (selectedFile) {
+      values.profilePic = selectedFile;
+    }
     console.log(values);
   };
 
@@ -63,16 +89,35 @@ export default function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col items-center gap-4 text-center md:flex-row md:gap-6 md:text-left">
             <div className="relative">
               <Avatar className="h-24 w-24">
-                <AvatarImage src={user.profilePic} alt={user.name} data-ai-hint="person avatar" />
+                <AvatarImage
+                  src={
+                    selectedFile
+                      ? URL.createObjectURL(selectedFile)
+                      : user.profilePic
+                  }
+                  alt={user.name}
+                  data-ai-hint="person avatar"
+                />
                 <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <Button size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8">
+              <Button
+                size="icon"
+                className="absolute bottom-0 right-0 rounded-full h-8 w-8"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <Camera className="h-4 w-4" />
                 <span className="sr-only">Change Picture</span>
               </Button>
+              <Input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileChange}
+                accept="image/*"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-bold">{user.name}</h2>
@@ -85,9 +130,9 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       <Tabs defaultValue="personal">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="flex w-full flex-wrap">
           <TabsTrigger value="personal">Personal Details</TabsTrigger>
-          <TabsTrigger value="school">School Details</TabsTrigger>
+          {user.role !== 'Super Admin' && <TabsTrigger value="school">School Details</TabsTrigger>}
           <TabsTrigger value="subscription">Subscription</TabsTrigger>
         </TabsList>
         <TabsContent value="personal">
@@ -99,7 +144,7 @@ export default function ProfilePage() {
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
+                  className="grid grid-cols-1 gap-4 md:grid-cols-2"
                 >
                   <FormField
                     control={form.control}
@@ -140,7 +185,87 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit">Save Changes</Button>
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gender</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="district"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>District</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pincode</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="md:col-span-2">
+                    <Button type="submit">Save Changes</Button>
+                  </div>
                 </form>
               </Form>
             </CardContent>
@@ -151,10 +276,51 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>School Details</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                School-related information will be displayed here.
-              </p>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {(user.role === 'School Admin' || user.role === 'Teacher') && (
+                <>
+                  <div>
+                    <p className="font-semibold">School ID</p>
+                    <p>SC-12345</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">School Name</p>
+                    <p>Greenwood High</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Employee ID</p>
+                    <p>EMP-54321</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Joining Date</p>
+                    <p>2020-08-15</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Experience</p>
+                    <p>5 years</p>
+                  </div>
+                </>
+              )}
+              {user.role === 'Student' && (
+                <>
+                  <div>
+                    <p className="font-semibold">School ID</p>
+                    <p>SC-12345</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">School Name</p>
+                    <p>Greenwood High</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Class</p>
+                    <p>{user.class}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">Section</p>
+                    <p>{user.section}</p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -163,10 +329,23 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Subscription Plan</CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Subscription and license details will be displayed here.
-              </p>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
+               <div>
+                <p className="font-semibold">User Type</p>
+                <p>{user.role}</p>
+              </div>
+              <div>
+                <p className="font-semibold">Status</p>
+                <p>Active</p>
+              </div>
+              <div>
+                <p className="font-semibold">Created On</p>
+                <p>2023-01-01</p>
+              </div>
+              <div>
+                <p className="font-semibold">Expires On</p>
+                <p>2024-01-01</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

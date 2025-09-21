@@ -1,0 +1,29 @@
+[
+  {
+    "id": "1",
+    "name": "Welcome Banner",
+    "school": "Greenwood High",
+    "targetAudience": "Students",
+    "startDate": "2024-05-10",
+    "endDate": "2024-05-20",
+    "media": "/banners/welcome.png"
+  },
+  {
+    "id": "2",
+    "name": "Exam Schedule",
+    "school": "Oakridge International",
+    "targetAudience": "Teachers",
+    "startDate": "2024-05-15",
+    "endDate": "2024-05-25",
+    "media": "/banners/exams.jpg"
+  },
+  {
+    "id": "3",
+    "name": "Annual Day",
+    "school": "Global Edge School",
+    "targetAudience": "All",
+    "startDate": "2024-06-01",
+    "endDate": "2024-06-05",
+    "media": "/banners/annual-day.mp4"
+  }
+]
