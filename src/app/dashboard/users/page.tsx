@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle, Search, Upload, FileUp } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, Upload, FileUp, User, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -188,9 +188,11 @@ export default function UsersPage() {
               <Upload className="mr-2 h-4 w-4" />
               Bulk Import
             </Button>
-            <Button size="icon" className="md:hidden" onClick={() => router.push('/dashboard/users/add')}>
-              <PlusCircle className="h-4 w-4" />
-              <span className="sr-only">Add User</span>
+            <Button size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative" onClick={() => router.push('/dashboard/users/add')}>
+                <User className="h-5 w-5" />
+                <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                    <Plus className="h-3 w-3 text-white" />
+                </div>
             </Button>
             <Button className="hidden md:flex" onClick={() => router.push('/dashboard/users/add')}>
               <PlusCircle className="mr-2 h-4 w-4" />

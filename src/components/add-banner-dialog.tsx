@@ -35,7 +35,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { CalendarIcon, PlusCircle } from "lucide-react";
+import { CalendarIcon, PlusCircle, Image as BannerIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -73,9 +73,12 @@ export function AddBannerDialog() {
     <Dialog>
       <DialogTrigger asChild>
         {isMobile ? (
-          <Button size="icon" variant="outline">
-            <PlusCircle className="h-4 w-4" />
-          </Button>
+            <Button size="icon" variant="outline" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                <BannerIcon className="h-5 w-5" />
+                <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                    <Plus className="h-3 w-3 text-white" />
+                </div>
+            </Button>
         ) : (
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" /> Add Banner

@@ -19,7 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileDown, FileUp, PlusCircle } from 'lucide-react';
+import { FileDown, FileUp, PlusCircle, BookOpenPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { CreateHomeworkDialog } from '@/components/create-homework-dialog';
@@ -236,7 +236,7 @@ export default function HomeworkPage() {
           </div>
           {isTeacher &&
             (isMobile ? (
-              <CreateHomeworkDialog onSubmit={handleCreateHomework} isIcon />
+                <CreateHomeworkDialog onSubmit={handleCreateHomework} isIcon />
             ) : (
               <CreateHomeworkDialog onSubmit={handleCreateHomework} />
             ))}

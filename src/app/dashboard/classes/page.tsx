@@ -98,17 +98,14 @@ export default function ClassesPage() {
     const [currentClass, setCurrentClass] = useState<any | null>(null);
 
     useEffect(() => {
-        if (user) {
+        if (user && schools.length > 0) {
             if (user.role === 'School Admin') {
-                setSelectedSchool(user.schoolId);
-            } else if ((user.role === 'Super Admin' || user.role ==='School Admin') && schools.length > 0) {
-                // For Super Admin, default to the first school in the list if none is selected
-                if (!selectedSchool) {
-                    setSelectedSchool(schools[0].id);
-                }
+                setSelectedSchool(schools[0].id);
+            } else if (user.role === 'Super Admin' && !selectedSchool) {
+                setSelectedSchool(schools[0].id);
             }
         }
-    }, [user, schools, selectedSchool]);
+    }, [user, schools]);
 
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
 

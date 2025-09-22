@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Edit, Paperclip, Check, ChevronsUpDown } from "lucide-react";
+import { PlusCircle, Trash2, Edit, Paperclip, Check, ChevronsUpDown, BookOpen, Plus } from "lucide-react";
 import diaryData from "@/diary.json";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -116,9 +116,11 @@ const DiaryPage = () => {
                 <CardTitle>Diary Entries</CardTitle>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={() => setEditingDiary(null)}>
-                            <PlusCircle className="h-5 w-5 md:mr-2" />
-                            <span className="hidden md:inline">Add Diary Entry</span>
+                         <Button onClick={() => setEditingDiary(null)} className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                            <BookOpen className="h-5 w-5" />
+                            <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                                <Plus className="h-3 w-3 text-white" />
+                            </div>
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="w-[95vw] max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-md">
