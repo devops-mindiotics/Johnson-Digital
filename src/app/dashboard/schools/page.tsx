@@ -26,6 +26,8 @@ import {
   Search,
   Trash2,
   View,
+  School,
+  Plus,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -145,9 +147,11 @@ export default function SchoolsPage() {
               </CardDescription>
             </div>
             <Link href="/dashboard/schools/add">
-              <Button size="icon" className="inline-flex md:hidden">
-                <PlusCircle className="h-4 w-4" />
-                <span className="sr-only">Add School</span>
+            <Button size="icon" className="inline-flex md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                <School className="h-5 w-5" />
+                <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                    <Plus className="h-3 w-3 text-white" />
+                </div>
               </Button>
               <Button className="hidden md:inline-flex">
                 <PlusCircle className="mr-2 h-4 w-4" />
