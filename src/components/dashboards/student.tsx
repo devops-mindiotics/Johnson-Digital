@@ -68,33 +68,29 @@ export default function StudentDashboard({ user }: { user: User }) {
                 </Carousel>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                    <button onClick={() => router.push('/dashboard/diary')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+            <div className="lg:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-3 lg:grid-cols-1 gap-4">
+                        <button onClick={() => router.push('/dashboard/diary')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <BookOpen className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-blue-700">Diary</div>
-                    </button>
+                            <div className="text-sm font-semibold text-blue-700">Diary</div>
+                        </button>
 
-                    <button onClick={() => router.push('/dashboard/homework')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
+                        <button onClick={() => router.push('/dashboard/homework')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <ClipboardList className="h-6 w-6 text-green-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-green-700">Homework</div>
-                    </button>
+                            <div className="text-sm font-semibold text-green-700">Homework</div>
+                        </button>
 
-                    <button onClick={() => router.push('/dashboard/notice-board')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
+                        <button onClick={() => router.push('/dashboard/notice-board')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <Bell className="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-yellow-700">Notice</div>
-                    </button>
-                </CardContent>
-            </Card>
+                            <div className="text-sm font-semibold text-yellow-700">Notice</div>
+                        </button>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
 
         <div className="text-center">

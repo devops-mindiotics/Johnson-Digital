@@ -67,44 +67,40 @@ export default function TeacherDashboard({ user }: { user: User }) {
                 </Carousel>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                    <button onClick={() => router.push('/dashboard/diary')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
+            <div className="lg:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-3 lg:grid-cols-1 gap-4">
+                        <button onClick={() => router.push('/dashboard/diary')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <BookOpen className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-blue-700">Diary</div>
-                    </button>
+                            <div className="text-sm font-semibold text-blue-700">Diary</div>
+                        </button>
 
-                    <button onClick={() => router.push('/dashboard/homework')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
+                        <button onClick={() => router.push('/dashboard/homework')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <ClipboardList className="h-6 w-6 text-green-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-green-700">Homework</div>
-                    </button>
+                            <div className="text-sm font-semibold text-green-700">Homework</div>
+                        </button>
 
-                    <button onClick={() => router.push('/dashboard/notice-board')} className="flex items-center gap-4 p-4 rounded-md hover:bg-gray-50 transition border">
-                        <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
+                        <button onClick={() => router.push('/dashboard/notice-board')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <Bell className="h-6 w-6 text-yellow-600" />
-                        </div>
-                        <div className="text-sm font-semibold text-yellow-700">Notice</div>
-                    </button>
-                </CardContent>
-            </Card>
+                            <div className="text-sm font-semibold text-yellow-700">Notice</div>
+                        </button>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
 
       {/* Classes Content - boxed and fills available width */}
-      <div className="w-full max-w-7xl">
+      <div className="w-full">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Subjects</h3>
-            <div className="text-sm text-gray-500">Select a class</div>
+            <h3 className="text-lg font-semibold text-gray-800">Classes</h3>
+            <div className="text-sm text-gray-500">Select a class to continue</div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-5">
             {classes.map((c) => (
               <button
                 key={c.label}
@@ -121,8 +117,8 @@ export default function TeacherDashboard({ user }: { user: User }) {
       </div>
 
       {/* Footer / small note */}
-      <div className="w-full max-w-7xl text-center text-xs text-gray-400">
-      <p className="hidden md:block">  © 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
+      <div className="w-full text-center text-xs text-gray-400 pt-6">
+      <p className="hidden md:block">© 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
       </div>
     </div>
   );
