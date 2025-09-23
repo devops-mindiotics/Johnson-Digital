@@ -1,6 +1,7 @@
-
 'use client';
 import Link from 'next/link';
+import React, { useState } from 'react';
+import Autoplay from "embla-carousel-autoplay"
 import {
   Card,
   CardContent,
@@ -21,8 +22,16 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, Briefcase } from 'lucide-react';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+  } from "@/components/ui/carousel"
+import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User } from '@/contexts/auth-context';
+import banners from '@/banners.json';
 
 const stats = [
     { 
@@ -50,13 +59,6 @@ const stats = [
       color: 'bg-yellow-50 text-yellow-600' 
     },
   ];
-  
-// const stats = [
-//   { title: 'Total Teachers', value: '150', icon: Users, color: 'text-primary' },
-//   { title: 'Total Students', value: '1,200', icon: GraduationCap },
-//   { title: 'Classes', value: '45', icon: BookUser },
-//   { title: 'New Admissions', value: '52', icon: UserCheck },
-// ];
 
 const enrollmentData = [
   { name: '2020', students: 800 },
@@ -80,19 +82,89 @@ const recentActivities = [
 ];
 
 export default function SchoolAdminDashboard({ user }: { user: User }) {
+    const plugin = React.useRef(
+        Autoplay({ delay: 3000, stopOnInteraction: true })
+      )
+    const [showAllNotices, setShowAllNotices] = useState(false);
+
   return (
     <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardContent className="p-0">
+                        <Carousel 
+                            plugins={[plugin.current]}
+                            className="w-full"
+                            onMouseEnter={plugin.current.stop}
+                            onMouseLeave={plugin.current.reset}>
+                            <CarouselContent>
+                                {banners.map((banner, index) => (
+                                <CarouselItem key={index}>
+                                    <div className="h-48 md:h-64 relative">
+                                    <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
+                                        <h2 className="text-white text-2xl font-bold">{banner.title}</h2>
+                                        <p className="text-white text-sm">{banner.description}</p>
+                                    </div>
+                                    </div>
+                                </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/50 text-slate-100 transition-colors hover:bg-slate-900">
+                                <ChevronLeft className="h-6 w-6" />
+                            </CarouselPrevious>
+                            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/50 text-slate-100 transition-colors hover:bg-slate-900">
+                                <ChevronRight className="h-6 w-6" />
+                            </CarouselNext>
+                        </Carousel>
+                    </CardContent>
+                </Card>
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Notice Board</CardTitle>
+                    <CardDescription>Recent activities in the school.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        {(showAllNotices ? recentActivities : recentActivities.slice(0, 2)).map(activity => (
+                            <div key={activity.text} className="flex items-start gap-4">
+                                <div className="bg-muted p-2 rounded-full">
+                                    <activity.icon className="h-5 w-5 text-muted-foreground" />
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="text-sm">{activity.text}</p>
+                                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {recentActivities.length > 2 && (
+                        <Button
+                            variant="link"
+                            className="w-full mt-4 lg:hidden"
+                            onClick={() => setShowAllNotices(!showAllNotices)}
+                        >
+                            {showAllNotices ? 'Show Less' : 'View All'}
+                        </Button>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => (
-  <div key={stat.title} className="flex flex-col items-center bg-white rounded-md p-4 shadow">
-    <div className={`inline-flex items-center justify-center rounded-full p-3 ${stat.color.split(" ")[0]}`}>
-      <stat.icon className={`h-6 w-6 ${stat.color.split(" ")[1]}`} />
-    </div>
-    <h3 className="mt-2 text-sm font-medium">{stat.title}</h3>
-    <p className="text-xl font-bold">{stat.value}</p>
-  </div>
-))}
-
+                <Card key={stat.title}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -130,28 +202,6 @@ export default function SchoolAdminDashboard({ user }: { user: User }) {
                 </CardContent>
             </Card>
         </div>
-
-         <Card>
-            <CardHeader>
-                <CardTitle>Notice Board</CardTitle>
-                <CardDescription>An overview of recent activities in the school.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {recentActivities.map(activity => (
-                        <div key={activity.text} className="flex items-start gap-4">
-                            <div className="bg-muted p-2 rounded-full">
-                                <activity.icon className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div className="flex-grow">
-                                <p className="text-sm">{activity.text}</p>
-                                <p className="text-xs text-muted-foreground">{activity.time}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
     </div>
   );
 }
