@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export function SidebarNav() {
   const { user, logout } = useAuth();
@@ -36,8 +37,8 @@ export function SidebarNav() {
           tooltip={{ children: item.label, side: 'right' }}
         >
           <Link href={item.href}>
-            <item.icon />
-            <span>{item.label}</span>
+            <item.icon className={cn("h-5 w-5", item.color)} />
+            <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
           </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -54,7 +55,7 @@ export function SidebarNav() {
               variant="ghost"
               className="w-full justify-start group-data-[collapsible=icon]:justify-center"
             >
-              <ShieldQuestion />
+              <ShieldQuestion className="h-5 w-5" />
               <span className="group-data-[collapsible=icon]:hidden">
                 Legal
               </span>
@@ -82,7 +83,7 @@ export function SidebarNav() {
           className="w-full justify-start group-data-[collapsible=icon]:justify-center"
           tooltip={{ children: 'Logout', side: 'right' }}
         >
-          <LogOut />
+          <LogOut className="h-5 w-5 text-red-500" />
           <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </SidebarMenuButton>
       </div>
