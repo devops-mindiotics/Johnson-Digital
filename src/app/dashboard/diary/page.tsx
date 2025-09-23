@@ -116,11 +116,9 @@ const DiaryPage = () => {
                 <CardTitle>Diary Entries</CardTitle>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                     <DialogTrigger asChild>
-                         <Button onClick={() => setEditingDiary(null)} className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
-                            <BookOpen className="h-5 w-5" />
-                            <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
-                                <Plus className="h-3 w-3 text-white" />
-                            </div>
+                        <Button onClick={() => setEditingDiary(null)} className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                            <PlusCircle className="h-4 w-4 mr-2" />
+                            Add Diary
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="w-[95vw] max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-md">
