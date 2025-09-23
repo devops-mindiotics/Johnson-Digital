@@ -41,26 +41,18 @@ export default function SuperAdminDashboard({ user }: { user: UserType }) {
   const router = useRouter();
   return (
     <div className="space-y-6">
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((stat) => (
-            // <Card key={stat.title}>
-              
-            //     {/* <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            //         <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-            //         <stat.icon className="h-4 w-4 text-muted-foreground" />
-            //     </CardHeader> */}
-            //     <CardContent>
-            //         <div className="text-2xl font-bold">{stat.value}</div>
-            //         <p className="text-xs text-muted-foreground">{stat.change} from last month</p>
-            //     </CardContent>
-            // </Card>
-            <div key={stat.title} className="flex flex-col items-center bg-white rounded-md p-4 shadow">
-            <div className={`inline-flex items-center justify-center rounded-full p-3 ${stat.color.split(" ")[0]}`}>
-              <stat.icon className={`h-6 w-6 ${stat.color.split(" ")[1]}`} />
-            </div>
-            <h3 className="mt-2 text-sm font-medium">{stat.title}</h3>
-            <p className="text-xl font-bold">{stat.value}</p>
-          </div> 
+            <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                    <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground">{stat.change} from last month</p>
+                </CardContent>
+            </Card>
         ))}
       </div>
       
