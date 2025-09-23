@@ -81,7 +81,7 @@ export function CreateHomeworkDialog({
           </Button>
         ) : (
           <Button>
-            <PlusCircle className="mr-2" /> Create Homework
+            <BookOpen className="mr-2" /> Create Homework
           </Button>
         )}
       </DialogTrigger>

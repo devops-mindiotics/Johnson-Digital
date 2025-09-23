@@ -154,7 +154,7 @@ export default function SchoolsPage() {
                 </div>
               </Button>
               <Button className="hidden md:inline-flex">
-                <PlusCircle className="mr-2 h-4 w-4" />
+                <School className="mr-2 h-4 w-4" />
                 Add School
               </Button>
             </Link>

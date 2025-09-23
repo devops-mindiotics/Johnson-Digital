@@ -81,7 +81,7 @@ export function AddBannerDialog() {
             </Button>
         ) : (
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+            <BannerIcon className="mr-2 h-4 w-4" /> Add Banner
           </Button>
         )}
       </DialogTrigger>

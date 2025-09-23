@@ -4,7 +4,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,ChevronLeft,ChevronRight,Users,
+  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -180,7 +180,7 @@ export function DashboardHeader() {
             <DropdownMenuGroup>
               <Link href="/dashboard/profile" passHref>
                 <DropdownMenuItem>
-                  <UserIcon className="mr-2 h-4 w-4" />
+                  <UserCircle className="mr-2 h-4 w-4 text-purple-500" />
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
