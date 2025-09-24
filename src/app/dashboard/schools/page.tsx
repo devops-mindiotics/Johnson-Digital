@@ -58,6 +58,7 @@ const initialSchools = [
     date: '2023-01-15',
     city: 'Metropolis',
     state: 'California',
+    licenses: { teachers: 50, students: 500 },
   },
   {
     id: 'sch_2',
@@ -69,6 +70,7 @@ const initialSchools = [
     date: '2022-11-20',
     city: 'Gotham',
     state: 'New York',
+    licenses: { teachers: 75, students: 750 },
   },
   {
     id: 'sch_3',
@@ -80,6 +82,7 @@ const initialSchools = [
     date: '2023-05-10',
     city: 'Star City',
     state: 'Washington',
+    licenses: { teachers: 40, students: 400 },
   },
   {
     id: 'sch_4',
@@ -91,6 +94,7 @@ const initialSchools = [
     date: '2021-09-01',
     city: 'Central City',
     state: 'Missouri',
+    licenses: { teachers: 60, students: 600 },
   },
   {
     id: 'sch_5',
@@ -102,6 +106,7 @@ const initialSchools = [
     date: '2023-08-30',
     city: 'Riverdale',
     state: 'Georgia',
+    licenses: { teachers: 30, students: 300 },
   },
 ];
 
@@ -170,17 +175,20 @@ export default function SchoolsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>School Name</TableHead>
-                  <TableHead>Johnson ID</TableHead>
-                  <TableHead>Board</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Expiry</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>City</TableHead>
-                  <TableHead>State</TableHead>
-                  <TableHead>
+                  <TableHead rowSpan={2} className="text-center">School Name</TableHead>
+                  <TableHead rowSpan={2} className="text-center">Johnson ID</TableHead>
+                  <TableHead rowSpan={2} className="text-center">Board</TableHead>
+                  <TableHead rowSpan={2} className="text-center">City, State</TableHead>
+                  <TableHead colSpan={2} className="text-center">Licenses</TableHead>
+                  <TableHead rowSpan={2} className="text-center">Expiry Date</TableHead>
+                  <TableHead rowSpan={2} className="text-center">Status</TableHead>
+                  <TableHead rowSpan={2}>
                     <span className="sr-only">Actions</span>
                   </TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableHead className="text-center">Teachers</TableHead>
+                  <TableHead className="text-center">Students</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,7 +197,11 @@ export default function SchoolsPage() {
                     <TableCell className="font-medium">{school.name}</TableCell>
                     <TableCell>{school.johnsonId}</TableCell>
                     <TableCell>{school.board}</TableCell>
-                    <TableCell>
+                    <TableCell>{school.city}, {school.state}</TableCell>
+                    <TableCell className="text-center">25/{school.licenses.teachers}</TableCell>
+                    <TableCell className="text-center">250/{school.licenses.students}</TableCell>
+                    <TableCell className="text-center">{school.expiry}</TableCell>
+                    <TableCell className="text-center">
                       <Badge
                         variant={
                           school.status === 'Active'
@@ -204,10 +216,6 @@ export default function SchoolsPage() {
                         {school.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{school.expiry}</TableCell>
-                    <TableCell>{school.date}</TableCell>
-                    <TableCell>{school.city}</TableCell>
-                    <TableCell>{school.state}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -219,7 +227,6 @@ export default function SchoolsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => router.push(`/dashboard/schools/${school.id}`)}>
-                            <View className="mr-2 h-4 w-4" />
                             View/Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
