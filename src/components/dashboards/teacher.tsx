@@ -1,20 +1,24 @@
 'use client';
-import React from "react";
+import React, { useRef } from "react";
 import Image from 'next/image';
 import type { User } from '@/contexts/auth-context';
-import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell } from 'lucide-react';
+import { BookUser, Users, Clock, ArrowRight, BookOpen, ClipboardList, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay"
 
 export default function TeacherDashboard({ user }: { user: User }) {
   const router = useRouter();
   const firstName = (user?.name || 'Teacher').split(' ')[0];
+  const plugin = useRef(
+    Autoplay({ delay: 3000, stopOnInteraction: true })
+  )
 
   const banners = [
-    { src: 'https://picsum.photos/1280/720?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures' },
-    { src: 'https://picsum.photos/1280/720?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow' },
-    { src: 'https://picsum.photos/1280/720?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning' },
+    { src: 'https://picsum.photos/1280/720?q=31', alt: 'banner-1', title: 'Dedicated Educators, Inspiring Futures', description: 'Our experienced and passionate educators are committed to helping every student reach their full potential.' },
+    { src: 'https://picsum.photos/1280/720?q=32', alt: 'banner-2', title: 'Empowering Students for a Brighter Tomorrow', description: 'We provide a supportive and challenging environment where students can develop the skills and confidence to succeed.' },
+    { src: 'https://picsum.photos/1280/720?q=33', alt: 'banner-3', title: 'Fostering a Love for Lifelong Learning', description: 'Our innovative curriculum and engaging activities inspire a passion for learning that lasts a lifetime.' },
   ];
 
   const classes = [
@@ -28,75 +32,75 @@ export default function TeacherDashboard({ user }: { user: User }) {
     { label: "Grade 5", icon: "🎓" },
   ];
   return (
-    <div className="min-h-screen w-full bg-blue-50 flex flex-col items-center px-6 py-6 space-y-6">
-      {/* Banner */}
-      <div className="w-full">
-        <Carousel className="w-full" opts={{ loop: true, align: 'center' }} plugins={[Autoplay({ delay: 5000 })]}>
-          <CarouselContent>
-            {banners.map((banner, index) => (
-              <CarouselItem key={index}>
-                <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow md:w-[60vw] mx-auto">
-                  <Image src={banner.src} alt={banner.alt} fill className="object-contain" />
-                  <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center">
-                    <h3 className="text-xl md:text-3xl font-bold text-white">{banner.title}</h3>
-                    <p className="mt-2 text-sm md:text-lg text-white/90">{banner.description}</p>
-                  </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="absolute left-4 bg-transparent border-0 text-white hover:text-gray-200" />
-          <CarouselNext className="absolute right-4 bg-transparent border-0 text-white hover:text-gray-200" />
-        </Carousel>
-      </div>
+    <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+                <Carousel 
+                    className="w-full"
+                    opts={{ loop: true, align: 'center' }} 
+                    plugins={[plugin.current]}
+                    onMouseEnter={plugin.current.stop}
+                    onMouseLeave={plugin.current.reset}
+                >
+                <CarouselContent>
+                    {banners.map((banner, index) => (
+                    <CarouselItem key={index}>
+                        <Card className="overflow-hidden">
+                            <CardContent className="relative flex w-full h-64 md:h-96 items-center justify-center p-0 rounded-lg mx-auto">
+                                <Image src={banner.src} alt={banner.alt} fill style={{ objectFit: 'cover' }} />
+                                <div className="absolute inset-0 bg-black/35 flex flex-col items-center justify-center px-6 text-center pointer-events-none" />
+                                <div className="relative text-center text-primary-foreground p-8 flex flex-col items-center justify-center h-full">
+                                    <h3 className="text-2xl md:text-4xl font-bold">{banner.title}</h3>
+                                    <p className="mt-2 text-sm md:text-lg max-w-xl">{banner.description}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </CarouselItem>
+                    ))}
+                </CarouselContent>
+                <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/50 text-slate-100 transition-colors hover:bg-slate-900">
+                    <ChevronLeft className="h-6 w-6" />
+                </CarouselPrevious>
+                <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/50 text-slate-100 transition-colors hover:bg-slate-900">
+                    <ChevronRight className="h-6 w-6" />
+                </CarouselNext>
+                </Carousel>
+            </div>
 
-      {/* Quick menu (Diary / Homework / Notice) - full width boxed */}
-      <div className="w-full max-w-7xl">
-        <div className="bg-white rounded-xl shadow px-4 py-5">
-          <div className="flex items-center justify-between mb-3">
-            <div />
-            {/* <div className="text-left whitespace-nowrap  text-black-700">Quick Access </div>
-          </div> */}
-          <div className="w-full ">
-  <div className="text-left text-black whitespace-nowrap">
-    Quick Access
-  </div>
-</div>
-</div>
-          <div className="flex gap-4">
-            <button onClick={() => router.push('/dashboard/diary')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
-              <div className="inline-flex items-center justify-center rounded-full bg-blue-50 p-3">
-                <BookOpen className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="text-sm text-blue-700">Diary</div>
-            </button>
+            <div className="lg:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-3 lg:grid-cols-1 gap-4">
+                        <button onClick={() => router.push('/dashboard/diary')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
+                            <BookOpen className="h-6 w-6 text-blue-600" />
+                            <div className="text-sm font-semibold text-blue-700">Diary</div>
+                        </button>
 
-            <button onClick={() => router.push('/dashboard/homework')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
-              <div className="inline-flex items-center justify-center rounded-full bg-green-50 p-3">
-                <ClipboardList className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="text-sm text-green-700">Homework</div>
-            </button>
+                        <button onClick={() => router.push('/dashboard/homework')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
+                            <ClipboardList className="h-6 w-6 text-green-600" />
+                            <div className="text-sm font-semibold text-green-700">Homework</div>
+                        </button>
 
-            <button onClick={() => router.push('/dashboard/notice-board')} className="flex-1 flex flex-col items-center gap-2 bg-white rounded-md p-4 hover:bg-gray-50 transition border">
-              <div className="inline-flex items-center justify-center rounded-full bg-yellow-50 p-3">
-                <Bell className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="text-sm text-yellow-700">Notice</div>
-            </button>
-          </div>
+                        <button onClick={() => router.push('/dashboard/notice-board')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
+                            <Bell className="h-6 w-6 text-yellow-600" />
+                            <div className="text-sm font-semibold text-yellow-700">Notice</div>
+                        </button>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-      </div>
 
       {/* Classes Content - boxed and fills available width */}
-      <div className="w-full max-w-7xl">
+      <div className="w-full">
         <div className="bg-white rounded-xl shadow p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Classes-Content</h3>
-            <div className="text-sm text-gray-500">Select a class</div>
+            <h3 className="text-lg font-semibold text-gray-800">Classes</h3>
+            <div className="text-sm text-gray-500">Select a class to continue</div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-5">
             {classes.map((c) => (
               <button
                 key={c.label}
@@ -113,8 +117,8 @@ export default function TeacherDashboard({ user }: { user: User }) {
       </div>
 
       {/* Footer / small note */}
-      <div className="w-full max-w-7xl text-center text-xs text-gray-400">
-      <p className="hidden md:block">  © 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
+      <div className="w-full text-center text-xs text-gray-400 pt-6">
+      <p className="hidden md:block">© 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
       </div>
     </div>
   );

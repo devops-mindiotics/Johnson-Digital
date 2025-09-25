@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useFieldArray } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -12,105 +12,125 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from 'lucide-react';
+} from "@/components/ui/select";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Trash2 } from "lucide-react";
 
 const classes = [
-    { id: 'nursery', label: 'Nursery' },
-    { id: 'lkg', label: 'LKG' },
-    { id: 'ukg', label: 'UKG' },
-    { id: '1', label: 'I' },
-    { id: '2', label: 'II' },
-    { id: '3', label: 'III' },
-    { id: '4', label: 'IV' },
-    { id: '5', label: 'V' },
-  ];
+  { id: "nursery", label: "Nursery" },
+  { id: "lkg", label: "LKG" },
+  { id: "ukg", label: "UKG" },
+  { id: "1", label: "I" },
+  { id: "2", label: "II" },
+  { id: "3", label: "III" },
+  { id: "4", label: "IV" },
+  { id: "5", label: "V" },
+];
 
 const seriesOptions = [
-    { id: 'mirac', label: 'Mirac' },
-    { id: 'marvel', label: 'Marvel' },
-    { id: 'other', label: 'Other' },
+  { id: "mirac", label: "Mirac" },
+  { id: "marvel", label: "Marvel" },
+  { id: "other", label: "Other" },
 ];
 
 const mockSchoolList = [
   {
-    id: 'sch_2',
-    schoolName: 'Oakridge International School',
-    johnsonSchoolId: 'JSN-124',
+    id: "sch_2",
+    schoolName: "Oakridge International School",
+    johnsonSchoolId: "JSN-124",
   },
   {
-    id: 'sch_3',
-    schoolName: 'Delhi Public School',
-    johnsonSchoolId: 'JSN-125',
+    id: "sch_3",
+    schoolName: "Delhi Public School",
+    johnsonSchoolId: "JSN-125",
   },
   {
-    id: 'sch_4',
-    schoolName: 'National Public School',
-    johnsonSchoolId: 'JSN-126',
+    id: "sch_4",
+    schoolName: "National Public School",
+    johnsonSchoolId: "JSN-126",
   },
   {
-    id: 'sch_5',
-    schoolName: 'Oakridge International School',
-    johnsonSchoolId: 'JSN-124',
+    id: "sch_5",
+    schoolName: "Oakridge International School",
+    johnsonSchoolId: "JSN-124",
   },
   {
-    id: 'sch_6',
-    schoolName: 'Delhi Public School',
-    johnsonSchoolId: 'JSN-125',
+    id: "sch_6",
+    schoolName: "Delhi Public School",
+    johnsonSchoolId: "JSN-125",
   },
 ];
 
 const classConfigurationSchema = z.object({
-  class: z.string().min(1, 'Class is required'),
-  sections: z.coerce.number().min(1, 'Number of sections is required'),
-  series: z.string().min(1, 'Series is required'),
+  class: z.string().min(1, "Class is required"),
+  sections: z.coerce.number().min(1, "Number of sections is required"),
+  series: z.string().min(1, "Series is required"),
 });
 
 const formSchema = z.object({
-  schoolName: z.string().min(1, 'School Name is required'),
+  schoolName: z.string().min(1, "School Name is required"),
   trustSocietyName: z.string(),
-  schoolBoard: z.enum(['State Board', 'CBSE', 'ICSE']),
+  schoolBoard: z.enum(["State Board", "CBSE", "ICSE"]),
+  schoolType: z.enum(["Co-Education", "Girls", "Boys"]),
   affiliationNo: z.string(),
   schoolLogo: z.any(),
   schoolWebsite: z.string().url().optional(),
   isBranch: z.boolean().default(false),
   parentSchool: z.string().optional(),
   email: z.string().email(),
-  principalName: z.string().min(1, 'Principal Name is required'),
-  principalMobile: z.string().min(1, 'Principal Mobile is required'),
-  inchargeName: z.string().min(1, 'Incharge Name is required'),
-  inchargeMobile: z.string().min(1, 'Incharge Mobile is required'),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  district: z.string().min(1, 'District is required'),
-  state: z.string().min(1, 'State is required'),
-  pincode: z.string().min(1, 'Pincode is required'),
+  principalName: z.string().min(1, "Principal Name is required"),
+  principalMobile: z.string().min(1, "Principal Mobile is required"),
+  inchargeName: z.string().min(1, "Incharge Name is required"),
+  inchargeMobile: z.string().min(1, "Incharge Mobile is required"),
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  district: z.string().min(1, "District is required"),
+  state: z.string().min(1, "State is required"),
+  pincode: z.string().min(1, "Pincode is required"),
   instagram: z.string().url().optional(),
   linkedIn: z.string().url().optional(),
   classConfigurations: z.array(classConfigurationSchema),
-  status: z.enum(['Active', 'Inactive', 'Pending', 'Trial']).default('Pending'),
-  expiryDate: z.string().min(1, 'Expiry Date is required'),
-  totalTeachers: z.coerce.number().min(0, 'Total teachers must be a positive number'),
-  totalStudents: z.coerce.number().min(0, 'Total students must be a positive number'),
+  status: z.enum(["Active", "Inactive", "Pending", "Trial"]).default("Pending"),
+  expiryDate: z.string().min(1, "Expiry Date is required"),
+  totalTeachers: z.coerce
+    .number()
+    .min(0, "Total teachers must be a positive number"),
+  totalStudents: z.coerce
+    .number()
+    .min(0, "Total students must be a positive number"),
 });
 
 export default function AddSchoolPage() {
   const router = useRouter();
-  const [schools, setSchools] = useState<{ id: string; schoolName: string; johnsonSchoolId: string; }[]>([]);
-  
+  const [schools, setSchools] = useState<
+    { id: string; schoolName: string; johnsonSchoolId: string }[]
+  >([]);
+
   const getExpiryDate = () => {
     const today = new Date();
     const nextYear = today.getFullYear() + 1;
@@ -121,8 +141,8 @@ export default function AddSchoolPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       isBranch: false,
-      classConfigurations: [{ class: '', sections: 1, series: '' }],
-      status: 'Pending',
+      classConfigurations: [{ class: "", sections: 1, series: "" }],
+      status: "Pending",
       expiryDate: getExpiryDate(),
     },
   });
@@ -144,12 +164,12 @@ export default function AddSchoolPage() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Add New School</h1>
-            <Link href="/dashboard/schools">
-              <Button variant="outline">Back to Schools</Button>
-            </Link>
+          <h1 className="text-2xl font-bold">Add New School</h1>
+          <Link href="/dashboard/schools">
+            <Button variant="outline">Back to Schools</Button>
+          </Link>
         </div>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>School Information</CardTitle>
@@ -177,7 +197,10 @@ export default function AddSchoolPage() {
                   <FormItem>
                     <FormLabel>Trust/Society Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Greenwood Educational Trust" {...field} />
+                      <Input
+                        placeholder="e.g., Greenwood Educational Trust"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,7 +212,10 @@ export default function AddSchoolPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>School Board *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a school board" />
@@ -199,6 +225,33 @@ export default function AddSchoolPage() {
                         <SelectItem value="State Board">State Board</SelectItem>
                         <SelectItem value="CBSE">CBSE</SelectItem>
                         <SelectItem value="ICSE">ICSE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="schoolType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>School Type *</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a school type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Co-Education">
+                          Co-Education
+                        </SelectItem>
+                        <SelectItem value="Girls">Girls</SelectItem>
+                        <SelectItem value="Boys">Boys</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -250,7 +303,10 @@ export default function AddSchoolPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a status" />
@@ -286,7 +342,9 @@ export default function AddSchoolPage() {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Is this a Branch?</FormLabel>
+                      <FormLabel className="text-base">
+                        Is this a Branch?
+                      </FormLabel>
                     </div>
                     <FormControl>
                       <Switch
@@ -297,14 +355,17 @@ export default function AddSchoolPage() {
                   </FormItem>
                 )}
               />
-              {form.watch('isBranch') && (
+              {form.watch("isBranch") && (
                 <FormField
                   control={form.control}
                   name="parentSchool"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Parent School</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a parent school" />
@@ -312,7 +373,10 @@ export default function AddSchoolPage() {
                         </FormControl>
                         <SelectContent>
                           {schools.map((school) => (
-                            <SelectItem key={school.id} value={`${school.johnsonSchoolId}-${school.schoolName}`}>
+                            <SelectItem
+                              key={school.id}
+                              value={`${school.johnsonSchoolId}-${school.schoolName}`}
+                            >
                               {school.johnsonSchoolId} - {school.schoolName}
                             </SelectItem>
                           ))}
@@ -330,143 +394,167 @@ export default function AddSchoolPage() {
         <Card>
           <CardHeader>
             <CardTitle>Licence Information</CardTitle>
-            <CardDescription>Details about the school's licence.</CardDescription>
+            <CardDescription>
+              Details about the school's licence.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                    control={form.control}
-                    name="totalTeachers"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Total Teachers</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="e.g., 50" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="totalStudents"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Total Students</FormLabel>
-                        <FormControl>
-                            <Input type="number" placeholder="e.g., 500" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+              <FormField
+                control={form.control}
+                name="totalTeachers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Teachers</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 50" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="totalStudents"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Students</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 500" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </CardContent>
         </Card>
 
         <Card>
-            <CardHeader>
-              <CardTitle>Class Configuration</CardTitle>
-              <CardDescription>Select the class and number of Students.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Class</TableHead>
-                    <TableHead>Series</TableHead>
-                    <TableHead>Licences</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((field, index) => (
-                    <TableRow key={field.id}>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`classConfigurations.${index}.class`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a class" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {classes.map((c) => (
-                                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`classConfigurations.${index}.series`}
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a series" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {seriesOptions.map((s) => (
-                                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormField
-                          control={form.control}
-                          name={`classConfigurations.${index}.sections`}
-                          render={({ field }) => (
-                            <FormItem>
+          <CardHeader>
+            <CardTitle>Class Configuration</CardTitle>
+            <CardDescription>
+              Select the class and number of Students.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Series</TableHead>
+                  <TableHead>Licences</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((field, index) => (
+                  <TableRow key={field.id}>
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`classConfigurations.${index}.class`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
                               <FormControl>
-                                <Input type="number" placeholder="Sections" {...field} />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a class" />
+                                </SelectTrigger>
                               </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button type="button" variant="destructive" onClick={() => remove(index)}>
-                          <span className="hidden md:block">Delete</span>
-                          <Trash2 className="block md:hidden" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => append({ class: '', sections: 1, series: '' })}
-                className="mt-4"
-              >
-                Add Class
-              </Button>
-            </CardContent>
+                              <SelectContent>
+                                {classes.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`classConfigurations.${index}.series`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a series" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {seriesOptions.map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`classConfigurations.${index}.sections`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="Sections"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => remove(index)}
+                      >
+                        <span className="hidden md:block">Delete</span>
+                        <Trash2 className="block md:hidden" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => append({ class: "", sections: 1, series: "" })}
+              className="mt-4"
+            >
+              Add Class
+            </Button>
+          </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Contact Information</CardTitle>
-            <CardDescription>Contact details for the school's key personnel.</CardDescription>
+            <CardDescription>
+              Contact details for the school's key personnel.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -618,7 +706,9 @@ export default function AddSchoolPage() {
         <Card>
           <CardHeader>
             <CardTitle>Social Media</CardTitle>
-            <CardDescription>Links to the school's social media profiles.</CardDescription>
+            <CardDescription>
+              Links to the school's social media profiles.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -629,7 +719,10 @@ export default function AddSchoolPage() {
                   <FormItem>
                     <FormLabel>Instagram</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://instagram.com/school" {...field} />
+                      <Input
+                        placeholder="https://instagram.com/school"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -642,7 +735,10 @@ export default function AddSchoolPage() {
                   <FormItem>
                     <FormLabel>LinkedIn</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://linkedin.com/school" {...field} />
+                      <Input
+                        placeholder="https://linkedin.com/school"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -653,8 +749,14 @@ export default function AddSchoolPage() {
         </Card>
 
         <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={() => router.push('/dashboard/schools')}>Cancel</Button>
-            <Button type="submit">Create School</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/dashboard/schools")}
+          >
+            Cancel
+          </Button>
+          <Button type="submit">Create School</Button>
         </div>
       </form>
     </Form>
