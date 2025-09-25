@@ -152,7 +152,7 @@ export default function NoticeBoardPage() {
                             </div>
                         </Button>
                         <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                            <PlusCircle className="h-5 w-5" />
+                            <Megaphone className="h-5 w-5" />
                             Add Notice
                         </Button>
                     </>

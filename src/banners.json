@@ -1,29 +1,42 @@
 [
   {
     "id": "1",
-    "name": "Welcome Banner",
+    "title": "Welcome to Greenwood High",
+    "description": "A vibrant community of learners and educators.",
+    "image": "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "school": "Greenwood High",
     "targetAudience": "Students",
     "startDate": "2024-05-10",
-    "endDate": "2024-05-20",
-    "media": "/banners/welcome.png"
+    "endDate": "2024-05-20"
   },
   {
     "id": "2",
-    "name": "Exam Schedule",
+    "title": "Finals Approaching!",
+    "description": "Best of luck to all students on their upcoming exams.",
+    "image": "https://images.unsplash.com/photo-1434030216411-8b78f4b7bbac?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "school": "Oakridge International",
     "targetAudience": "Teachers",
     "startDate": "2024-05-15",
-    "endDate": "2024-05-25",
-    "media": "/banners/exams.jpg"
+    "endDate": "2024-05-25"
   },
   {
     "id": "3",
-    "name": "Annual Day",
+    "title": "Annual Sports Day",
+    "description": "Join us for a day of fun, games, and healthy competition.",
+    "image": "https://images.unsplash.com/photo-1541252260730-0472e47b4b4d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "school": "Global Edge School",
     "targetAudience": "All",
     "startDate": "2024-06-01",
-    "endDate": "2024-06-05",
-    "media": "/banners/annual-day.mp4"
+    "endDate": "2024-06-05"
+  },
+  {
+    "id": "4",
+    "title": "Science Fair 2024",
+    "description": "Discover the amazing projects from our budding scientists.",
+    "image": "https://images.unsplash.com/photo-1532187644140-ce0a289a7f44?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "school": "All Schools",
+    "targetAudience": "All",
+    "startDate": "2024-06-10",
+    "endDate": "2024-06-12"
   }
 ]

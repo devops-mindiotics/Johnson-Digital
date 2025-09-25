@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
+import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const initialContentData = {
@@ -107,11 +107,11 @@ export default function ContentManagementPage() {
             </CardDescription>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-            <PlusCircle className="mr-2" />
+            <MonitorPlay className="mr-2" />
             Add New Content
           </Button>
            <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
-            <PlusCircle />
+            <MonitorPlay />
           </Button>
         </div>
       </CardHeader>

@@ -195,7 +195,7 @@ export default function UsersPage() {
                 </div>
             </Button>
             <Button className="hidden md:flex" onClick={() => router.push('/dashboard/users/add')}>
-              <PlusCircle className="mr-2 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" />
               Add User
             </Button>
           </div>
