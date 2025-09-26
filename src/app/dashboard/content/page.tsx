@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   Card,
@@ -30,7 +30,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { PlusCircle, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
+import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const initialContentData = {
@@ -76,7 +76,48 @@ const StatusBadge = ({ status }) => {
 
 export default function ContentManagementPage() {
     const [contentData, setContentData] = useState(initialContentData);
+    const [filteredData, setFilteredData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [filters, setFilters] = useState({
+      class: 'All',
+      series: 'All',
+      subject: 'All',
+      package: 'All'
+    });
+
+    const filterOptions = useMemo(() => {
+        const options = {
+            class: new Set(['All']),
+            series: new Set(['All']),
+            subject: new Set(['All'])
+        };
+        Object.keys(contentData).forEach(key => {
+            const [classValue, series, subject] = key.split('-');
+            if (classValue) options.class.add(classValue);
+            if (series) options.series.add(series);
+            if (subject) options.subject.add(subject);
+        });
+        return {
+            class: Array.from(options.class),
+            series: Array.from(options.series),
+            subject: Array.from(options.subject)
+        };
+    }, [contentData]);
+
+    useEffect(() => {
+        const filtered = Object.entries(contentData).filter(([key]) => {
+            const [classValue, series, subject] = key.split('-');
+            const classFilter = filters.class === 'All' || classValue === filters.class;
+            const seriesFilter = filters.series === 'All' || series === filters.series;
+            const subjectFilter = filters.subject === 'All' || subject === filters.subject;
+            return classFilter && seriesFilter && subjectFilter;
+        });
+        setFilteredData(Object.fromEntries(filtered));
+    }, [filters, contentData]);
+
+    const handleFilterChange = (filterName, value) => {
+        setFilters(prev => ({ ...prev, [filterName]: value }));
+    };
 
     const handleAddContent = (newContent) => {
         const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`;
@@ -87,7 +128,7 @@ export default function ContentManagementPage() {
         }));
         setIsAddDialogOpen(false);
     };
-    
+
     const handleUpdateContent = (lessonKey, contentIndex, updatedContent) => {
         setContentData(prevData => {
             const newContent = [...prevData[lessonKey]];
@@ -107,16 +148,65 @@ export default function ContentManagementPage() {
             </CardDescription>
           </div>
           <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-            <PlusCircle className="mr-2" />
+            <MonitorPlay className="mr-2" />
             Add New Content
           </Button>
            <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
-            <PlusCircle />
+            <MonitorPlay />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <ContentList contentData={contentData} onUpdateContent={handleUpdateContent} />
+        <div className="mb-6">
+            <h3 className="text-lg font-medium mb-3">Filters</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="class-filter">Class</Label>
+                    <Select value={filters.class} onValueChange={(value) => handleFilterChange('class', value)}>
+                        <SelectTrigger id="class-filter">
+                            <SelectValue placeholder="Select a class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {filterOptions.class.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="series-filter">Series</Label>
+                     <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
+                        <SelectTrigger id="series-filter">
+                            <SelectValue placeholder="Select a series" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {filterOptions.series.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="subject-filter">Subject</Label>
+                    <Select value={filters.subject} onValueChange={(value) => handleFilterChange('subject', value)}>
+                        <SelectTrigger id="subject-filter">
+                            <SelectValue placeholder="Select a subject" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {filterOptions.subject.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="package-filter">Package</Label>
+                     <Select disabled>
+                        <SelectTrigger id="package-filter">
+                            <SelectValue placeholder="Select a package" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </div>
+        <ContentList contentData={filteredData} onUpdateContent={handleUpdateContent} />
       </CardContent>
       <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
     </Card>
@@ -126,58 +216,72 @@ export default function ContentManagementPage() {
 function ContentList({ contentData, onUpdateContent }) {
     const [openKey, setOpenKey] = useState(Object.keys(contentData)[0]);
 
-    return (
-        <div className="space-y-4">
-            {Object.entries(contentData).map(([key, contents]) => {
-                const [classValue, series, subject, lesson] = key.split('-');
-                const isRowOpen = openKey === key;
+    useEffect(() => {
+        if (Object.keys(contentData).length > 0) {
+            setOpenKey(Object.keys(contentData)[0]);
+        } else {
+            setOpenKey(null);
+        }
+    }, [contentData]);
 
-                return (
-                    <Card key={key} className="overflow-hidden">
-                        <CardHeader 
-                            className="flex flex-row justify-between items-center p-4 cursor-pointer hover:bg-muted/50"
-                            onClick={() => setOpenKey(isRowOpen ? null : key)}
-                        >
-                           <div>
-                                <CardTitle className="text-lg">{lesson}</CardTitle>
-                                <CardDescription className="flex items-center gap-2 text-sm pt-1">
-                                   <span>{`Class - ${classValue}`}</span>
-                                   <span>&bull;</span>
-                                   <span>{series}</span>
-                                   <span>&bull;</span>
-                                   <span>{subject}</span>
-                                </CardDescription>
-                           </div>
-                            <div className="flex items-center gap-2">
-                                <LessonActions lesson={{ class: classValue, series, subject, lesson }} />
-                                {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                            </div>
-                        </CardHeader>
-                        {isRowOpen && (
-                            <CardContent className="p-4 border-t">
-                                <h4 className="font-semibold mb-3 text-md">Contents</h4>
-                                <div className="space-y-3">
-                                    {contents.map((content, index) => (
-                                        <div key={index} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
-                                            <div className="flex items-center gap-3">
-                                                {getContentTypeIcon(content.contentType)}
-                                                <div>
-                                                    <p className="font-medium">{content.contentName}</p>
-                                                    <p className="text-sm text-muted-foreground">{content.contentType}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <StatusBadge status={content.status} />
-                                                <ContentActions content={content} contentIndex={index} lessonKey={key} onUpdateContent={onUpdateContent} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        )}
-                    </Card>
-                )
-            })}
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.keys(contentData).length === 0 ? (
+                <div className="col-span-full text-center py-10">
+                    <p className="text-muted-foreground">No content found matching your filters.</p>
+                </div>
+            ) : (
+              Object.entries(contentData).map(([key, contents]) => {
+                  const [classValue, series, subject, lesson] = key.split('-');
+                  const isRowOpen = openKey === key;
+
+                  return (
+                      <Card key={key} className="overflow-hidden">
+                          <CardHeader
+                              className="flex flex-row justify-between items-center p-4 cursor-pointer hover:bg-muted/50"
+                              onClick={() => setOpenKey(isRowOpen ? null : key)}
+                          >
+                             <div>
+                                  <CardTitle className="text-lg">{lesson}</CardTitle>
+                                  <CardDescription className="flex items-center gap-2 text-sm pt-1">
+                                     <span>{`Class - ${classValue}`}</span>
+                                     <span>&bull;</span>
+                                     <span>{series}</span>
+                                     <span>&bull;</span>
+                                     <span>{subject}</span>
+                                  </CardDescription>
+                             </div>
+                              <div className="flex items-center gap-2">
+                                  <LessonActions lesson={{ class: classValue, series, subject, lesson }} />
+                                  {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                              </div>
+                          </CardHeader>
+                          {isRowOpen && (
+                              <CardContent className="p-4 border-t">
+                                  <h4 className="font-semibold mb-3 text-md">Contents</h4>
+                                  <div className="space-y-3">
+                                      {contents.map((content, index) => (
+                                          <div key={index} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
+                                              <div className="flex items-center gap-3">
+                                                  {getContentTypeIcon(content.contentType)}
+                                                  <div>
+                                                      <p className="font-medium">{content.contentName}</p>
+                                                      <p className="text-sm text-muted-foreground">{content.contentType}</p>
+                                                  </div>
+                                              </div>
+                                              <div className="flex items-center gap-4">
+                                                  <StatusBadge status={content.status} />
+                                                  <ContentActions content={content} contentIndex={index} lessonKey={key} onUpdateContent={onUpdateContent} />
+                                              </div>
+                                          </div>
+                                      ))}
+                                  </div>
+                              </CardContent>
+                          )}
+                      </Card>
+                  )
+              })
+            )}
         </div>
     )
 }
@@ -211,13 +315,13 @@ function ContentActions({ content, contentIndex, lessonKey, onUpdateContent }) {
                 <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>Edit</DropdownMenuItem>
                 <DeleteContentDialog trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete</DropdownMenuItem>} />
             </DropdownMenuContent>
-            <EditContentDialog 
-                isOpen={isEditDialogOpen} 
-                onOpenChange={setIsEditDialogOpen} 
-                content={content} 
-                contentIndex={contentIndex} 
-                lessonKey={lessonKey} 
-                onUpdateContent={onUpdateContent} 
+            <EditContentDialog
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                content={content}
+                contentIndex={contentIndex}
+                lessonKey={lessonKey}
+                onUpdateContent={onUpdateContent}
             />
         </DropdownMenu>
     )

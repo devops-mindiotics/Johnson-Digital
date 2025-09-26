@@ -118,18 +118,21 @@ export default function ViewUserPage() {
   }
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>View User Details</CardTitle>
-        <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)} size="icon">
-            <Pencil className="h-4 w-4" />
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-8">
-            {/* General Information */}
-            <div>
-                <h3 className="text-lg font-semibold mb-4">General Information</h3>
+    <div className="space-y-6">
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>View User Details</CardTitle>
+                <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)} size="icon">
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            </CardHeader>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <h3 className="text-lg font-bold">General Information</h3>
+            </CardHeader>
+            <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <InfoField label="First Name" value={user.firstName} />
                     <InfoField label="Last Name" value={user.lastName} />
@@ -139,22 +142,28 @@ export default function ViewUserPage() {
                     <InfoField label="Type" value={user.type} />
                     <InfoField label="Status" value={user.status} />
                 </div>
-            </div>
+            </CardContent>
+        </Card>
 
-            {/* School Information */}
-            {loggedInUser && loggedInUser.role === 'Super Admin' && (
-              <div>
-                  <h3 className="text-lg font-semibold mb-4">School Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      <InfoField label="School" value={user.school} />
-                      <InfoField label="School Unique ID" value={user.schoolUniqueId} />
-                  </div>
-              </div>
-            )}
+        {loggedInUser && loggedInUser.role === 'Super Admin' && (
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-bold">School Information</h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <InfoField label="School" value={user.school} />
+                        <InfoField label="School Unique ID" value={user.schoolUniqueId} />
+                    </div>
+                </CardContent>
+            </Card>
+        )}
 
-            {/* Address Information */}
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Address Information</h3>
+        <Card>
+            <CardHeader>
+                <h3 className="text-lg font-bold">Address Information</h3>
+            </CardHeader>
+            <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <InfoField label="Address" value={user.address} />
                     <InfoField label="City" value={user.city} />
@@ -162,52 +171,63 @@ export default function ViewUserPage() {
                     <InfoField label="State" value={user.state} />
                     <InfoField label="Pincode" value={user.pincode} />
                 </div>
-            </div>
+            </CardContent>
+        </Card>
 
-          {/* Role-Specific Information */}
-          {user.type === 'Teacher' && (
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Teacher Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="Employee ID" value={user.employeeId} />
-                    <InfoField label="Joining Date" value={user.joiningDate} />
-                    <InfoField label="Experience" value={user.experience} />
-                    <InfoField label="Expiry Date" value={user.expiryDate} />
-                </div>
-            </div>
-          )}
+        {user.type === 'Teacher' && (
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-bold">Teacher Details</h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <InfoField label="Employee ID" value={user.employeeId} />
+                        <InfoField label="Joining Date" value={user.joiningDate} />
+                        <InfoField label="Experience" value={user.experience} />
+                        <InfoField label="Expiry Date" value={user.expiryDate} />
+                    </div>
+                </CardContent>
+            </Card>
+        )}
 
-          {user.type === 'School Admin' && (
-            <div>
-                <h3 className="text-lg font-semibold mb-4">School Admin Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="Employee ID" value={user.employeeId} />
-                    <InfoField label="Joining Date" value={user.joiningDate} />
-                    <InfoField label="Experience" value={user.experience} />
-                    <InfoField label="Expiry Date" value={user.expiryDate} />
-                </div>
-            </div>
-          )}
+        {user.type === 'School Admin' && (
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-bold">School Admin Details</h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <InfoField label="Employee ID" value={user.employeeId} />
+                        <InfoField label="Joining Date" value={user.joiningDate} />
+                        <InfoField label="Experience" value={user.experience} />
+                        <InfoField label="Expiry Date" value={user.expiryDate} />
+                    </div>
+                </CardContent>
+            </Card>
+        )}
 
-          {user.type === 'Student' && (
-            <div>
-                <h3 className="text-lg font-semibold mb-4">Student Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <InfoField label="Father Name/Guardian Name" value={user.fatherName} />
-                    <InfoField label="Mother Name" value={user.motherName} />
-                    <InfoField label="Admission Number" value={user.admissionNumber} />
-                    <InfoField label="Date of Birth" value={user.dateOfBirth} />
-                    <InfoField label="Class" value={user.class} />
-                    <InfoField label="Section" value={user.section} />
-                    <InfoField label="Permanent Education Number (PEN)" value={user.permanentEducationNumber} />
-                </div>
-            </div>
-          )}
-        </div>
+        {user.type === 'Student' && (
+            <Card>
+                <CardHeader>
+                    <h3 className="text-lg font-bold">Student Details</h3>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <InfoField label="Father Name/Guardian Name" value={user.fatherName} />
+                        <InfoField label="Mother Name" value={user.motherName} />
+                        <InfoField label="Admission Number" value={user.admissionNumber} />
+                        <InfoField label="Date of Birth" value={user.dateOfBirth} />
+                        <InfoField label="Class" value={user.class} />
+                        <InfoField label="Section" value={user.section} />
+                        <InfoField label="Permanent Education Number (PEN)" value={user.permanentEducationNumber} />
+                    </div>
+                </CardContent>
+            </Card>
+        )}
+
         <div className="mt-8">
             <Button variant="outline" onClick={() => router.push('/dashboard/users')}>Back</Button>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

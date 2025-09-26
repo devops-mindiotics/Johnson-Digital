@@ -33,7 +33,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { PlusCircle, Paperclip, Megaphone, Calendar, User, Users, FileText, Image, Video } from 'lucide-react';
+import { PlusCircle, Paperclip, Megaphone, Calendar, User, Users, FileText, Image, Video, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
@@ -144,10 +144,18 @@ export default function NoticeBoardPage() {
                   </SelectContent>
                 </Select>
                 {canAddNotice && (
-                    <Button onClick={() => setIsAddDialogOpen(true)}>
-                        <PlusCircle className="h-4 w-4 md:mr-2" />
-                        <span className="hidden md:inline">Add Notice</span>
-                    </Button>
+                    <>
+                        <Button onClick={() => setIsAddDialogOpen(true)} className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                            <Megaphone className="h-5 w-5" />
+                            <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                                <Plus className="h-3 w-3 text-white" />
+                            </div>
+                        </Button>
+                        <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                            <Megaphone className="h-5 w-5" />
+                            Add Notice
+                        </Button>
+                    </>
                 )}
             </div>
           </div>

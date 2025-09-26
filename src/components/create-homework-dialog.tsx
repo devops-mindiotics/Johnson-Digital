@@ -30,7 +30,7 @@ import { Textarea } from './ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, BookOpen, Plus } from 'lucide-react';
 
 const formSchema = z.object({
   class: z.string().min(1, { message: 'Class is required' }),
@@ -73,12 +73,15 @@ export function CreateHomeworkDialog({
     <Dialog>
       <DialogTrigger asChild>
         {isIcon ? (
-          <Button size="icon" variant="ghost">
-            <PlusCircle />
+          <Button size="icon" variant="outline" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+            <BookOpen className="h-5 w-5" />
+            <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                <Plus className="h-3 w-3 text-white" />
+            </div>
           </Button>
         ) : (
           <Button>
-            <PlusCircle className="mr-2" /> Create Homework
+            <BookOpen className="mr-2" /> Create Homework
           </Button>
         )}
       </DialogTrigger>
