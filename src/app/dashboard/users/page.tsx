@@ -235,7 +235,7 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 {user && user.role === 'Super Admin' && <TableHead>School</TableHead>}
                 <TableHead>Role</TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead>Class</TableHead>
                 <TableHead>Expires on</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -261,9 +261,7 @@ export default function UsersPage() {
                   {user && user.role === 'Super Admin' && <TableCell>{u.schoolId} - {u.school}</TableCell>}
                   <TableCell>{u.role}</TableCell>
                   <TableCell>
-                    {u.role === 'Student' && `Class: ${u.class}-${u.section}`}
-                    {u.role === 'Teacher' && `Experience: ${u.experience}`}
-                    {(u.role === 'School Admin') && 'N/A'}
+                    {u.role === 'Student' ? `${u.class}-${u.section}` : 'N/A'}
                   </TableCell>
                   <TableCell>{u.expiresOn}</TableCell>
                   <TableCell>
@@ -337,11 +335,9 @@ export default function UsersPage() {
                   <div>{u.role}</div>
                 </div>
                 <div>
-                  <div className="font-semibold">Details</div>
+                  <div className="font-semibold">Class</div>
                   <div>
-                    {u.role === 'Student' && `Class: ${u.class}-${u.section}`}
-                    {u.role === 'Teacher' && `Experience: ${u.experience}`}
-                    {(u.role === 'School Admin') && 'N/A'}
+                    {u.role === 'Student' ? `${u.class}-${u.section}`: 'N/A'}
                   </div>
                 </div>
                 <div>

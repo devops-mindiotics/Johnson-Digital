@@ -11,4 +11,9 @@
   .file-upload-area:hover {
     background-color: hsl(var(--accent));
   }
+
+  .user-mobile {
+    font-size: 0.8rem;
+    color: hsl(var(--muted-foreground));
+  }
   
