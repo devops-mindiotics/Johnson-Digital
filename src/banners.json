@@ -1,42 +1,47 @@
 [
   {
     "id": "1",
-    "title": "Welcome to Greenwood High",
-    "description": "A vibrant community of learners and educators.",
-    "image": "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "name": "Summer Camp Enrollment Open",
     "school": "Greenwood High",
     "targetAudience": "Students",
-    "startDate": "2024-05-10",
-    "endDate": "2024-05-20"
+    "startDate": "2024-06-01",
+    "endDate": "2024-06-30",
+    "media": "https://picsum.photos/1280/720?q=1"
   },
   {
     "id": "2",
-    "title": "Finals Approaching!",
-    "description": "Best of luck to all students on their upcoming exams.",
-    "image": "https://images.unsplash.com/photo-1434030216411-8b78f4b7bbac?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "school": "Oakridge International",
-    "targetAudience": "Teachers",
-    "startDate": "2024-05-15",
-    "endDate": "2024-05-25"
+    "name": "Back to School Night",
+    "school": "Northwood Elementary",
+    "targetAudience": "All",
+    "startDate": "2024-08-15",
+    "endDate": "2024-08-15",
+    "media": "https://picsum.photos/1280/720?q=2"
   },
   {
     "id": "3",
-    "title": "Annual Sports Day",
-    "description": "Join us for a day of fun, games, and healthy competition.",
-    "image": "https://images.unsplash.com/photo-1541252260730-0472e47b4b4d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "school": "Global Edge School",
+    "name": "Annual Science Fair",
+    "school": "Westwood Middle School",
     "targetAudience": "All",
-    "startDate": "2024-06-01",
-    "endDate": "2024-06-05"
+    "startDate": "2024-10-20",
+    "endDate": "2024-10-22",
+    "media": "https://picsum.photos/1280/720?q=3"
   },
   {
     "id": "4",
-    "title": "Science Fair 2024",
-    "description": "Discover the amazing projects from our budding scientists.",
-    "image": "https://images.unsplash.com/photo-1532187644140-ce0a289a7f44?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "school": "All Schools",
+    "name": "Parent-Teacher Conferences",
+    "school": "Greenwood High",
+    "targetAudience": "Teachers",
+    "startDate": "2024-09-10",
+    "endDate": "2024-09-12",
+    "media": "https://picsum.photos/1280/720?q=4"
+  },
+  {
+    "id": "5",
+    "name": "School Holiday Concert",
+    "school": "Northwood Elementary",
     "targetAudience": "All",
-    "startDate": "2024-06-10",
-    "endDate": "2024-06-12"
+    "startDate": "2024-12-15",
+    "endDate": "2024-12-15",
+    "media": "https://picsum.photos/1280/720?q=5"
   }
 ]
