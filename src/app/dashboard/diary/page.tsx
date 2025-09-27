@@ -233,7 +233,15 @@ const formSchema = z.object({
     sectionId: z.string().min(1, "Please select a section."),
     assignedTo: z.string(),
     studentIds: z.array(z.string()).optional(),
-    attachments: z.instanceof(FileList).optional(),
+     attachments: z
+      .any()
+      .refine(
+        (v) =>
+          v === undefined ||
+          (typeof FileList !== "undefined" && v instanceof FileList),
+        "Invalid file selection"
+      )
+      .optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;

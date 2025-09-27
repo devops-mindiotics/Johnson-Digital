@@ -2,6 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+
+export const dynamic = "error";
+
 import {
   Card,
   CardContent,
