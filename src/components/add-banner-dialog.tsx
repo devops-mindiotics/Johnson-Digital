@@ -37,6 +37,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -188,30 +189,36 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
                         <Button variant="outline" className="w-full justify-start font-normal">
                           <span className="truncate">
                             {(!field.value || field.value.length === 0) && "Select schools"}
-                            {field.value?.length === 1 && field.value[0]}
-                            {field.value?.length > 1 && `${field.value.length} schools selected`}
+                            {field.value?.includes('All') && 'All schools selected'}
+                            {field.value && !field.value.includes('All') && field.value.length === 1 && field.value[0]}
+                            {field.value && !field.value.includes('All') && field.value.length > 1 && `${field.value.length} schools selected`}
                           </span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                         <DropdownMenuCheckboxItem
-                          checked={field.value?.length === schoolsData.length}
                           onCheckedChange={(checked) => {
-                            field.onChange(checked ? schoolsData.map(s => s.name) : []);
+                            field.onChange(checked ? ['All', ...schoolsData.map(s => s.name)] : []);
                           }}
+                          checked={field.value?.includes('All')}
                         >
-                          All Schools
+                          All
                         </DropdownMenuCheckboxItem>
+                        <DropdownMenuSeparator />
                         {schoolsData.map((school) => (
                           <DropdownMenuCheckboxItem
                             key={school.id}
                             checked={field.value?.includes(school.name)}
                             onCheckedChange={(checked) => {
-                              const currentSelection = Array.isArray(field.value) ? field.value : [];
+                              const currentSelection = Array.isArray(field.value) ? field.value.filter(v => v !== 'All') : [];
                               const newSelection = checked
                                 ? [...currentSelection, school.name]
                                 : currentSelection.filter((name) => name !== school.name);
-                              field.onChange(newSelection);
+                              if (newSelection.length === schoolsData.length) {
+                                field.onChange(['All', ...newSelection]);
+                              } else {
+                                field.onChange(newSelection);
+                              }
                             }}
                           >
                             {school.name}
