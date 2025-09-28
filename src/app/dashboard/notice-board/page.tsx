@@ -176,7 +176,7 @@ export default function NoticeBoardPage() {
                                         <span>{notice.date}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <User className="h-3.5 w-3.5" />
+                                        <User className="h-4 w-4 text-primary" />
                                         <span>{notice.author}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">

@@ -76,6 +76,12 @@ const mockUsers = [
     },
 ];
 
+export async function generateStaticParams() {
+    return mockUsers.map(user => ({
+      id: user.id,
+    }));
+  }
+
 const InfoField = ({ label, value }) => (
     <div className="flex flex-col space-y-1">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
@@ -214,7 +220,7 @@ export default function ViewUserPage() {
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <InfoField label="Father Name/Guardian Name" value={user.fatherName} />
-                        <InfoField label="Mother Name" value={user.motherName} />
+                        <InfoFiellabel="Mother Name" value={user.motherName} />
                         <InfoField label="Admission Number" value={user.admissionNumber} />
                         <InfoField label="Date of Birth" value={user.dateOfBirth} />
                         <InfoField label="Class" value={user.class} />
