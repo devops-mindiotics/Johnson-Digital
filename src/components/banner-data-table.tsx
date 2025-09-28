@@ -1,22 +1,26 @@
-'use client'
+'use client';
 
-import * as React from "react"
+import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
+  SortingState,
+  ColumnFiltersState,
+} from "@tanstack/react-table";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AddBannerDialog } from "@/components/add-banner-dialog";
+import { ViewBannerDialog } from "@/components/view-banner-dialog";
+import bannersData from "@/banners.json";
+import schoolsData from "@/schools.json";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,145 +28,78 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { DatePicker } from "@/components/ui/date-picker" 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from "@/components/ui/card";
-
-import bannersData from "@/banners.json";
-import schoolsData from "@/schools.json";
-import { useIsMobile } from "@/hooks/use-mobile";
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export type Banner = {
-  id: string
-  name: string
-  school: string
-  targetAudience: "All" | "School Admins" | "Teachers" | "Students"
-  startDate: string
-  endDate: string
-  media: string
-}
-
-export const columns: ColumnDef<Banner>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "school",
-    header: "School",
-  },
-  {
-    accessorKey: "targetAudience",
-    header: "Target Audience",
-  },
-  {
-    accessorKey: "startDate",
-    header: "Start Date",
-  },
-  {
-    accessorKey: "endDate",
-    header: "End Date",
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const banner = row.original
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(banner.id)}
-            >
-              Copy banner ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Edit banner</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">Delete banner</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
-
+  id: string;
+  name: string;
+  school: string;
+  targetAudience: "All" | "School Admins" | "Teachers" | "Students";
+  startDate: string;
+  endDate: string;
+  media: string;
+};
 
 const useUserRole = () => {
-
-  return "schoolAdmin"; 
-}
-
+  return "schoolAdmin";
+};
 
 export function BannerDataTable() {
   const [data, setData] = React.useState<Banner[]>([]);
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
-  const userRole = useUserRole();
-  const isMobile = useIsMobile();
-
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
   React.useEffect(() => {
     setData(bannersData);
   }, []);
 
+  const addBanner = (banner: Omit<Banner, "id">) => {
+    const newBanner = {
+      id: (data.length + 1).toString(),
+      ...banner,
+    };
+    setData([newBanner, ...data]);
+  };
+
+  const updateBanner = (updatedBanner: Banner) => {
+    setData(data.map((banner) => (banner.id === updatedBanner.id ? updatedBanner : banner)));
+  };
+
+  const deleteBanner = (bannerId: string) => {
+    setData(data.filter((banner) => banner.id !== bannerId));
+  };
+
+  const columns: ColumnDef<Banner>[] = [
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "school",
+      header: "School",
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <ViewBannerDialog banner={row.original}>
+            <Button variant="outline" size="sm">
+              View
+            </Button>
+          </ViewBannerDialog>
+          <AddBannerDialog banner={row.original} onSave={(updatedBanner) => updateBanner({ ...row.original, ...updatedBanner })}>
+            <Button variant="outline" size="sm">
+              Edit
+            </Button>
+          </AddBannerDialog>
+          <Button variant="destructive" size="sm" onClick={() => deleteBanner(row.original.id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   const table = useReactTable({
     data,
@@ -173,162 +110,66 @@ export function BannerDataTable() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
-      columnVisibility,
-      rowSelection,
     },
-  })
+  });
+
+  const userRole = useUserRole();
 
   return (
-    <div className="w-full">
-        <div className="flex flex-wrap items-center py-4 gap-2">
-            <Input
-              placeholder="Filter banners by name..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("name")?.setFilterValue(event.target.value)
-              }
-              className="w-full sm:w-auto flex-grow"
-            />
-            {userRole !== 'schoolAdmin' && (
-                <Select
-                    value={(table.getColumn("school")?.getFilterValue() as string) ?? ""}
-                    onValueChange={(value) => {
-                        table.getColumn("school")?.setFilterValue(value === "all" ? "" : value)
-                    }}
-                >
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Filter by school" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Schools</SelectItem>
-                        {schoolsData.map(school => (
-                            <SelectItem key={school.id} value={school.name}>{school.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
-             <Select
-                value={(table.getColumn("targetAudience")?.getFilterValue() as string) ?? ""}
-                onValueChange={(value) => {
-                    table.getColumn("targetAudience")?.setFilterValue(value === "all" ? "" : value)
-                }}
-            >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by audience" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Audiences</SelectItem>
-                    <SelectItem value="All">All</SelectItem>
-                    <SelectItem value="School Admins">School Admins</SelectItem>
-                    <SelectItem value="Teachers">Teachers</SelectItem>
-                    <SelectItem value="Students">Students</SelectItem>
-                </SelectContent>
-            </Select>
-
-            <div className="w-full sm:w-auto">
-                <DatePicker
-                    value={(table.getColumn("startDate")?.getFilterValue() as string) ?? ""}
-                    onChange={(value) => table.getColumn("startDate")?.setFilterValue(value)}
-                    placeholder="Filter by start date"
-                />
-            </div>
-            <div className="w-full sm:w-auto">
-                <DatePicker
-                    value={(table.getColumn("endDate")?.getFilterValue() as string) ?? ""}
-                    onChange={(value) => table.getColumn("endDate")?.setFilterValue(value)}
-                    placeholder="Filter by end date"
-                />
-            </div>
-      </div>
-      {isMobile ? (
-          <div className="space-y-4">
-              {table.getRowModel().rows.map(row => (
-                  <Card key={row.id}>
-                      <CardHeader>
-                          <CardTitle>{row.original.name}</CardTitle>
-                          <CardDescription>{row.original.school}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="grid gap-2">
-                          <div className="flex justify-between">
-                              <span className="font-semibold">Target Audience:</span>
-                              <span>{row.original.targetAudience}</span>
-                          </div>
-                          <div className="flex justify-between">
-                              <span className="font-semibold">Start Date:</span>
-                              <span>{row.original.startDate}</span>
-                          </div>
-                          <div className="flex justify-between">
-                              <span className="font-semibold">End Date:</span>
-                              <span>{row.original.endDate}</span>
-                          </div>
-                          <div className="flex justify-end mt-2">
-                            {flexRender(row.getVisibleCells().find(cell => cell.column.id === 'actions')!.column.columnDef.cell, row.getVisibleCells().find(cell => cell.column.id === 'actions')!.getContext())}
-                          </div>
-                      </CardContent>
-                  </Card>
+    <div className="w-full space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Filter banners by name..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+          className="flex-grow"
+        />
+        {userRole !== 'schoolAdmin' && (
+          <Select
+            value={(table.getColumn("school")?.getFilterValue() as string) ?? ""}
+            onValueChange={(value) => table.getColumn("school")?.setFilterValue(value === "all" ? "" : value)}
+          >
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by school" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Schools</SelectItem>
+              {schoolsData.map((school) => (
+                <SelectItem key={school.id} value={school.name}>
+                  {school.name}
+                </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        )}
+        <AddBannerDialog onSave={addBanner} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {table.getRowModel().rows.map((row) => (
+          <div key={row.id} className="border rounded-lg overflow-hidden shadow-lg">
+            <div className="relative h-40 w-full">
+              <img
+                src={row.original.media}
+                alt={row.original.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold truncate">{row.original.name}</h3>
+              <p className="text-sm text-muted-foreground truncate">{row.original.school}</p>
+              <div className="mt-4 flex justify-end">
+                {flexRender(row.getVisibleCells().find(c => c.column.id === 'actions')!.column.columnDef.cell, row.getVisibleCells().find(c => c.column.id === 'actions')!.getContext())}
+              </div>
+            </div>
           </div>
-      ) : (
-        <div className="rounded-md border overflow-x-auto">
-            <Table>
-            <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                    return (
-                        <TableHead key={header.id}>
-                        {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                            )}
-                        </TableHead>
-                    )
-                    })}
-                </TableRow>
-                ))}
-            </TableHeader>
-            <TableBody>
-                {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                    <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    >
-                    {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                        {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                        )}
-                        </TableCell>
-                    ))}
-                    </TableRow>
-                ))
-                ) : (
-                <TableRow>
-                    <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                    >
-                    No results.
-                    </TableCell>
-                </TableRow>
-                )}
-            </TableBody>
-            </Table>
-        </div>
-      )}
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+        ))}
+      </div>
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="text-sm text-muted-foreground">
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </div>
         <div className="space-x-2">
           <Button
@@ -350,5 +191,5 @@ export function BannerDataTable() {
         </div>
       </div>
     </div>
-  )
+  );
 }
