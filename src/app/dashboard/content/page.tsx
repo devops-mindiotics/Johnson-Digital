@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import {
   Card,
@@ -84,6 +85,13 @@ export default function ContentManagementPage() {
       subject: 'All',
       package: 'All'
     });
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get('add') === 'true') {
+            setIsAddDialogOpen(true);
+        }
+    }, [searchParams]);
 
     const filterOptions = useMemo(() => {
         const options = {

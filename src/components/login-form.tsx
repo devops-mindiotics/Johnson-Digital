@@ -36,7 +36,7 @@ const FormSchema = z.object({
 });
 
 const mockUsers: Record<string, Omit<User, 'mobile'>> = {
-  '1111111111': { id: 'user-1', name: 'Dr. Evelyn Reed', role: 'Super Admin', profilePic: 'https://picsum.photos/100/100?q=1', gender: 'female' },
+  '1111111111': { id: 'user-1', name: 'Evelyn Reed', role: 'Super Admin', profilePic: 'https://picsum.photos/100/100?q=1', gender: 'female' },
   '2222222222': { id: 'user-2', name: 'John Smith', role: 'School Admin', profilePic: 'https://picsum.photos/100/100?q=2', gender: 'male' },
   '3333333333': { id: 'user-3', name: 'Alice Johnson', role: 'Teacher', profilePic: 'https://picsum.photos/100/100?q=3', gender: 'female' },
   '4444444444': { id: 'user-4', name: 'Bobby Tables', role: 'Student', profilePic: 'https://picsum.photos/100/100?q=4', class: '10th Grade', gender: 'male' },
@@ -205,7 +205,7 @@ export function LoginForm() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            MindIoTics Tech
+            mindIoTics Tech.
           </Link>
         </p>
       </div>

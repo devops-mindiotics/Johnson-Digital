@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LogOut,
   Plus,
@@ -35,37 +36,51 @@ import { School, ClipboardList } from 'lucide-react';
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const showBackButton = pathname !== '/dashboard';
 
   if (!user) return null;
 
-  const baseName = user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '');
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const baseName = user.name ? user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
   let displayName = baseName;
 
-  if (user.role !== 'Student') {
-      if (user.gender === 'male') {
+  if (user.role !== 'Student' && typeof user.gender === 'string' && user.gender) {
+      const gender = user.gender.toLowerCase();
+      if (gender === 'male') {
           displayName = `Mr. ${baseName}`;
-      } else if (user.gender === 'female') {
+      } else if (gender === 'female') {
           displayName = `Ms. ${baseName}`;
       }
   }
 
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
-            <ChevronLeft className="h-5 w-5" />
-            <span className="sr-only">Back</span>
-        </Button>
-        <SidebarTrigger />
-        <h1 className="text-lg font-semibold md:text-xl">
-          Hello, {displayName}!
-        </h1>
-        {user.role === 'Student' && (
-          <p className="hidden text-sm text-muted-foreground sm:block">
-            ({user.class})
-          </p>
+        {showBackButton && (
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
+                <ChevronLeft className="h-5 w-5" />
+                <span className="sr-only">Back</span>
+            </Button>
         )}
+        <SidebarTrigger />
+        <div className="flex flex-col">
+            <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
+            <div className="flex items-center gap-2">
+                <p className="text-sm">{displayName}</p>
+                {user.role === 'Student' && (
+                <p className="hidden text-sm text-muted-foreground sm:block">
+                    ({user.class})
+                </p>
+                )}
+            </div>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         {user.role === 'Student' && (
@@ -118,7 +133,7 @@ export function DashboardHeader() {
       <School className="mr-2 h-4 w-4 text-blue-600" />
       Add School
     </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => router.push('/dashboard/content')}>
+    <DropdownMenuItem onClick={() => router.push('/dashboard/content?add=true')}>
       <ClipboardList className="mr-2 h-4 w-4 text-green-600" />
       Add Content
     </DropdownMenuItem>

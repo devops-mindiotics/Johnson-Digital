@@ -17,7 +17,7 @@ export function DashboardFooter({ className }: { className?: string }) {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        MindIoTics Tech
+                        mindIoTics Tech.
                     </a>
                 </p>
             </div>

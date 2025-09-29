@@ -79,6 +79,17 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
+  const baseName = user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '');
+  let displayName = baseName;
+
+  if (user.role !== 'Student') {
+    if (user.gender === 'male') {
+      displayName = `Mr. ${baseName}`;
+    } else if (user.gender === 'female') {
+      displayName = `Ms. ${baseName}`;
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -98,10 +109,10 @@ export default function ProfilePage() {
                       ? URL.createObjectURL(selectedFile)
                       : user.profilePic
                   }
-                  alt={user.name}
+                  alt={displayName}
                   data-ai-hint="person avatar"
                 />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{baseName.charAt(0)}</AvatarFallback>
               </Avatar>
               <Button
                 size="icon"
@@ -120,7 +131,7 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">{user.name}</h2>
+              <h2 className="text-2xl font-bold">{displayName}</h2>
               <p className="text-muted-foreground">{user.role}</p>
               {user.role === 'Student' && (
                 <p className="text-muted-foreground">{user.class}</p>
