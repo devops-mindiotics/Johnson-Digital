@@ -12,23 +12,13 @@ import {
   SortingState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AddBannerDialog } from "@/components/add-banner-dialog";
 import { ViewBannerDialog } from "@/components/view-banner-dialog";
-import bannersData from "@/banners.json";
 import schoolsData from "@/schools.json";
-import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export type Banner = {
@@ -42,33 +32,20 @@ export type Banner = {
 };
 
 const useUserRole = () => {
-  return "schoolAdmin";
+  return "superAdmin"; // Can be 'superAdmin' or 'schoolAdmin'
 };
 
-export function BannerDataTable() {
-  const [data, setData] = React.useState<Banner[]>([]);
+interface BannerDataTableProps {
+  data: Banner[];
+  updateBanner: (updatedBanner: Banner) => void;
+  deleteBanner: (bannerId: string) => void;
+}
+
+export function BannerDataTable({ data, updateBanner, deleteBanner }: BannerDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
-  React.useEffect(() => {
-    setData(bannersData);
-  }, []);
-
-  const addBanner = (banner: Omit<Banner, "id">) => {
-    const newBanner = {
-      id: (data.length + 1).toString(),
-      ...banner,
-    };
-    setData([newBanner, ...data]);
-  };
-
-  const updateBanner = (updatedBanner: Banner) => {
-    setData(data.map((banner) => (banner.id === updatedBanner.id ? updatedBanner : banner)));
-  };
-
-  const deleteBanner = (bannerId: string) => {
-    setData(data.filter((banner) => banner.id !== bannerId));
-  };
+  const userRole = useUserRole();
 
   const columns: ColumnDef<Banner>[] = [
     {
@@ -84,16 +61,12 @@ export function BannerDataTable() {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <ViewBannerDialog banner={row.original}>
-            <Button variant="outline" size="sm">
-              View
+            <Button variant="ghost" size="icon">
+              <Eye className="h-4 w-4" />
             </Button>
           </ViewBannerDialog>
-          <AddBannerDialog banner={row.original} onSave={(updatedBanner) => updateBanner({ ...row.original, ...updatedBanner })}>
-            <Button variant="outline" size="sm">
-              Edit
-            </Button>
-          </AddBannerDialog>
-          <Button variant="destructive" size="sm" onClick={() => deleteBanner(row.original.id)}>
+          <AddBannerDialog banner={row.original} onSave={(updatedBanner) => updateBanner({ ...row.original, ...updatedBanner })} />
+          <Button variant="destructive" size="icon" onClick={() => deleteBanner(row.original.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -114,40 +87,45 @@ export function BannerDataTable() {
       sorting,
       columnFilters,
     },
+    initialState: {
+      pagination: {
+        pageSize: 6,
+      },
+    },
   });
-
-  const userRole = useUserRole();
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Filter banners by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
-          className="flex-grow"
-        />
-        {userRole !== 'schoolAdmin' && (
-          <Select
-            value={(table.getColumn("school")?.getFilterValue() as string) ?? ""}
-            onValueChange={(value) => table.getColumn("school")?.setFilterValue(value === "all" ? "" : value)}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by school" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Schools</SelectItem>
-              {schoolsData.map((school) => (
-                <SelectItem key={school.id} value={school.name}>
-                  {school.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        <AddBannerDialog onSave={addBanner} />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <Input
+                placeholder="Filter banners by name..."
+                value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+                onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+                className="w-full sm:w-auto flex-grow"
+            />
+            {userRole === 'superAdmin' && (
+                <Select
+                    value={(table.getColumn("school")?.getFilterValue() as string) ?? ""}
+                    onValueChange={(value) => table.getColumn("school")?.setFilterValue(value === "all" ? "" : value)}
+                >
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by school" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Schools</SelectItem>
+                        {schoolsData.map((school) => (
+                            <SelectItem key={school.id} value={school.name}>
+                                {school.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {table.getRowModel().rows.map((row) => (
           <div key={row.id} className="border rounded-lg overflow-hidden shadow-lg">
             <div className="relative h-40 w-full">
@@ -161,12 +139,13 @@ export function BannerDataTable() {
               <h3 className="text-lg font-semibold truncate">{row.original.name}</h3>
               <p className="text-sm text-muted-foreground truncate">{row.original.school}</p>
               <div className="mt-4 flex justify-end">
-                {flexRender(row.getVisibleCells().find(c => c.column.id === 'actions')!.column.columnDef.cell, row.getVisibleCells().find(c => c.column.id === 'actions')!.getContext())}
+                 {flexRender(row.getVisibleCells().find(c => c.column.id === 'actions')!.column.columnDef.cell, row.getVisibleCells().find(c => c.column.id === 'actions')!.getContext())}
               </div>
             </div>
           </div>
         ))}
       </div>
+      
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}

@@ -15,22 +15,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
-import type { UserRole, User } from '@/contexts/auth-context';
+import type { User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
-  role: z.enum(['Super Admin', 'School Admin', 'Teacher', 'Student'], {
-    required_error: 'Please select a role.',
-  }),
   mobile: z.string().min(10, 'Mobile number must be at least 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
@@ -62,18 +52,17 @@ export function LoginForm() {
     try {
       // This is a mock login. In a real app, you'd call an API.
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const userRole = data.role as UserRole;
       const mobileNumber = data.mobile;
       
       const mockUser = mockUsers[mobileNumber];
 
-      if (mockUser && mockUser.role === userRole) {
-        login({ ...mockUser, role: userRole, mobile: mobileNumber });
+      if (mockUser) {
+        login({ ...mockUser, mobile: mobileNumber });
       } else {
          toast({
           variant: "destructive",
           title: "Login Failed",
-          description: "Invalid credentials for the selected role.",
+          description: "Invalid credentials.",
         });
       }
     } finally {
@@ -85,29 +74,6 @@ export function LoginForm() {
     <div className="relative w-full h-full pb-10">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Login Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Super Admin">Super Admin</SelectItem>
-                    <SelectItem value="School Admin">School Admin</SelectItem>
-                    <SelectItem value="Teacher">Teacher</SelectItem>
-                    <SelectItem value="Student">Student</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="mobile"
