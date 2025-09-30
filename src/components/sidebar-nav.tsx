@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -22,25 +23,33 @@ import { cn } from '@/lib/utils';
 export function SidebarNav() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
 
   if (!user) return null;
 
   const userMenu = menuConfig[user.role] || [];
   const allMenuItems = [...userMenu, ...commonMenuItems];
 
+  const handleMenuItemClick = () => {
+    setOpenMobile(false);
+  };
+
   const renderMenuItems = (items: MenuItem[]) => {
     return items.map((item) => (
       <SidebarMenuItem key={item.href}>
+        <Link href={item.href} passHref onClick={handleMenuItemClick}>
         <SidebarMenuButton
           asChild
           isActive={pathname === item.href}
           tooltip={{ children: item.label, side: 'right' }}
+          
         >
-          <Link href={item.href}>
+          <div>
             <item.icon className={cn("h-5 w-5", item.color)} />
             <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-          </Link>
+          </div>
         </SidebarMenuButton>
+        </Link>
       </SidebarMenuItem>
     ));
   };
@@ -79,7 +88,10 @@ export function SidebarNav() {
         <Separator className="my-1" />
 
         <SidebarMenuButton
-          onClick={logout}
+          onClick={() => {
+            logout();
+            handleMenuItemClick();
+          }}
           className="w-full justify-start group-data-[collapsible=icon]:justify-center"
           tooltip={{ children: 'Logout', side: 'right' }}
         >

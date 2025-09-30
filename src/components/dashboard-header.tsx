@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LogOut,
   Plus,
@@ -35,25 +36,51 @@ import { School, ClipboardList } from 'lucide-react';
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const showBackButton = pathname !== '/dashboard';
 
   if (!user) return null;
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  const baseName = user.name ? user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
+  let displayName = baseName;
+
+  if (user.role !== 'Student' && typeof user.gender === 'string' && user.gender) {
+      const gender = user.gender.toLowerCase();
+      if (gender === 'male') {
+          displayName = `Mr. ${baseName}`;
+      } else if (gender === 'female') {
+          displayName = `Ms. ${baseName}`;
+      }
+  }
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
-            <ChevronLeft className="h-5 w-5" />
-            <span className="sr-only">Back</span>
-        </Button>
-        <SidebarTrigger />
-        <h1 className="text-lg font-semibold md:text-xl">
-          Hello, Mr. {user.name}!
-        </h1>
-        {user.role === 'Student' && (
-          <p className="hidden text-sm text-muted-foreground sm:block">
-            ({user.class})
-          </p>
+        {showBackButton && (
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
+                <ChevronLeft className="h-5 w-5" />
+                <span className="sr-only">Back</span>
+            </Button>
         )}
+        <SidebarTrigger />
+        <div className="flex flex-col">
+            <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
+            <div className="flex items-center gap-2">
+                <p className="text-sm">{displayName}</p>
+                {user.role === 'Student' && (
+                <p className="hidden text-sm text-muted-foreground sm:block">
+                    ({user.class})
+                </p>
+                )}
+            </div>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         {user.role === 'Student' && (
@@ -65,7 +92,7 @@ export function DashboardHeader() {
                   <SelectValue placeholder="Switch Kid" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="child1">{user.name}</SelectItem>
+                  <SelectItem value="child1">{displayName}</SelectItem>
                   <SelectItem value="child2">Jane Doe</SelectItem>
                 </SelectContent>
               </Select>
@@ -83,7 +110,7 @@ export function DashboardHeader() {
                 <DropdownMenuContent align="end">
                   {/* <DropdownMenuLabel>Switch Kid</DropdownMenuLabel> */}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>{user.name}</DropdownMenuItem>
+                  <DropdownMenuItem>{displayName}</DropdownMenuItem>
                   <DropdownMenuItem>Jane Doe</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -106,7 +133,7 @@ export function DashboardHeader() {
       <School className="mr-2 h-4 w-4 text-blue-600" />
       Add School
     </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => router.push('/dashboard/content')}>
+    <DropdownMenuItem onClick={() => router.push('/dashboard/content?add=true')}>
       <ClipboardList className="mr-2 h-4 w-4 text-green-600" />
       Add Content
     </DropdownMenuItem>
@@ -162,15 +189,15 @@ export function DashboardHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user.profilePic} alt={user.name} data-ai-hint="person avatar" />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                <AvatarImage src={user.profilePic} alt={displayName} data-ai-hint="person avatar" />
+                <AvatarFallback>{baseName.charAt(0)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.role}
                 </p>

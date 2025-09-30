@@ -12,6 +12,7 @@ export interface User {
   mobile: string;
   class?: string;
   id: string;
+  gender?: 'male' | 'female';
 }
 
 interface AuthContextType {

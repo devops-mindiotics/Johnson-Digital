@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Pencil } from "lucide-react";
+import { Image, Pencil, Plus } from "lucide-react";
 import schoolsData from "@/schools.json";
 import { Banner } from "./banner-data-table";
 import {
@@ -47,7 +47,7 @@ const formSchema = z.object({
   school: z.union([z.string(), z.array(z.string())]).optional(),
   startDate: z.string().min(1, { message: "Start date is required" }),
   endDate: z.string().min(1, { message: "End date is required" }),
-  media: z.string().min(1, { message: "Media is required" }),
+  media: z.any().optional(),
 }).refine(
   (data) => {
     if (data.targetAudience === 'School Admins') {
@@ -68,34 +68,60 @@ interface AddBannerDialogProps {
 
 export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: banner
-      ? { ...banner, school: banner.school ? banner.school.split(", ") : [] }
+      ? { ...banner, school: banner.school ? banner.school.split(", ") : [], media: undefined }
       : {
           name: "",
           targetAudience: "All",
           school: [],
           startDate: "",
           endDate: "",
-          media: `https://picsum.photos/1280/720?q=${Math.random()}`,
+          media: undefined,
         },
   });
 
   const targetAudience = form.watch("targetAudience");
 
   React.useEffect(() => {
-    if (banner) {
-      form.reset({ ...banner, school: banner.school ? banner.school.split(", ") : [] });
+    if (open) {
+      if (banner) {
+        form.reset({ ...banner, school: banner.school ? banner.school.split(", ") : [], media: undefined });
+        setImagePreview(banner.media);
+      } else {
+        form.reset({
+          name: "",
+          targetAudience: "All",
+          school: [],
+          startDate: "",
+          endDate: "",
+          media: undefined,
+        });
+        setImagePreview(null);
+      }
     }
-  }, [banner, form]);
+  }, [banner, form, open]);
+
+  React.useEffect(() => {
+    // Clean up blob URLs to prevent memory leaks
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     const schoolValue =
       values.targetAudience === 'School Admins' && Array.isArray(values.school)
         ? values.school.join(', ')
         : '';
-    onSave({ ...values, school: schoolValue });
+    
+    const mediaUrl = values.media?.[0] ? URL.createObjectURL(values.media[0]) : banner?.media;
+    onSave({ ...values, school: schoolValue, media: mediaUrl });
     setOpen(false);
   };
 
@@ -103,13 +129,18 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {banner ? (
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="icon">
             <Pencil className="h-4 w-4" />
           </Button>
         ) : (
           <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Banner
+            <span className="relative h-5 w-5 sm:mr-2">
+              <Image className="h-full w-full" />
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                <Plus className="h-3 w-3 text-primary-foreground" />
+              </span>
+            </span>
+            <span className="hidden sm:inline">Add Banner</span>
           </Button>
         )}
       </DialogTrigger>
@@ -122,15 +153,17 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
               : "Fill in the details to create a new banner."}
           </DialogDescription>
         </DialogHeader>
-        {banner && (
+        
+        {imagePreview && (
           <div className="relative h-60 w-full rounded-md overflow-hidden my-4">
             <img
-              src={banner.media}
-              alt={banner.name}
+              src={imagePreview}
+              alt="Banner preview"
               className="h-full w-full object-cover"
             />
           </div>
         )}
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -264,16 +297,31 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
               name="media"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Media URL</FormLabel>
+                  <FormLabel>Upload Banner</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. https://picsum.photos/1280/720" {...field} />
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        field.onChange(e.target.files);
+                        if (file) {
+                          setImagePreview(URL.createObjectURL(file));
+                        } else {
+                          setImagePreview(banner ? banner.media : null);
+                        }
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit">{banner ? "Save Changes" : "Create"}</Button>
+              <div className="flex flex-row justify-end space-x-2">
+                <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="submit">{banner ? "Save Changes" : "Create"}</Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>
