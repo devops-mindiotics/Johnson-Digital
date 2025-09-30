@@ -31,8 +31,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
+import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
@@ -79,6 +80,7 @@ export default function ContentManagementPage() {
     const [contentData, setContentData] = useState(initialContentData);
     const [filteredData, setFilteredData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
       class: 'All',
       series: 'All',
@@ -86,6 +88,7 @@ export default function ContentManagementPage() {
       package: 'All'
     });
     const searchParams = useSearchParams();
+    const isMobile = useIsMobile();
 
     useEffect(() => {
         if (searchParams.get('add') === 'true') {
@@ -128,7 +131,7 @@ export default function ContentManagementPage() {
     };
 
     const handleAddContent = (newContent) => {
-        const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`;
+        const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`.replace(/ /g, '-');
         const newContentWithStatus = { ...newContent, status: 'Pending' };
         setContentData(prevData => ({
             ...prevData,
@@ -155,57 +158,49 @@ export default function ContentManagementPage() {
               Manage all your learning materials in one place.
             </CardDescription>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-            <MonitorPlay className="mr-2" />
-            Add New Content
-          </Button>
-           <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
-            <MonitorPlay />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowFilters(!showFilters)} variant="outline">
+                <Filter className="mr-2 h-4 w-4" />
+                {isMobile ? null : "Filters"}
+            </Button>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <MonitorPlay className="mr-2" />
+              {isMobile ? null : "Add Content"}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3">Filters</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="class-filter">Class</Label>
+        {showFilters && (
+            <div className="mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <Select value={filters.class} onValueChange={(value) => handleFilterChange('class', value)}>
                         <SelectTrigger id="class-filter">
-                            <SelectValue placeholder="Select a class" />
+                            <SelectValue placeholder="Class" />
                         </SelectTrigger>
                         <SelectContent>
                             {filterOptions.class.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="series-filter">Series</Label>
-                     <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
+                    <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
                         <SelectTrigger id="series-filter">
-                            <SelectValue placeholder="Select a series" />
+                            <SelectValue placeholder="Series" />
                         </SelectTrigger>
                         <SelectContent>
                             {filterOptions.series.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="subject-filter">Subject</Label>
                     <Select value={filters.subject} onValueChange={(value) => handleFilterChange('subject', value)}>
                         <SelectTrigger id="subject-filter">
-                            <SelectValue placeholder="Select a subject" />
+                            <SelectValue placeholder="Subject" />
                         </SelectTrigger>
                         <SelectContent>
                             {filterOptions.subject.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="package-filter">Package</Label>
-                     <Select disabled>
+                    <Select disabled>
                         <SelectTrigger id="package-filter">
-                            <SelectValue placeholder="Select a package" />
+                            <SelectValue placeholder="Package" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All</SelectItem>
@@ -213,7 +208,7 @@ export default function ContentManagementPage() {
                     </Select>
                 </div>
             </div>
-        </div>
+        )}
         <ContentList contentData={filteredData} onUpdateContent={handleUpdateContent} />
       </CardContent>
       <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
@@ -549,7 +544,8 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 </div>
             </div>
             <DialogFooter>
-              <Button type="submit">Upload Content</Button>
+                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                <Button type="submit">Upload Content</Button>
             </DialogFooter>
         </form>
       </DialogContent>
