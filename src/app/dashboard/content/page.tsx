@@ -31,22 +31,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon } from 'lucide-react';
+import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
-    { contentType: 'Video', contentName: 'Alphabet Song', status: 'Active' },
-    { contentType: 'PDF', contentName: 'Letter Tracing', status: 'Inactive' },
+    { contentType: 'Video', contentName: 'Alphabet Song', status: 'Active', package: 'Term 1' },
+    { contentType: 'PDF', contentName: 'Letter Tracing', status: 'Inactive', package: 'Term 1' },
   ],
   'II-NCERT-Mathematics-Numbers': [
-    { contentType: 'PDF', contentName: 'Counting 1 to 100', status: 'Active' },
+    { contentType: 'PDF', contentName: 'Counting 1 to 100', status: 'Active', package: 'Term 2' },
   ],
   '10-NCERT-Science-Biology': [
-    { contentType: 'PDF', contentName: 'Cell Structure', status: 'Pending' },
+    { contentType: 'PDF', contentName: 'Cell Structure', status: 'Pending', package: 'Term 3' },
   ],
   '12-NCERT-Physics-Mechanics': [
-    { contentType: 'PPT', contentName: 'Laws of Motion', status: 'Active' },
+    { contentType: 'PPT', contentName: 'Laws of Motion', status: 'Active', package: 'Individual' },
   ],
 };
 
@@ -79,6 +79,7 @@ export default function ContentManagementPage() {
     const [contentData, setContentData] = useState(initialContentData);
     const [filteredData, setFilteredData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
     const [filters, setFilters] = useState({
       class: 'All',
       series: 'All',
@@ -97,28 +98,34 @@ export default function ContentManagementPage() {
         const options = {
             class: new Set(['All']),
             series: new Set(['All']),
-            subject: new Set(['All'])
+            subject: new Set(['All']),
+            package: new Set(['All'])
         };
         Object.keys(contentData).forEach(key => {
             const [classValue, series, subject] = key.split('-');
             if (classValue) options.class.add(classValue);
             if (series) options.series.add(series);
             if (subject) options.subject.add(subject);
+            contentData[key].forEach(c => {
+                if(c.package) options.package.add(c.package);
+            })
         });
         return {
             class: Array.from(options.class),
             series: Array.from(options.series),
-            subject: Array.from(options.subject)
+            subject: Array.from(options.subject),
+            package: Array.from(options.package)
         };
     }, [contentData]);
 
     useEffect(() => {
-        const filtered = Object.entries(contentData).filter(([key]) => {
+        const filtered = Object.entries(contentData).filter(([key, contents]) => {
             const [classValue, series, subject] = key.split('-');
             const classFilter = filters.class === 'All' || classValue === filters.class;
             const seriesFilter = filters.series === 'All' || series === filters.series;
             const subjectFilter = filters.subject === 'All' || subject === filters.subject;
-            return classFilter && seriesFilter && subjectFilter;
+            const packageFilter = filters.package === 'All' || contents.some(c => c.package === filters.package);
+            return classFilter && seriesFilter && subjectFilter && packageFilter;
         });
         setFilteredData(Object.fromEntries(filtered));
     }, [filters, contentData]);
@@ -155,65 +162,78 @@ export default function ContentManagementPage() {
               Manage all your learning materials in one place.
             </CardDescription>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-            <MonitorPlay className="mr-2" />
-            Add New Content
-          </Button>
-           <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
-            <MonitorPlay />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
+                <MonitorPlay className="mr-2" />
+                Add New Content
+            </Button>
+            <Button onClick={() => setShowFilters(!showFilters)} className="hidden md:flex">
+                <Filter className="mr-2" />
+                Filter
+            </Button>
+            <div className="md:hidden flex items-center gap-2">
+                <Button onClick={() => setIsAddDialogOpen(true)} size="icon">
+                    <MonitorPlay />
+                </Button>
+                <Button onClick={() => setShowFilters(!showFilters)} size="icon">
+                    <Filter />
+                </Button>
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-            <h3 className="text-lg font-medium mb-3">Filters</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                    <Label htmlFor="class-filter">Class</Label>
-                    <Select value={filters.class} onValueChange={(value) => handleFilterChange('class', value)}>
-                        <SelectTrigger id="class-filter">
-                            <SelectValue placeholder="Select a class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {filterOptions.class.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="series-filter">Series</Label>
-                     <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
-                        <SelectTrigger id="series-filter">
-                            <SelectValue placeholder="Select a series" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {filterOptions.series.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="subject-filter">Subject</Label>
-                    <Select value={filters.subject} onValueChange={(value) => handleFilterChange('subject', value)}>
-                        <SelectTrigger id="subject-filter">
-                            <SelectValue placeholder="Select a subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {filterOptions.subject.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="package-filter">Package</Label>
-                     <Select disabled>
-                        <SelectTrigger id="package-filter">
-                            <SelectValue placeholder="Select a package" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                        </SelectContent>
-                    </Select>
+        {showFilters && (
+            <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Filters</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="class-filter">Class</Label>
+                        <Select value={filters.class} onValueChange={(value) => handleFilterChange('class', value)}>
+                            <SelectTrigger id="class-filter">
+                                <SelectValue placeholder="Select a class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {filterOptions.class.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="series-filter">Series</Label>
+                         <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
+                            <SelectTrigger id="series-filter">
+                                <SelectValue placeholder="Select a series" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {filterOptions.series.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="subject-filter">Subject</Label>
+                        <Select value={filters.subject} onValueChange={(value) => handleFilterChange('subject', value)}>
+                            <SelectTrigger id="subject-filter">
+                                <SelectValue placeholder="Select a subject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {filterOptions.subject.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="package-filter">Package</Label>
+                         <Select value={filters.package} onValueChange={(value) => handleFilterChange('package', value)}>
+                            <SelectTrigger id="package-filter">
+                                <SelectValue placeholder="Select a package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {filterOptions.package.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
-        </div>
+        )}
         <ContentList contentData={filteredData} onUpdateContent={handleUpdateContent} />
       </CardContent>
       <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
