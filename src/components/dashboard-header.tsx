@@ -198,8 +198,14 @@ export function DashboardHeader() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none">{displayName}</p>
+                 <p className="text-xs leading-none text-muted-foreground">
+                  {user.mobile}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.role}
+                </p>
+                 <p className="text-xs leading-none text-muted-foreground">
+                  email@example.com
                 </p>
               </div>
             </DropdownMenuLabel>

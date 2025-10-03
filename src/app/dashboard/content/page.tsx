@@ -421,7 +421,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
                 <div className="space-y-2">
                     <Label htmlFor="class">Class</Label>
                     <Select name="class">
@@ -512,9 +512,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                     </Select>
                     {showNewLessonInput && <Input placeholder="Enter new lesson" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
                 </div>
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2 sm:col-span-2">
                     <Label>Content Type</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
                         <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
                         <ContentTypeBox icon={<FileText className="h-7 w-7" />} label="PDF" isSelected={selectedContentType === 'PDF'} onSelect={() => setSelectedContentType('PDF')} />
                         <ContentTypeBox icon={<Presentation className="h-7 w-7" />} label="PPT" isSelected={selectedContentType === 'PPT'} onSelect={() => setSelectedContentType('PPT')} />
@@ -564,7 +564,7 @@ function EditLessonDialog({ lesson, trigger }) {
                         Fill in the details below to edit the lesson.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
                     <div className="space-y-2">
                         <Label htmlFor="class">Class</Label>
                         <Input id="class" defaultValue={`Class - ${lesson.class}`} />
@@ -638,7 +638,7 @@ function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lesson
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
               <FormField
                 control={form.control}
                 name="contentName"
