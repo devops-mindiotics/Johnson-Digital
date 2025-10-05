@@ -80,7 +80,7 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
                         <button onClick={() => router.push('/dashboard/homework')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">
                             <ClipboardList className="h-6 w-6 text-green-600" />
-                            <div className="text-sm font-semibold text-green-700">Homework</div>
+                            <div className="text-sm font-semibold text-green-700">Assignments</div>
                         </button>
 
                         <button onClick={() => router.push('/dashboard/notice-board')} className="flex flex-col items-center justify-center gap-2 p-4 rounded-md hover:bg-gray-50 transition border">

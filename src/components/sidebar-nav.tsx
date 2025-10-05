@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { getSidebarNav } from '@/lib/sidebar';
@@ -8,7 +9,8 @@ import { LogOut, Shield } from 'lucide-react';
 export function SidebarNav() {
   const { user, logout } = useAuth();
   const sidebarNav = getSidebarNav(user?.role as string);
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, open } = useSidebar();
+  const pathname = usePathname();
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -19,29 +21,36 @@ export function SidebarNav() {
   return (
     <div className="flex flex-col h-full">
       <SidebarMenu>
-        {sidebarNav.map((item, index) => (
-          <SidebarMenuItem key={index} onClick={handleLinkClick}>
-            <Link href={item.href} passHref>
-              <SidebarMenuButton
-                icon={item.icon}
-                tooltip={{ children: item.title, side: 'right' }}
-                aria-label={item.title}
-              >
-                {item.title}
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        ))}
+        {sidebarNav.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <SidebarMenuItem key={index} onClick={handleLinkClick}>
+              <Link href={item.href} passHref>
+                <SidebarMenuButton
+                  tooltip={{ children: item.title, side: 'right' }}
+                  aria-label={item.title}
+                  data-active={pathname === item.href}
+                >
+                  {Icon && <Icon className="shrink-0" />}
+                  <span className={open ? "truncate" : "sr-only"}>
+                    {item.title}
+                  </span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          );
+        })}
       </SidebarMenu>
       <SidebarMenu className="mt-auto">
         <SidebarMenuItem onClick={handleLinkClick}>
           <Link href="/legal" passHref>
             <SidebarMenuButton
-              icon={Shield}
               tooltip={{ children: 'Legal', side: 'right' }}
               aria-label="Legal"
+              data-active={pathname === '/legal'}
             >
-              Legal
+              <Shield className="shrink-0" />
+              <span className={open ? "truncate" : "sr-only"}>Legal</span>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -51,11 +60,11 @@ export function SidebarNav() {
               logout();
               handleLinkClick();
             }}
-            icon={LogOut}
             tooltip={{ children: 'Logout', side: 'right' }}
             aria-label="Logout"
           >
-            Logout
+            <LogOut className="shrink-0" />
+            <span className={open ? "truncate" : "sr-only"}>Logout</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

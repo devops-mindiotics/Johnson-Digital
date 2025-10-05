@@ -170,7 +170,7 @@ const DiaryPage = () => {
                         {sectionsForSelectedClass.map(s => <SelectItem key={s} value={s}>Section {s}</SelectItem>)}
                     </SelectContent>
                 </Select>
-              <DatePicker onSelect={setSelectedDate} className="w-full sm:w-auto"/>
+              <DatePicker onSelect={setSelectedDate} className="w-full sm:w-auto" placeholder="Select a date" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDiaries.map((diary) => (
