@@ -13,7 +13,8 @@ import {
   MonitorPlay,
   UsersRound,
   Presentation,
-  Bug
+  Bug,
+  PlaySquare
 } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
 
@@ -103,7 +104,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
     },
     {
       label: 'Assignments',
-      href: '/dashboard/homework',
+      href: '/dashboard/assignments',
       icon: BookOpen,
       color: 'text-white',
     },
@@ -140,8 +141,8 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
       color: 'text-white',
     },
     {
-      label: 'Homework',
-      href: '/dashboard/homework',
+      label: 'Assignments',
+      href: '/dashboard/assignments',
       icon: BookOpen,
       color: 'text-white',
     },
@@ -172,8 +173,8 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
       color: 'text-white',
     },
     {
-      label: 'Homework',
-      href: '/dashboard/homework',
+      label: 'Assignments',
+      href: '/dashboard/assignments',
       icon: BookOpen,
       color: 'text-white',
     },

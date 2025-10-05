@@ -2,11 +2,12 @@
 import { Suspense, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { SidebarProvider, Sidebar, SidebarContent } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
 import { DashboardHeader } from '@/components/dashboard-header';
 import { DashboardFooter } from '@/components/dashboard-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { SidebarHeader } from '@/components/sidebar-header';
+import { SidebarFooterNav } from '@/components/sidebar-footer-nav';
 import { DashboardSkeleton } from '@/components/ui/loader';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -37,6 +38,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <SidebarContent>
             <SidebarNav />
           </SidebarContent>
+          <SidebarFooter>
+            <SidebarFooterNav />
+          </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col overflow-hidden">
             <DashboardHeader />

@@ -12,7 +12,7 @@ import {
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 
-export function ReviewHomeworkDialog({ homework, onReassign, onComplete }: { homework: any, onReassign: () => void, onComplete: () => void }) {
+export function ReviewAssignmentDialog({ assignment, onReassign, onComplete }: { assignment: any, onReassign: () => void, onComplete: () => void }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -20,17 +20,17 @@ export function ReviewHomeworkDialog({ homework, onReassign, onComplete }: { hom
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{homework.title}</DialogTitle>
+          <DialogTitle>{assignment.title}</DialogTitle>
           <DialogDescription>
-            {homework.subject} - Due on {homework.dueDate}
+            {assignment.subject} - Due on {assignment.dueDate}
           </DialogDescription>
         </DialogHeader>
         <div>
-          <p className="mb-4">{homework.description}</p>
+          <p className="mb-4">{assignment.description}</p>
           <div className="flex items-center gap-2 mb-4">
             <span className="font-semibold">Status:</span>
             <Badge variant={'secondary'}>
-              {homework.status}
+              {assignment.status}
             </Badge>
           </div>
           <div className="mb-4">

@@ -10,7 +10,8 @@ import {
   User, 
   FolderKanban, 
   GraduationCap,
-  Bug
+  Bug,
+  BookOpen
 } from 'lucide-react';
 
 const superAdminSidebar = [
@@ -38,18 +39,20 @@ const schoolAdminSidebar = [
 
 const teacherSidebar = [
   { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/dashboard/classes', icon: Book, title: 'Classes' },
-  { href: '/dashboard/students', icon: GraduationCap, title: 'Students' },
+  { href: '/dashboard/my-classes', icon: BookOpen, title: 'Start Learning' },
   { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/homework', icon: PenSquare, title: 'Assignments' },
+  { href: '/dashboard/assignments', icon: PenSquare, title: 'Assignments' },
+  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/dashboard/profile', icon: User, title: 'Profile' },
   { href: '/dashboard/report', icon: Bug, title: 'Report' },
 ];
 
 const studentSidebar = [
   { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
+  { href: '/dashboard/my-classes', icon: BookOpen, title: 'Start Learning' },
   { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/homework', icon: PenSquare, title: 'Assignments' },
+  { href: '/dashboard/assignments', icon: PenSquare, title: 'Assignments' },
+  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/dashboard/profile', icon: User, title: 'Profile' },
   { href: '/dashboard/report', icon: Bug, title: 'Report' },
 ];

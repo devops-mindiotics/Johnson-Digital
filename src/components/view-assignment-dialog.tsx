@@ -13,7 +13,7 @@ import { Button } from './ui/button';
 import { Eye } from 'lucide-react';
 import { Badge } from './ui/badge';
 
-export function ViewHomeworkDialog({ homework }: { homework: any }) {
+export function ViewAssignmentDialog({ assignment }: { assignment: any }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -23,23 +23,23 @@ export function ViewHomeworkDialog({ homework }: { homework: any }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{homework.title}</DialogTitle>
+          <DialogTitle>{assignment.title}</DialogTitle>
           <DialogDescription>
-            {homework.subject} - Due on {homework.dueDate}
+            {assignment.subject} - Due on {assignment.dueDate}
           </DialogDescription>
         </DialogHeader>
         <div>
-          <p className="mb-4">{homework.description}</p>
+          <p className="mb-4">{assignment.description}</p>
           <div className="flex items-center gap-2 mb-4">
             <span className="font-semibold">Status:</span>
-            <Badge variant={homework.status === 'Checked' ? 'default' : 'secondary'}>
-              {homework.status}
+            <Badge variant={assignment.status === 'Checked' ? 'default' : 'secondary'}>
+              {assignment.status}
             </Badge>
           </div>
-          {homework.marks && (
+          {assignment.marks && (
             <div className="flex items-center gap-2">
               <span className="font-semibold">Marks:</span>
-              <span>{homework.marks}</span>
+              <span>{assignment.marks}</span>
             </div>
           )}
         </div>

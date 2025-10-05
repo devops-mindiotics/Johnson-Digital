@@ -43,7 +43,7 @@ const formSchema = z.object({
   file: z.any(),
 });
 
-export function CreateHomeworkDialog({
+export function CreateAssignmentDialog({
   onSubmit,
   isIcon = false,
 }: {
@@ -81,15 +81,15 @@ export function CreateHomeworkDialog({
           </Button>
         ) : (
           <Button>
-            <BookOpen className="mr-2" /> Create Assignments
+            <BookOpen className="mr-2" /> Create Assignment
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Assignments</DialogTitle>
+          <DialogTitle>Create Assignment</DialogTitle>
           <DialogDescription>
-            Fill out the form to create a new  assignment.
+            Fill out the form to create a new assignment.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

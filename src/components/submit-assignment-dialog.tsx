@@ -31,7 +31,7 @@ const formSchema = z.object({
   comment: z.string(),
 });
 
-export function SubmitHomeworkDialog({
+export function SubmitAssignmentDialog({
   onSubmit,
   isIcon,
 }: {
@@ -67,9 +67,9 @@ export function SubmitHomeworkDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Submit Homework</DialogTitle>
+          <DialogTitle>Submit Assignment</DialogTitle>
           <DialogDescription>
-            Upload your homework file and add any comments.
+            Upload your assignment file and add any comments.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, Trash2, Edit, Paperclip, Check, ChevronsUpDown, BookOpen, Plus } from "lucide-react";
+import { PlusCircle, Trash2, Edit, Paperclip, Check, ChevronsUpDown, BookOpen, Plus, Filter } from "lucide-react";
 import diaryData from "@/diary.json";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 
 // Mock Data
@@ -27,9 +28,13 @@ const students = [
     { id: "student_103", name: "Charlie Brown" },
     { id: "student_104", name: "David Miller" },
     { id: "student_105", name: "Eve Davis" },
+    { id: "4444444444", name: "Test Student" },
 ];
 
 const DiaryPage = () => {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'Student';
+
   const [diaries, setDiaries] = useState(diaryData);
   const [filteredDiaries, setFilteredDiaries] = useState(diaries);
   const [selectedClass, setSelectedClass] = useState("all");
@@ -37,6 +42,7 @@ const DiaryPage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDiary, setEditingDiary] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const classSectionMap = useMemo(() => {
     const map = {};
@@ -51,25 +57,36 @@ const DiaryPage = () => {
         map[classId] = Array.from(map[classId]).sort();
     });
     return map;
-}, []);
+  }, []);
 
   const classes = Object.keys(classSectionMap).sort();
   const sectionsForSelectedClass = selectedClass !== 'all' ? classSectionMap[selectedClass] || [] : [];
 
   useEffect(() => {
     let filtered = diaries;
-    if (selectedClass && selectedClass !== "all") {
-      filtered = filtered.filter((d) => d.classId === selectedClass);
-       if (selectedSection && selectedSection !== 'all') {
+
+    if (isStudent && user?.class && user?.section) {
+      filtered = filtered.filter(d => 
+        d.classId === user.class && 
+        d.sectionId === user.section &&
+        (d.assignedTo === 'all' || (d.assignedTo === 'student' && d.studentIds.includes(user.id)))
+      );
+    } else if (!isStudent) {
+      if (selectedClass && selectedClass !== "all") {
+        filtered = filtered.filter((d) => d.classId === selectedClass);
+        if (selectedSection && selectedSection !== 'all') {
             filtered = filtered.filter(d => d.sectionId === selectedSection);
         }
+      }
     }
+    
     if (selectedDate) {
         const formattedDate = new Date(selectedDate).toISOString().split('T')[0];
         filtered = filtered.filter((d) => d.date === formattedDate);
     }
+
     setFilteredDiaries(filtered);
-  }, [diaries, selectedClass, selectedSection, selectedDate]);
+  }, [diaries, selectedClass, selectedSection, selectedDate, isStudent, user]);
 
   const handleAddOrUpdateDiary = (values: FormValues) => {
     const { attachments, ...rest } = values;
@@ -117,71 +134,89 @@ const DiaryPage = () => {
                     <CardTitle>Diary Entries</CardTitle>
                     <p className="text-sm text-muted-foreground">Manage and view all diary entries.</p>
                 </div>
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogTrigger asChild>
-                       <div>
-                            <Button onClick={() => setEditingDiary(null)} className="hidden md:inline-flex bg-gradient-to-r from-blue-500 to-purple-500 text-white">
-                                <BookOpen className="h-4 w-4 mr-2" />
-                                Add Diary
-                            </Button>
-                            <Button onClick={() => setEditingDiary(null)} size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
-                                <BookOpen className="h-5 w-5" />
-                                <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
-                                    <Plus className="h-3 w-3 text-white" />
-                                </div>
-                            </Button>
-                        </div>
-                    </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-md">
-                        <DialogHeader>
-                            <DialogTitle className="text-2xl">{editingDiary ? "Edit" : "Add"} Diary Entry</DialogTitle>
-                            <DialogDescription>
-                                Fill in the details below to {editingDiary ? "update the" : "create a new"} diary entry.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <DiaryForm
-                            onSubmit={handleAddOrUpdateDiary}
-                            initialData={editingDiary}
-                            onClose={() => setIsModalOpen(false)}
-                            classSectionMap={classSectionMap}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-2">
+                    <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="hidden md:inline-flex items-center">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <span>Filter</span>
+                    </Button>
+                    <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="icon" className="md:hidden">
+                        <Filter className="h-4 w-4" />
+                    </Button>
+                    {!isStudent && (
+                    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                        <DialogTrigger asChild>
+                           <div>
+                                <Button onClick={() => setEditingDiary(null)} className="hidden md:inline-flex bg-gradient-to-r from-blue-500 to-purple-500 text-white">
+                                    <BookOpen className="h-4 w-4 mr-2" />
+                                    Add Diary
+                                </Button>
+                                <Button onClick={() => setEditingDiary(null)} size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                                    <BookOpen className="h-5 w-5" />
+                                    <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
+                                        <Plus className="h-3 w-3 text-white" />
+                                    </div>
+                                </Button>
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="w-[95vw] max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-md">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl">{editingDiary ? "Edit" : "Add"} Diary Entry</DialogTitle>
+                                <DialogDescription>
+                                    Fill in the details below to {editingDiary ? "update the" : "create a new"} diary entry.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DiaryForm
+                                onSubmit={handleAddOrUpdateDiary}
+                                initialData={editingDiary}
+                                onClose={() => setIsModalOpen(false)}
+                                classSectionMap={classSectionMap}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
-            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
-                <Select onValueChange={(value) => { setSelectedClass(value); setSelectedSection('all'); }} value={selectedClass}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Select Class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="all">All Classes</SelectItem>
-                    {classes.map((c) => (
-                        <SelectItem key={c} value={c}>Class {c}</SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
-                 <Select onValueChange={setSelectedSection} value={selectedSection} disabled={selectedClass === 'all' || sectionsForSelectedClass.length === 0}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Select Section" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Sections</SelectItem>
-                        {sectionsForSelectedClass.map(s => <SelectItem key={s} value={s}>Section {s}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-              <DatePicker onSelect={setSelectedDate} className="w-full sm:w-auto" placeholder="Select a date" />
-            </div>
+            {showFilters && (
+                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+                    {!isStudent && (
+                        <>
+                        <Select onValueChange={(value) => { setSelectedClass(value); setSelectedSection('all'); }} value={selectedClass}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Select Class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                            <SelectItem value="all">All Classes</SelectItem>
+                            {classes.map((c) => (
+                                <SelectItem key={c} value={c}>Class {c}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={setSelectedSection} value={selectedSection} disabled={selectedClass === 'all' || sectionsForSelectedClass.length === 0}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Select Section" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sections</SelectItem>
+                                {sectionsForSelectedClass.map(s => <SelectItem key={s} value={s}>Section {s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        </>
+                    )}
+                    <DatePicker value={selectedDate} onChange={setSelectedDate} placeholder="Select a date" />
+                </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredDiaries.map((diary) => (
                 <Card key={diary.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="flex flex-row justify-between items-start">
                     <div>
-                        <CardTitle className="text-lg font-semibold">{diary.title}</CardTitle>
+                        <CardTitle className="text-base font-semibold">{diary.title}</CardTitle>
                         <p className="text-sm text-muted-foreground">
                         Class {diary.classId} - Section {diary.sectionId}
                         </p>
                     </div>
+                    {!isStudent && (
                     <div className="flex space-x-1">
                         <Button variant="ghost" size="icon" onClick={() => openEditModal(diary)}>
                             <Edit className="h-4 w-4" />
@@ -190,12 +225,13 @@ const DiaryPage = () => {
                             <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                     </div>
+                    )}
                     </CardHeader>
                     <CardContent>
                     <p className="text-sm text-gray-700 mb-3">{diary.description}</p>
                     {diary.assignedTo === 'student' && diary.studentIds.length > 0 && (
                         <p className="text-xs font-semibold mt-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        Assigned to: {diary.studentIds.length} student(s)
+                        Assigned to: {diary.studentIds.map(id => students.find(s => s.id === id)?.name || id).join(', ')}
                         </p>
                     )}
                     {diary.attachments && diary.attachments.length > 0 && (

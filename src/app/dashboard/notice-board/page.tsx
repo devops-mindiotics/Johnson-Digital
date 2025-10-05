@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -92,9 +92,19 @@ const getAttachmentIcon = (attachment) => {
 export default function NoticeBoardPage() {
   const { user } = useAuth();
   const [notices, setNotices] = useState(initialNotices);
+  const [filteredNotices, setFilteredNotices] = useState(initialNotices);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
+  useEffect(() => {
+    if (user?.role === 'Student') {
+      setFilteredNotices(notices.filter(notice => notice.targetAudience === 'Students'));
+    } else {
+      setFilteredNotices(notices);
+    }
+  }, [notices, user]);
+
   const canAddNotice = user?.role === 'Super Admin' || user?.role === 'School Admin';
+  const showSchoolFilter = user?.role === 'Super Admin';
 
   const handleAddNotice = (newNotice) => {
     setNotices([...notices, { ...newNotice, id: notices.length + 1 }]);
@@ -129,7 +139,7 @@ export default function NoticeBoardPage() {
                 Important announcements and updates for everyone.
               </CardDescription>
             </div>
-            <div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-4">
+           {showSchoolFilter && (<div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-4">
                 <Select>
                   <SelectTrigger className="w-full md:w-[250px]">
                     <SelectValue placeholder="Select a school" />
@@ -142,12 +152,12 @@ export default function NoticeBoardPage() {
                     ))}
                   </SelectContent>
                 </Select>
-            </div>
+            </div>)}
           </div>
         </CardHeader>
         <CardContent>
             <div className="space-y-6">
-                {notices.map((notice, index) => (
+                {filteredNotices.map((notice, index) => (
                     <div key={notice.id}>
                         <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-grow">
@@ -181,7 +191,7 @@ export default function NoticeBoardPage() {
                                 <Badge variant="secondary">{notice.noticeType}</Badge>
                             </div>
                         </div>
-                       {index < notices.length - 1 && <Separator className="my-6" />}
+                       {index < filteredNotices.length - 1 && <Separator className="my-6" />}
                     </div>
                 ))}
             </div>
