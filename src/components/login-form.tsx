@@ -21,7 +21,7 @@ import type { User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
-  mobile: z.string().min(10, 'Mobile number must be at least 10 digits.'),
+  mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
 
@@ -40,6 +40,7 @@ export function LoginForm() {
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
+    mode: 'onBlur',
     resolver: zodResolver(FormSchema),
     defaultValues: {
       mobile: '',
@@ -81,7 +82,18 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Mobile Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your mobile number" {...field} />
+                  <Input
+                    placeholder="Enter your mobile number"
+                    maxLength={10}
+                    type="tel"
+                    {...field}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      if (/^[0-9]*$/.test(value)) {
+                        field.onChange(e);
+                      }
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -160,19 +172,6 @@ export function LoginForm() {
             Terms &amp; Conditions
           </Link>
           .
-        </p>
-      </div>
-      <div className="absolute -bottom-4 -right-4">
-        <p className="text-xs text-muted-foreground italic">
-          Powered by{' '}
-          <Link
-            href="https://mindiotics.com"
-            className="text-primary hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            mindIoTics Tech.
-          </Link>
         </p>
       </div>
     </div>

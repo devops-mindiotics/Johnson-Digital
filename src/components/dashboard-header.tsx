@@ -32,6 +32,7 @@ import { FaUserGraduate, FaChalkboardTeacher } from "react-icons/fa";
 import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
+import { GoldBadge } from './ui/gold-badge';
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -74,6 +75,7 @@ export function DashboardHeader() {
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
+                {user.isPremium && <GoldBadge />}
                 {user.role === 'Student' && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
                     ({user.class})
@@ -87,16 +89,17 @@ export function DashboardHeader() {
           <>
             {/* Web view */}
             <div className="hidden items-center gap-2 md:flex">
-              <Select defaultValue="child1">
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Switch Kid" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="child1">{displayName}</SelectItem>
-                  <SelectItem value="child2">Jane Doe</SelectItem>
-                </SelectContent>
-              </Select>
-              <Users className="h-5 w-5 text-muted-foreground" />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Switch Child <Users className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>{displayName}</DropdownMenuItem>
+                  <DropdownMenuItem>Jane Doe</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Mobile view */}
@@ -108,7 +111,7 @@ export function DashboardHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {/* <DropdownMenuLabel>Switch Kid</DropdownMenuLabel> */}
+                  {/* <DropdownMenuLabel>Switch Child</DropdownMenuLabel> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>{displayName}</DropdownMenuItem>
                   <DropdownMenuItem>Jane Doe</DropdownMenuItem>
@@ -197,9 +200,18 @@ export function DashboardHeader() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{displayName}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  {user.isPremium && <GoldBadge />}
+                </div>
+                 <p className="text-xs leading-none text-muted-foreground">
+                  {user.mobile}
+                </p>
                 <p className="text-xs leading-none text-muted-foreground">
                   {user.role}
+                </p>
+                 <p className="text-xs leading-none text-muted-foreground">
+                  email@example.com
                 </p>
               </div>
             </DropdownMenuLabel>

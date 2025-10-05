@@ -12,7 +12,8 @@ import {
   Book,
   MonitorPlay,
   UsersRound,
-  Presentation
+  Presentation,
+  Bug
 } from 'lucide-react';
 import type { UserRole } from '@/contexts/auth-context';
 
@@ -190,6 +191,12 @@ export const commonMenuItems: MenuItem[] = [
     label: 'Profile',
     href: '/dashboard/profile',
     icon: UserCircle,
+    color: 'text-white',
+  },
+  {
+    label: 'Report',
+    href: '/dashboard/report',
+    icon: Bug,
     color: 'text-white',
   },
 ];
