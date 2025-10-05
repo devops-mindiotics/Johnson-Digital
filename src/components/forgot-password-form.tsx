@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,10 +20,10 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronLeft } from 'lucide-react';
 
 const mobileSchema = z.object({
-  mobile: z.string().min(10, 'Mobile number must be 10 digits.'),
+  mobile: z.string().length(10, 'Mobile number must be 10 digits.'),
 });
 const otpSchema = z.object({
-  otp: z.string().min(6, 'OTP must be 6 digits.'),
+  otp: z.string().length(6, 'OTP must be 6 digits.'),
 });
 const passwordSchema = z.object({
     password: z.string().min(6, 'Password must be at least 6 characters.'),
@@ -39,6 +39,8 @@ export function ForgotPasswordForm() {
   const [step, setStep] = useState<Step>('mobile');
   const { toast } = useToast();
   const router = useRouter();
+  const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const mobileForm = useForm<z.infer<typeof mobileSchema>>({ resolver: zodResolver(mobileSchema) });
   const otpForm = useForm<z.infer<typeof otpSchema>>({ resolver: zodResolver(otpSchema) });
@@ -66,6 +68,26 @@ export function ForgotPasswordForm() {
     router.push('/login');
   };
 
+  const handleOtpChange = (element: HTMLInputElement, index: number, field: any) => {
+    if (isNaN(Number(element.value))) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = element.value;
+    setOtp(newOtp);
+
+    field.onChange(newOtp.join(''));
+
+    if (element.value !== '' && index < 5) {
+        inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+    }
+  };
+
   return (
     <>
         {step === 'mobile' && (
@@ -78,7 +100,12 @@ export function ForgotPasswordForm() {
                   <FormItem>
                     <FormLabel>Mobile Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your mobile number" {...field} />
+                      <Input placeholder="Enter your mobile number" {...field} onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^\d{0,10}$/.test(value)) {
+                            field.onChange(value);
+                        }
+                      }}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -98,7 +125,23 @@ export function ForgotPasswordForm() {
                   <FormItem>
                     <FormLabel>Enter OTP</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter 6-digit OTP" {...field} />
+                        <div className="flex items-center justify-center gap-2">
+                            {otp.map((data, index) => {
+                                return (
+                                    <Input
+                                        key={index}
+                                        type="text"
+                                        value={data}
+                                        maxLength={1}
+                                        onChange={(e) => handleOtpChange(e.target as HTMLInputElement, index, field)}
+                                        onKeyDown={(e) => handleKeyDown(e, index)}
+                                        onFocus={(e) => e.target.select()}
+                                        ref={(el) => (inputRefs.current[index] = el)}
+                                        className="w-12 h-14 text-center text-2xl"
+                                    />
+                                );
+                            })}
+                        </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>

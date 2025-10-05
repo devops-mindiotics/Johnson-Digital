@@ -70,11 +70,13 @@ SelectScrollDownButton.displayName =
 
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & { hideSearch?: boolean }
+>(({ className, children, position = "popper", hideSearch = false, ...props }, ref) => {
   const [search, setSearch] = React.useState("")
 
   const filterNodes = (nodes: React.ReactNode) => {
+    if (hideSearch) return nodes;
+
     return React.Children.toArray(nodes)
       .map((node) => {
         if (!React.isValidElement(node)) {
@@ -127,14 +129,14 @@ const SelectContent = React.forwardRef<
         position={position}
         {...props}
       >
-        <div className="p-2">
+        {!hideSearch && <div className="p-2">
           <Input
             placeholder="Search..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full"
           />
-        </div>
+        </div>}
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(

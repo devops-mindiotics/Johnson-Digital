@@ -174,19 +174,6 @@ export function LoginForm() {
           .
         </p>
       </div>
-      <div className="absolute -bottom-4 -right-4">
-        <p className="text-xs text-muted-foreground italic">
-          Powered by{' '}
-          <Link
-            href="https://mindiotics.com"
-            className="text-primary hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            mindIoTics Tech.
-          </Link>
-        </p>
-      </div>
     </div>
   );
 }

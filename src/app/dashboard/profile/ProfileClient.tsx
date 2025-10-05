@@ -28,17 +28,58 @@ import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { GoldBadge } from '@/components/ui/gold-badge';
+
+const indianStates = [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
+];
 
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required.'),
-  mobile: z.string().min(10, 'Mobile number must be 10 digits.'),
+  mobile: z.string().regex(/^\d{10}$/, 'Mobile number must be 10 digits.'),
   email: z.string().email('Invalid email address.'),
-  gender: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  district: z.string().optional(),
-  state: z.string().optional(),
-  pincode: z.string().optional(),
+  gender: z.string().min(1, "Gender is required."),
+  address: z.string().min(1, "Address is required."),
+  city: z.string().min(1, "City is required."),
+  district: z.string().min(1, "District is required."),
+  state: z.string().min(1, "State is required."),
+  pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits."),
   profilePic: z.any().optional(),
 });
 
@@ -59,6 +100,7 @@ export default function ProfileClient({ user }: { user: any }) {
       state: user?.state || '',
       pincode: user?.pincode || '',
     },
+    mode: 'onChange',
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +168,10 @@ export default function ProfileClient({ user }: { user: any }) {
               />
             </div>
             <div>
-              <h2 className="text-2xl font-bold">{displayName}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold">{displayName}</h2>
+                {user.isPremium && <GoldBadge />}
+              </div>
               <p className="text-muted-foreground">{user.role}</p>
               {user.role === 'Student' && (
                 <p className="text-muted-foreground">{user.class}</p>
@@ -172,7 +217,7 @@ export default function ProfileClient({ user }: { user: any }) {
                       <FormItem>
                         <FormLabel>Mobile Number</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} onChange={(e) => { e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10); field.onChange(e); }} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -197,9 +242,17 @@ export default function ProfileClient({ user }: { user: any }) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Gender</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a gender" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent hideSearch>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -249,9 +302,18 @@ export default function ProfileClient({ user }: { user: any }) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a state" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {indianStates.map(state => (
+                                <SelectItem key={state} value={state}>{state}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -263,7 +325,7 @@ export default function ProfileClient({ user }: { user: any }) {
                       <FormItem>
                         <FormLabel>Pincode</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} onChange={(e) => { e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 6); field.onChange(e); }} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
