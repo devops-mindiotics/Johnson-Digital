@@ -41,7 +41,7 @@ const teacherSidebar = [
   { href: '/dashboard/classes', icon: Book, title: 'Classes' },
   { href: '/dashboard/students', icon: GraduationCap, title: 'Students' },
   { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/homework', icon: PenSquare, title: 'Homework' },
+  { href: '/dashboard/homework', icon: PenSquare, title: 'Assignments' },
   { href: '/dashboard/profile', icon: User, title: 'Profile' },
   { href: '/dashboard/report', icon: Bug, title: 'Report' },
 ];
@@ -49,7 +49,7 @@ const teacherSidebar = [
 const studentSidebar = [
   { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
   { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/homework', icon: PenSquare, title: 'Homework' },
+  { href: '/dashboard/homework', icon: PenSquare, title: 'Assignments' },
   { href: '/dashboard/profile', icon: User, title: 'Profile' },
   { href: '/dashboard/report', icon: Bug, title: 'Report' },
 ];

@@ -81,15 +81,15 @@ export function CreateHomeworkDialog({
           </Button>
         ) : (
           <Button>
-            <BookOpen className="mr-2" /> Create Homework
+            <BookOpen className="mr-2" /> Create Assignments
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Homework</DialogTitle>
+          <DialogTitle>Create Assignments</DialogTitle>
           <DialogDescription>
-            Fill out the form to create a new homework assignment.
+            Fill out the form to create a new  assignment.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

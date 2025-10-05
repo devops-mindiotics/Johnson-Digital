@@ -102,7 +102,7 @@ export const menuConfig: Record<UserRole, MenuItem[]> = {
       color: 'text-white',
     },
     {
-      label: 'Homework',
+      label: 'Assignments',
       href: '/dashboard/homework',
       icon: BookOpen,
       color: 'text-white',

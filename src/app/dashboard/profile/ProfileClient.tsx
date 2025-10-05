@@ -30,6 +30,14 @@ import { Camera } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GoldBadge } from '@/components/ui/gold-badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const indianStates = [
     "Andhra Pradesh",
@@ -86,6 +94,7 @@ const profileSchema = z.object({
 export default function ProfileClient({ user }: { user: any }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -114,6 +123,7 @@ export default function ProfileClient({ user }: { user: any }) {
       values.profilePic = selectedFile;
     }
     console.log(values);
+    setIsSuccessDialogOpen(true);
   };
 
   const baseName = user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '');
@@ -418,6 +428,19 @@ export default function ProfileClient({ user }: { user: any }) {
           </Card>
         </TabsContent>
       </Tabs>
+      <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Success</DialogTitle>
+            <DialogDescription>
+              Successfully profile updated.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setIsSuccessDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
