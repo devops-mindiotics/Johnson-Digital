@@ -75,7 +75,7 @@ export function DashboardHeader() {
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
-                {user.isPremium && <GoldBadge />}
+                {user.role === 'Student' && user.isPremium && <GoldBadge />}
                 {user.role === 'Student' && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
                     ({user.class})
@@ -202,7 +202,7 @@ export function DashboardHeader() {
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {user.isPremium && <GoldBadge />}
+                  {user.role === 'Student' && user.isPremium && <GoldBadge />}
                 </div>
                  <p className="text-xs leading-none text-muted-foreground">
                   {user.mobile}

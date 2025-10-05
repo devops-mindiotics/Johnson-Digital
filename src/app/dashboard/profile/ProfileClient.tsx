@@ -180,7 +180,7 @@ export default function ProfileClient({ user }: { user: any }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold">{displayName}</h2>
-                {user.isPremium && <GoldBadge />}
+                {user.role === 'Student' && user.isPremium && <GoldBadge />}
               </div>
               <p className="text-muted-foreground">{user.role}</p>
               {user.role === 'Student' && (
