@@ -4,10 +4,9 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { getSidebarNav } from '@/lib/sidebar';
-import { LogOut, Shield } from 'lucide-react';
 
 export function SidebarNav() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const sidebarNav = getSidebarNav(user?.role as string);
   const { isMobile, setOpenMobile, open } = useSidebar();
   const pathname = usePathname();
@@ -17,6 +16,10 @@ export function SidebarNav() {
       setOpenMobile(false);
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -44,10 +47,16 @@ export function SidebarNav() {
       <SidebarMenu className="mt-auto">
         <SidebarMenuItem onClick={handleLinkClick}>
           <Link href="/legal" passHref>
+    <SidebarMenu>
+      {sidebarNav.map((item) => {
+        const Icon = item.icon;
+        return (
+          <SidebarMenuItem key={item.title}>
             <SidebarMenuButton
-              tooltip={{ children: 'Legal', side: 'right' }}
-              aria-label="Legal"
-              data-active={pathname === '/legal'}
+              asChild
+              tooltip={{ children: item.title, side: 'right' }}
+              data-active={pathname === item.href}
+              aria-label={item.title}
             >
               {!open && <Shield className="shrink-0" />}
               <span className={open ? "truncate" : "sr-only"}>Legal</span>
@@ -69,5 +78,14 @@ export function SidebarNav() {
         </SidebarMenuItem>
       </SidebarMenu>
     </div>
+              <Link href={item.href} onClick={handleLinkClick}>
+                <Icon className="shrink-0" />
+                <span className={open ? 'truncate' : 'sr-only'}>{item.title}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
   );
 }
