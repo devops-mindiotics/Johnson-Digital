@@ -114,8 +114,8 @@ const mockUsers = [
   },
   {
     id: '4444444444',
-    name: 'Test Student',
-    email: 'teststudent@example.com',
+    name: 'Bobby Tables',
+    email: 'bobby@example.com',
     mobile: '+91-4444444444',
     role: 'Student',
     school: 'Greenwood High',
@@ -137,7 +137,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const storedUser = localStorage.getItem('educentral-user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const userData = JSON.parse(storedUser);
+        let fullUserData = { ...userData };
+        if (userData.role === 'Student') {
+            const studentData = mockUsers.find(u => u.id === userData.id);
+            if (studentData) {
+                fullUserData = { ...fullUserData, class: studentData.class, section: studentData.section };
+            }
+        }
+        setUser(fullUserData);
       }
     } catch (error) {
       console.error('Failed to parse user from localStorage', error);

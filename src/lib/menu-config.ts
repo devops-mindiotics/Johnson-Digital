@@ -131,7 +131,7 @@ import {
         color: 'text-white',
       },
       {
-        label: 'My Classes',
+        label: 'Start Learning',
         href: '/dashboard/my-classes',
         icon: Presentation,
         color: 'text-white',
@@ -163,8 +163,8 @@ import {
         color: 'text-white',
       },
       {
-        label: 'Subjects',
-        href: '/dashboard/subjects',
+        label: 'Start Learning',
+        href: '/dashboard/my-classes',
         icon: Book,
         color: 'text-white',
       },

@@ -84,10 +84,12 @@ export function DashboardHeader() {
                     ({user.class})
                 </p>
                 )}
-                 <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
-                    <Crown className="w-3 h-3 mr-1" />
-                    Premium
-                </span>
+                 {user.role === 'Student' && (
+                    <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                        <Crown className="w-3 h-3 mr-1" />
+                        Premium
+                    </span>
+                )}
             </div>
         </div>
       </div>
