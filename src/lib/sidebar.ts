@@ -11,7 +11,9 @@ import {
   FolderKanban, 
   GraduationCap,
   Bug,
-  BookOpen
+  BookOpen,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 
 const superAdminSidebar = [
