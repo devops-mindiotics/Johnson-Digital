@@ -1,18 +1,51 @@
+'use client';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, User } from "lucide-react";
-import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+import { useAuth } from "@/hooks/use-auth";
+import { classSubjects } from "@/lib/data";
 
-const subjects = [
-    { name: "Mathematics", teacher: "Mrs. Davis", image: "https://picsum.photos/600/400?q=21", dataAiHint: "math chalkboard" },
-    { name: "English Literature", teacher: "Ms. Blue", image: "https://picsum.photos/600/400?q=22", dataAiHint: "books library" },
-    { name: "History", teacher: "Mr. Black", image: "https://picsum.photos/600/400?q=23", dataAiHint: "historic artifact" },
-    { name: "Biology", teacher: "Ms. White", image: "https://picsum.photos/600/400?q=24", dataAiHint: "dna microscope" },
-    { name: "Chemistry", teacher: "Mr. Green", image: "https://picsum.photos/600/400?q=25", dataAiHint: "chemistry beakers" },
-    { name: "Computer Science", teacher: "Mr. Robert Fox", image: "https://picsum.photos/600/400?q=26", dataAiHint: "computer code" },
-];
+// This map translates a student's class/section into a general class ID.
+const studentClassMap = {
+    '10-A': 'C10A',
+    '10-B': 'C10B',
+    '9-A': 'C9B',
+    '10-C': 'C10C',
+    '10': 'C10B' // Fallback for 10th grade without a specific section
+};
 
 export default function SubjectsPage() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth(); // Get the isLoading state from the auth hook
+  const isStudent = user?.role === 'Student';
+
+  let studentClassId = null;
+
+  // Only perform this logic if the user is a student and their data is available
+  if (isStudent && user && user.class) {
+    const keyWithSection = `${user.class}-${user.section}`;
+
+    // First, try to find a match with the section (e.g., '10-B')
+    if (user.section && studentClassMap[keyWithSection]) {
+      studentClassId = studentClassMap[keyWithSection];
+    } else if (studentClassMap[user.class]) {
+      // If no section-specific match, fall back to the class number alone (e.g., '10')
+      studentClassId = studentClassMap[user.class];
+    }
+  }
+
+  const subjects = studentClassId ? classSubjects[studentClassId] || [] : [];
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  // While the user data is loading, display a simple message.
+  if (isLoading) {
+      return <p>Loading subjects...</p>;
+  }
+
   return (
     <div className="space-y-6">
         <Card>
@@ -21,28 +54,36 @@ export default function SubjectsPage() {
                 <CardDescription>Explore your subjects, access lessons, and view learning materials.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {subjects.map((subject) => (
-                        <Card key={subject.name} className="overflow-hidden group">
-                            <div className="relative h-40 w-full">
-                                <Image src={subject.image} alt={subject.name} layout="fill" objectFit="cover" data-ai-hint={subject.dataAiHint} />
+                {subjects.length > 0 ? (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {subjects.map((subject) => (
+                            <Card key={subject.id} className="bg-gradient-to-r from-blue-400 to-purple-400 text-white">
+                                <CardHeader className="text-center">
+                                    <CardTitle className="text-xl">{subject.name}</CardTitle>
+                                </CardHeader>
+                                <CardFooter>
+                                    <Button className="w-full" onClick={() => handleNavigation(`/dashboard/my-classes/${studentClassId}/${subject.id}`)}>View Content</Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center">
+                        <p>No subjects are currently assigned to your class.</p>
+                        <p className="text-sm text-muted-foreground">Please contact your administrator if you believe this is an error.</p>
+                        {/* Detailed debug info in case of an error */}
+                        {user && (
+                            <div className="text-xs text-muted-foreground mt-4 rounded-lg bg-slate-100 p-2 inline-block">
+                                <p className="font-bold">Debug Info:</p>
+                                <p>User ID: {user.id}</p>
+                                <p>User Role: {user.role}</p>
+                                <p>User Class: {user.class || 'Not available'}</p>
+                                <p>User Section: {user.section || 'Not available'}</p>
+                                <p>Derived Class ID: {studentClassId || 'None'}</p>
                             </div>
-                            <CardContent className="p-4">
-                               <CardTitle className="text-2xl mb-2">{subject.name}</CardTitle>
-                               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  <span>{subject.teacher}</span>
-                               </p>
-                            </CardContent>
-                            <CardFooter className="p-4 pt-0">
-                                <button className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
-                                    <BookOpen className="mr-2" />
-                                    View Subject
-                                </button>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
+                        )}
+                    </div>
+                )}
             </CardContent>
         </Card>
     </div>

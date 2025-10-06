@@ -182,12 +182,12 @@ export default function ProfileClient({ user }: { user: any }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold">{displayName}</h2>
-                {user.role === 'Student' && user.isPremium && <GoldBadge/> }(
+                {user.role === 'Student' && user.isPremium && (
                   <Badge className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
                   </Badge>
-                )
+                )}
               </div>
               <p className="text-muted-foreground">{user.role}</p>
               {user.role === 'Student' && (
