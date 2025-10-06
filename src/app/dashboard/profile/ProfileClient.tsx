@@ -29,7 +29,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Crown } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { GoldBadge } from '@/components/ui/gold-badge';
+
 import {
   Dialog,
   DialogContent,
@@ -180,17 +182,14 @@ export default function ProfileClient({ user }: { user: any }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-2xl font-bold">{displayName}</h2>
-                {user.role === 'Student' && user.isPremium && <GoldBadge />}
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-muted-foreground">{user.role}</p>
-                {user.role === 'Student' && user.isPremium && (
-                  <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                {user.role === 'Student' && user.isPremium && <GoldBadge/> }(
+                  <Badge className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
-                  </span>
-                )}
+                  </Badge>
+                )
               </div>
+              <p className="text-muted-foreground">{user.role}</p>
               {user.role === 'Student' && (
                 <p className="text-muted-foreground">{user.class}</p>
               )}
@@ -430,7 +429,7 @@ export default function ProfileClient({ user }: { user: any }) {
               </div>
               <div>
                 <p className="font-semibold">Expires On</p>
-                <p>2024-01-01</p>
+                <p>2024-.01-01</p>
               </div>
             </CardContent>
           </Card>

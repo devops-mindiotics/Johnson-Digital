@@ -5,7 +5,8 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle, Crown
+  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle, Crown,
+  Badge
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,7 +33,9 @@ import { FaUserGraduate, FaChalkboardTeacher } from "react-icons/fa";
 import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
-import { GoldBadge } from './ui/gold-badge';
+//import { Badge } from '@/components/ui/badge';
+import { GoldBadge } from '@/components/ui/gold-badge';
+// 
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -206,7 +209,13 @@ export function DashboardHeader() {
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {user.role === 'Student' && user.isPremium && <GoldBadge />}
+
+                  {user.role === 'Student' && user.isPremium && <GoldBadge/> }(
+                                    <Badge className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                                      <Crown className="w-0 h-0 mr-1" />
+                                      Premium
+                                    </Badge>
+                                  )
                 </div>
                  <p className="text-xs leading-none text-muted-foreground">
                   {user.mobile}
