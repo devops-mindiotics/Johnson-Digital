@@ -22,6 +22,31 @@ export function SidebarNav() {
   }
 
   return (
+    <div className="flex flex-col h-full">
+      <SidebarMenu>
+        {sidebarNav.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <SidebarMenuItem key={index} onClick={handleLinkClick}>
+              <Link href={item.href} passHref>
+                <SidebarMenuButton
+                  tooltip={{ children: item.title, side: 'right' }}
+                  aria-label={item.title}
+                  data-active={pathname === item.href}
+                >
+                  {!open && Icon && <Icon className="shrink-0" />}
+                  <span className={open ? "truncate" : "sr-only"}>
+                    {item.title}
+                  </span>
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          );
+        })}
+      </SidebarMenu>
+      <SidebarMenu className="mt-auto">
+        <SidebarMenuItem onClick={handleLinkClick}>
+          <Link href="/legal" passHref>
     <SidebarMenu>
       {sidebarNav.map((item) => {
         const Icon = item.icon;
@@ -33,6 +58,26 @@ export function SidebarNav() {
               data-active={pathname === item.href}
               aria-label={item.title}
             >
+              {!open && <Shield className="shrink-0" />}
+              <span className={open ? "truncate" : "sr-only"}>Legal</span>
+            </SidebarMenuButton>
+          </Link>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            onClick={() => {
+              logout();
+              handleLinkClick();
+            }}
+            tooltip={{ children: 'Logout', side: 'right' }}
+            aria-label="Logout"
+          >
+            {!open && <LogOut className="shrink-0" />}
+            <span className={open ? "truncate" : "sr-only"}>Logout</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </div>
               <Link href={item.href} onClick={handleLinkClick}>
                 <Icon className="shrink-0" />
                 <span className={open ? 'truncate' : 'sr-only'}>{item.title}</span>
