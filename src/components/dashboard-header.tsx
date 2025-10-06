@@ -5,7 +5,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle
+  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle, Crown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -75,12 +75,15 @@ export function DashboardHeader() {
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
-                {user.isPremium && <GoldBadge />}
                 {user.role === 'Student' && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
                     ({user.class})
                 </p>
                 )}
+                 <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium
+                </span>
             </div>
         </div>
       </div>

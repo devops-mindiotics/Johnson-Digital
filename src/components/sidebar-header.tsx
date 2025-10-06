@@ -1,6 +1,7 @@
 'use client';
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Crown } from 'lucide-react';
 
 export function SidebarHeader() {
   const { user } = useAuth();
@@ -26,7 +27,15 @@ export function SidebarHeader() {
           <AvatarFallback>{baseName.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col text-sidebar-foreground overflow-hidden">
-          <p className="font-semibold text-sm truncate">{displayName}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-sm truncate">{displayName}</p>
+            {user.isPremium && (
+              <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                <Crown className="w-3 h-3 mr-1" />
+                Premium
+              </span>
+            )}
+          </div>
           <p className="text-xs text-sidebar-foreground/80 truncate">
             {user.role}
           </p>

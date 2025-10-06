@@ -31,7 +31,7 @@ export function SidebarNav() {
                   aria-label={item.title}
                   data-active={pathname === item.href}
                 >
-                  {Icon && <Icon className="shrink-0" />}
+                  {!open && Icon && <Icon className="shrink-0" />}
                   <span className={open ? "truncate" : "sr-only"}>
                     {item.title}
                   </span>
@@ -49,7 +49,7 @@ export function SidebarNav() {
               aria-label="Legal"
               data-active={pathname === '/legal'}
             >
-              <Shield className="shrink-0" />
+              {!open && <Shield className="shrink-0" />}
               <span className={open ? "truncate" : "sr-only"}>Legal</span>
             </SidebarMenuButton>
           </Link>
@@ -63,7 +63,7 @@ export function SidebarNav() {
             tooltip={{ children: 'Logout', side: 'right' }}
             aria-label="Logout"
           >
-            <LogOut className="shrink-0" />
+            {!open && <LogOut className="shrink-0" />}
             <span className={open ? "truncate" : "sr-only"}>Logout</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

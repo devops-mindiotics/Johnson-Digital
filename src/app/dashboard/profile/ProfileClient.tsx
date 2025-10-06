@@ -26,7 +26,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera } from 'lucide-react';
+import { Camera, Crown } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GoldBadge } from '@/components/ui/gold-badge';
@@ -182,7 +182,15 @@ export default function ProfileClient({ user }: { user: any }) {
                 <h2 className="text-2xl font-bold">{displayName}</h2>
                 {user.isPremium && <GoldBadge />}
               </div>
-              <p className="text-muted-foreground">{user.role}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground">{user.role}</p>
+                {user.role === 'Student' && user.isPremium && (
+                  <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium
+                  </span>
+                )}
+              </div>
               {user.role === 'Student' && (
                 <p className="text-muted-foreground">{user.class}</p>
               )}
