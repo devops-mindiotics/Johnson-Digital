@@ -2,7 +2,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Crown } from 'lucide-react';
-import { GoldBadge } from './ui/gold-badge';
 
 export function SidebarHeader() {
   const { user } = useAuth();
@@ -37,10 +36,6 @@ export function SidebarHeader() {
               </span>
             )}
           </div>
-            <div className="flex items-center gap-2">
-                <p className="font-semibold text-sm truncate">{displayName}</p>
-                {user.role === 'Student' && user.isPremium && <GoldBadge />}
-            </div>
           <p className="text-xs text-sidebar-foreground/80 truncate">
             {user.role}
           </p>
