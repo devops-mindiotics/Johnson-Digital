@@ -209,6 +209,17 @@ export function DashboardHeader() {
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
                   {user.role === 'Student' && user.isPremium && <GoldBadge />}
+                  {user.role === 'Student' && (
+                  <p className="hidden text-sm text-muted-foreground sm:block">
+                      ({user.class})
+                  </p>
+                 )}
+                    {user.role === 'Student' && (
+                        <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+                        <Crown className="w-3 h-3 mr-1" />
+                        Premium
+                        </span>
+                    )}
                 </div>
                  <p className="text-xs leading-none text-muted-foreground">
                   {user.mobile}
