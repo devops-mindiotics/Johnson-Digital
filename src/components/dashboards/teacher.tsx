@@ -80,9 +80,9 @@ export default function TeacherDashboard({ user }: { user: User }) {
         </div>
 
       {/* Footer / small note */}
-      <div className="w-full text-center text-xs text-gray-400 pt-6">
-      <p className="hidden md:block">© 2025 EduCentral by Johnson Digital. All Rights Reserved.</p>
-      </div>
+      {/* <div className="w-full text-center text-xs text-gray-400 pt-6"> */}
+      {/* <p className="hidden md:block">© 2025 EduCentral by Johnson Digital. All Rights Reserved.</p> */}
+      {/* </div> */}
     </div>
   );
 }
