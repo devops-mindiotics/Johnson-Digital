@@ -3,6 +3,7 @@ import './globals.css';
 import { AuthProvider } from '@/contexts/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: 'EduCentral',
@@ -29,10 +30,11 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <AuthProvider>
+        { <AuthProvider>
           {children}
           <Toaster />
-        </AuthProvider>
+        </AuthProvider> 
+        }
       </body>
     </html>
   );
