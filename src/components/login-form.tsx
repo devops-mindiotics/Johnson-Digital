@@ -5,6 +5,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { handleApiError } from '@/lib/utils/error-handler';
+import { loginUser } from '@/lib/api/auth';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,22 +20,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
-import type { User } from '@/contexts/auth-context';
+//import type { User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
 const FormSchema = z.object({
   mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
-
-const mockUsers: Record<string, Omit<User, 'mobile'>> = {
-  '1111111111': { id: 'user-1', name: 'Evelyn Reed', role: 'Super Admin', profilePic: 'https://picsum.photos/100/100?q=1', gender: 'female' },
-  '2222222222': { id: 'user-2', name: 'John Smith', role: 'School Admin', profilePic: 'https://picsum.photos/100/100?q=2', gender: 'male' },
-  '3333333333': { id: 'user-3', name: 'Alice Johnson', role: 'Teacher', profilePic: 'https://picsum.photos/100/100?q=3', gender: 'female' },
-  '4444444444': { id: 'user-4', name: 'Bobby Tables', role: 'Student', profilePic: 'https://picsum.photos/100/100?q=4', class: '10th Grade', gender: 'male' },
-};
-
-
+  
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,28 +43,56 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  // async function onSubmit(data: z.infer<typeof FormSchema>) {
+  //   setIsLoading(true);
+  //   try {
+  //     // This is a mock login. In a real app, you'd call an API.
+  //     await new Promise(resolve => setTimeout(resolve, 2000));
+  //     const mobileNumber = data.mobile;
+      
+  //     const mockUser = mockUsers[mobileNumber];
+
+  //     if (mockUser) {
+  //      login({ ...mockUser, mobile: mobileNumber });
+  //     } else {
+  //        toast({
+  //         variant: "destructive",
+  //         title: "Login Failed",
+  //         description: "Invalid credentials.",
+  //       });
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
+
+
+  const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
     try {
-      // This is a mock login. In a real app, you'd call an API.
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const mobileNumber = data.mobile;
-      
-      const mockUser = mockUsers[mobileNumber];
-
-      if (mockUser) {
-        login({ ...mockUser, mobile: mobileNumber });
+      const response = await loginUser(values.mobile, values.password);
+      console.log("🚀 Unable to login. response", { response});
+      if (response.success) {
+        const user = {
+          id: response.data.userId,
+          name: 'User',
+          mobile: response.data.phone,
+          role: response.data.globalRoles[0] || 'Student',
+          profilePic: 'https://picsum.photos/100',
+        };
+        login(user);
+        toast({ title: 'Login Successful', description: 'Redirecting to dashboard...' });
       } else {
-         toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "Invalid credentials.",
-        });
+        toast({ variant: 'destructive', title: 'Login Failed', description: response.message });
       }
+    } catch (error) {
+      console.log("🚀 Unable to login. Please check your credentials.", { error});
+
+      handleApiError(error, 'Unable to login. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="relative w-full h-full pb-10">
