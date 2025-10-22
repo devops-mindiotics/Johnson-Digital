@@ -73,15 +73,21 @@ export function LoginForm() {
       const response = await loginUser(values.mobile, values.password);
       console.log("🚀 Unable to login. response", { response});
       if (response.success) {
+        
         const user = {
-          id: response.data.userId,
-          name: 'User',
-          mobile: response.data.phone,
-          role: response.data.globalRoles[0] || 'Student',
-          profilePic: 'https://picsum.photos/100',
-        };
+  userId: response?.data?.user?.userId ?? '',
+  phone: response?.data?.user?.phone ?? '',
+  displayName: response?.data?.user?.displayName ?? 'User',
+  avatarUrl: response?.data?.user?.avatarUrl ?? 'https://picsum.photos/100',
+  email: response?.data?.user?.email ?? null,
+  status: response?.data?.user?.status ?? 'active',
+  createdAt: response?.data?.user?.createdAt ?? '',
+  updatedAt: response?.data?.user?.updatedAt ?? '',
+  globalRoles: response?.data?.user?.globalRoles ?? null,
+};
+
         login(user);
-        toast({ title: 'Login Successful', description: 'Redirecting to dashboard...' });
+        toast({ title: 'Login Successful', description: 'Please wait Redirecting to dashboard...' });
       } else {
         toast({ variant: 'destructive', title: 'Login Failed', description: response.message });
       }
