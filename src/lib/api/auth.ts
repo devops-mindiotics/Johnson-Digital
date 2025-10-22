@@ -6,7 +6,8 @@ import { API_BASE_URL } from '@/lib/utils/constants';
 
 // Login API call
 export async function loginUser(mobile: string, password: string): Promise<LoginResponse> {
-    const phone = mobile.startsWith('+91') ? mobile : `+91${mobile}`;
+  //  const phone = mobile.startsWith('+91') ? mobile : `+91${mobile}`;
+     const phone = mobile;
 console.log('🌍 API Base URL loginUser:', API_BASE_URL);
 
       console.log("🚀 Unable to login. formattedMobile", { phone});
