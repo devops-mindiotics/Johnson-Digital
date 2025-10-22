@@ -186,7 +186,7 @@
 import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { USER_STORAGE_KEY } from '@/lib/utils/constants';
-import type { User } from '@/types/userDetails';
+import type { User } from '@/types/loginresponse';
 
 interface AuthContextType {
   user: User | null;
@@ -214,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
             console.log('✅ Login called with:', userData);
 
-    router.push('/dashboard');
+    router.push('/homepage');
   }, [router]);
 
   const logout = useCallback(() => {

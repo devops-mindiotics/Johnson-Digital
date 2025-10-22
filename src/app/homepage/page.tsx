@@ -1,21 +1,31 @@
 'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { DashboardSkeleton } from '@/components/ui/loader';
+
 import SuperAdminDashboard from '@/components/dashboards/super-admin';
 import SchoolAdminDashboard from '@/components/dashboards/school-admin';
 import TeacherDashboard from '@/components/dashboards/teacher';
 import StudentDashboard from '@/components/dashboards/student';
-import { DashboardSkeleton } from '@/components/ui/loader';
 
-export default function DashboardPage() {
+export default function Homepage() {
   const { user, isLoading } = useAuth();
+  const router = useRouter();
 
-   console.log('🚀 DashboardPage render', { user, isLoading });
+  // Redirect to login if user not logged in
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [isLoading, user, router]);
 
   if (isLoading || !user) {
-    console.log('🚀 DashboardPage showing skeleton/loading');
     return <DashboardSkeleton />;
   }
- 
+
+  
  const userRole = (user as any).role || 'Student'; // fallback to Student if role is missing
 
   const renderDashboard = () => {
@@ -37,4 +47,5 @@ export default function DashboardPage() {
 
 
   return renderDashboard();
+
 }
