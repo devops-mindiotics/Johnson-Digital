@@ -65,7 +65,7 @@ export function LoginForm() {
         };
 
         login(user);
-        toast({ title: 'Login Successful', description: 'Please wait Redirecting to dashboard...' });
+        // toast({ title: 'Login Successful', description: 'Please wait Redirecting to dashboard...' });
       } else {
         toast({ variant: 'destructive', title: 'Login Failed', description: response.message });
       }
