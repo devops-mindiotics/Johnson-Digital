@@ -11,9 +11,15 @@ import {
 import { getSidebarNav } from '@/lib/sidebar';
 import React from 'react';
 
+import { getRoles } from '@/lib/utils/getRole';
+
+
+
 export function SidebarNav() {
+  const userRole = getRoles() || 'student';
+  
   const { user, logout } = useAuth();
-  const sidebarNav = getSidebarNav(user?.role as string);
+  const sidebarNav = getSidebarNav(userRole as string);
   const { isMobile, setOpenMobile, open } = useSidebar();
   const pathname = usePathname();
 

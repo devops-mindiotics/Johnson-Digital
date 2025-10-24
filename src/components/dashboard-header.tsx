@@ -33,6 +33,7 @@ import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
 import { GoldBadge } from './ui/gold-badge';
+import { getRoles } from '@/lib/utils/getRole';
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
@@ -49,17 +50,20 @@ export function DashboardHeader() {
     return 'Good Evening';
   };
 
-  const baseName = user.name ? user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
-  let displayName = baseName;
+  
+  const userRole = getRoles() || 'student';
 
-  if (user.role !== 'Student' && typeof user.gender === 'string' && user.gender) {
-      const gender = user.gender.toLowerCase();
-      if (gender === 'male') {
-          displayName = `Mr. ${baseName}`;
-      } else if (gender === 'female') {
-          displayName = `Ms. ${baseName}`;
-      }
-  }
+  const baseName = user.displayName ? user.displayName.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
+  let displayName = baseName;
+let classsubecjt = "VII";
+  // if (userRole !== 'student' && typeof user.gender === 'string' && user.gender) {
+  //     const gender = user.gender.toLowerCase();
+  //     if (gender === 'male') {
+  //         displayName = `Mr. ${baseName}`;
+  //     } else if (gender === 'female') {
+  //         displayName = `Ms. ${baseName}`;
+  //     }
+  // }
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
@@ -75,13 +79,13 @@ export function DashboardHeader() {
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
-                {user.role === 'Student' && user.isPremium && <GoldBadge />}
-                {user.role === 'Student' && (
+                {userRole === 'student' && true && <GoldBadge />}
+                {userRole === 'student' && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
-                    ({user.class})
+                    ({classsubecjt})
                 </p>
                 )}
-                 {user.role === 'Student' && (
+                 {userRole === 'student' && (
                     <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                         <Crown className="w-3 h-3 mr-1" />
                         Premium
@@ -91,7 +95,7 @@ export function DashboardHeader() {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        {user.role === 'Student' && (
+        {userRole === 'student' && (
           <>
             {/* Web view */}
             <div className="hidden items-center gap-2 md:flex">
@@ -127,7 +131,7 @@ export function DashboardHeader() {
           </>
         )}
 
-        {user.role === 'Super Admin' && (
+        {userRole === 'super admin' && (
             <DropdownMenu>
   <DropdownMenuTrigger asChild>
     <Button 
@@ -151,7 +155,7 @@ export function DashboardHeader() {
 
         )}
 
-        {user.role === 'School Admin' && (
+        {userRole === 'schooladmin' && (
           <>
             <div className="hidden md:flex items-center gap-2">
   <Button 
@@ -198,7 +202,7 @@ export function DashboardHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user.profilePic} alt={displayName} data-ai-hint="person avatar" />
+                <AvatarImage src={user.avatarUrl ?? "https://picsum.photos/100"} alt={displayName} data-ai-hint="person avatar" />
                 <AvatarFallback>{baseName.charAt(0)}</AvatarFallback>
               </Avatar>
             </Button>
@@ -208,13 +212,13 @@ export function DashboardHeader() {
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {user.role === 'Student' && user.isPremium && <GoldBadge />}
-                  {user.role === 'Student' && (
+                  {userRole === 'Student' && true && <GoldBadge />}
+                  {userRole === 'Student' && (
                   <p className="hidden text-sm text-muted-foreground sm:block">
-                      ({user.class})
+                      ({userRole})
                   </p>
                  )}
-                    {user.role === 'Student' && (
+                    {userRole === 'student' && (
                         <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                         <Crown className="w-3 h-3 mr-1" />
                         Premium
@@ -222,10 +226,10 @@ export function DashboardHeader() {
                     )}
                 </div>
                  <p className="text-xs leading-none text-muted-foreground">
-                  {user.mobile}
+                  {user.phone}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user.role}
+                  {userRole}
                 </p>
                  <p className="text-xs leading-none text-muted-foreground">
                   email@example.com
@@ -240,7 +244,7 @@ export function DashboardHeader() {
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
-              {(user.role === 'Student' || user.role === 'Teacher') && (
+              {(userRole === 'student' || userRole === 'teacher') && (
   <Link href="/dashboard/settings" passHref>
   </Link>
 )}
