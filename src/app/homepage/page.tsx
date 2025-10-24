@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { DashboardSkeleton } from '@/components/ui/loader';
+import { getRoles } from '@/lib/utils/getRole'; 
 
 import SuperAdminDashboard from '@/components/dashboards/super-admin';
 import SchoolAdminDashboard from '@/components/dashboards/school-admin';
@@ -26,19 +27,21 @@ export default function Homepage() {
   }
 
   
- const userRole = (user as any).role || 'Student'; // fallback to Student if role is missing
+  const userRole = getRoles() || 'student';
 
-  const renderDashboard = () => {
+   const renderDashboard = () => {
     console.log('🚀 renderDashboard called', userRole);
-    switch (userRole) {
-      case 'Super Admin':
+    switch (userRole.toLowerCase()) {
+      case 'super admin':
         return <SuperAdminDashboard user={user} />;
-      case 'School Admin':
+      case 'schooladmin':
         return <SchoolAdminDashboard user={user} />;
-      case 'Teacher':
+      case 'teacher':
         return <TeacherDashboard user={user} />;
-      case 'Student':
+      case 'student':
         return <StudentDashboard user={user} />;
+      case 'tenantadmin':
+        return <SchoolAdminDashboard user={user} />; // or another dashboard if needed
       default:
         console.log('🚀 Invalid user role', userRole);
         return <div>Invalid user role.</div>;
