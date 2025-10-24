@@ -131,7 +131,7 @@ let classsubecjt = "VII";
           </>
         )}
 
-        {userRole === 'super admin' && (
+        {userRole === 'tenantadmin' && (
             <DropdownMenu>
   <DropdownMenuTrigger asChild>
     <Button 
