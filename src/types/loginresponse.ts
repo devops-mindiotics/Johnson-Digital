@@ -6,17 +6,17 @@ export interface Tokens {
 
 export interface LoginResponse {
   success: boolean;
-  status?: string; // Optional because it may be missing when success = true
+  status?: string;
   message?: string;
-  data?: LoginData | null; // May be null or missing when login fails
-  meta?: LoginMeta | null; // Optional or null-safe
+  data?: LoginData | null;
+  meta?: LoginMeta | null;
 }
 
 export interface LoginData {
   sessionJwt?: string | null;
   user?: User | null;
   tenantRoles?: TenantRole[] | null;
-  schoolRoles?: SchoolRole[] | null;
+  schools?: SchoolRole[] | null;
   contextJwt?: string | null;
   requiresSelection?: boolean | null;
 }

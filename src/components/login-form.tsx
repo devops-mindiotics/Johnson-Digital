@@ -27,7 +27,7 @@ const FormSchema = z.object({
   mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
   password: z.string().min(6, 'Password must be at least 6 characters.'),
 });
-  
+
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,48 +43,26 @@ export function LoginForm() {
     },
   });
 
-  // async function onSubmit(data: z.infer<typeof FormSchema>) {
-  //   setIsLoading(true);
-  //   try {
-  //     // This is a mock login. In a real app, you'd call an API.
-  //     await new Promise(resolve => setTimeout(resolve, 2000));
-  //     const mobileNumber = data.mobile;
-      
-  //     const mockUser = mockUsers[mobileNumber];
-
-  //     if (mockUser) {
-  //      login({ ...mockUser, mobile: mobileNumber });
-  //     } else {
-  //        toast({
-  //         variant: "destructive",
-  //         title: "Login Failed",
-  //         description: "Invalid credentials.",
-  //       });
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }
 
 
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
     try {
       const response = await loginUser(values.mobile, values.password);
-      console.log("🚀 Unable to login. response", { response});
+      console.log("🚀 Unable to login. response", { response });
       if (response.success) {
-        
+
         const user = {
-  userId: response?.data?.user?.userId ?? '',
-  phone: response?.data?.user?.phone ?? '',
-  displayName: response?.data?.user?.displayName ?? 'User',
-  avatarUrl: response?.data?.user?.avatarUrl ?? 'https://picsum.photos/100',
-  email: response?.data?.user?.email ?? null,
-  status: response?.data?.user?.status ?? 'active',
-  createdAt: response?.data?.user?.createdAt ?? '',
-  updatedAt: response?.data?.user?.updatedAt ?? '',
-  globalRoles: response?.data?.user?.globalRoles ?? null,
-};
+          userId: response?.data?.user?.userId ?? '',
+          phone: response?.data?.user?.phone ?? '',
+          displayName: response?.data?.user?.displayName ?? 'User',
+          avatarUrl: response?.data?.user?.avatarUrl ?? 'https://picsum.photos/100',
+          email: response?.data?.user?.email ?? null,
+          status: response?.data?.user?.status ?? 'active',
+          createdAt: response?.data?.user?.createdAt ?? '',
+          updatedAt: response?.data?.user?.updatedAt ?? '',
+          globalRoles: response?.data?.user?.globalRoles ?? null,
+        };
 
         login(user);
         toast({ title: 'Login Successful', description: 'Please wait Redirecting to dashboard...' });
@@ -92,7 +70,7 @@ export function LoginForm() {
         toast({ variant: 'destructive', title: 'Login Failed', description: response.message });
       }
     } catch (error) {
-      console.log("🚀 Unable to login. Please check your credentials.", { error});
+      console.log("🚀 Unable to login. Please check your credentials.", { error });
 
       handleApiError(error, 'Unable to login. Please check your credentials.');
     } finally {
