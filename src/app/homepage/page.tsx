@@ -41,7 +41,7 @@ export default function Homepage() {
       case 'student':
         return <StudentDashboard user={user} />;
       case 'tenantadmin':
-        return <SchoolAdminDashboard user={user} />; // or another dashboard if needed
+        return <SuperAdminDashboard user={user} />; // or another dashboard if needed
       default:
         console.log('🚀 Invalid user role', userRole);
         return <div>Invalid user role.</div>;
