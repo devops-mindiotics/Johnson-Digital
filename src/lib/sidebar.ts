@@ -17,46 +17,46 @@ import {
 } from 'lucide-react';
 
 const superAdminSidebar = [
-  { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/dashboard/schools', icon: School, title: 'Schools' },
-  { href: '/dashboard/users', icon: Users, title: 'Users' },
-  { href: '/dashboard/classes', icon: Book, title: 'Classes' },
-  { href: '/dashboard/content', icon: FolderKanban, title: 'Content' },
-  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
-  { href: '/dashboard/banners', icon: Image, title: 'Banners' },
-  { href: '/dashboard/profile', icon: User, title: 'Profile' },
-  { href: '/dashboard/report', icon: Bug, title: 'Report' },
+  { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
+  { href: '/homepage/schools', icon: School, title: 'Schools' },
+  { href: '/homepage/users', icon: Users, title: 'Users' },
+  { href: '/homepage/classes', icon: Book, title: 'Classes' },
+  { href: '/homepage/content', icon: FolderKanban, title: 'Content' },
+  { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
+  { href: '/homepage/banners', icon: Image, title: 'Banners' },
+  { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
 const schoolAdminSidebar = [
-  { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/dashboard/users', icon: Users, title: 'Users' },
-  { href: '/dashboard/classes', icon: Book, title: 'Classes' },
-  { href: '/dashboard/content', icon: FolderKanban, title: 'Content' },
-  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
-  { href: '/dashboard/banners', icon: Image, title: 'Banners' },
-  { href: '/dashboard/profile', icon: User, title: 'Profile' },
-  { href: '/dashboard/report', icon: Bug, title: 'Report' },
+  { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
+  { href: '/homepage/users', icon: Users, title: 'Users' },
+  { href: '/homepage/classes', icon: Book, title: 'Classes' },
+  { href: '/homepage/content', icon: FolderKanban, title: 'Content' },
+  { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
+  { href: '/homepage/banners', icon: Image, title: 'Banners' },
+  { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
 const teacherSidebar = [
-  { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/dashboard/my-classes', icon: BookOpen, title: 'Start Learning' },
-  { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/assignments', icon: PenSquare, title: 'Assignments' },
-  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
-  { href: '/dashboard/profile', icon: User, title: 'Profile' },
-  { href: '/dashboard/report', icon: Bug, title: 'Report' },
+  { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
+  { href: '/homepage/my-classes', icon: BookOpen, title: 'Start Learning' },
+  { href: '/homepage/diary', icon: PenSquare, title: 'Diary' },
+  { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments' },
+  { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
+  { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
 const studentSidebar = [
-  { href: '/dashboard', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/dashboard/my-classes', icon: BookOpen, title: 'Start Learning' },
-  { href: '/dashboard/diary', icon: PenSquare, title: 'Diary' },
-  { href: '/dashboard/assignments', icon: PenSquare, title: 'Assignments' },
-  { href: '/dashboard/notice-board', icon: ClipboardList, title: 'Notice Board' },
-  { href: '/dashboard/profile', icon: User, title: 'Profile' },
-  { href: '/dashboard/report', icon: Bug, title: 'Report' },
+  { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
+  { href: '/homepage/my-classes', icon: BookOpen, title: 'Start Learning' },
+  { href: '/homepage/diary', icon: PenSquare, title: 'Diary' },
+  { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments' },
+  { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
+  { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
 export function getSidebarNav(role: string) {
