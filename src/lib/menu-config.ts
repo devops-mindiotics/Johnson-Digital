@@ -29,7 +29,7 @@ import {
   }
   
   export const menuConfig: Record<UserRole, MenuItem[]> = {
-    'Super Admin': [
+    'tenantadmin': [
       {
         label: 'Dashboard',
         href: '/dashboard',
@@ -73,7 +73,7 @@ import {
         color: 'text-white',
       },
     ],
-    'School Admin': [
+    'schooladmin': [
       {
         label: 'Dashboard',
         href: '/dashboard',
@@ -123,7 +123,7 @@ import {
         color: 'text-white',
       },
     ],
-    Teacher: [
+    teacher: [
       {
         label: 'Dashboard',
         href: '/dashboard',
@@ -155,7 +155,7 @@ import {
         color: 'text-white',
       },
     ],
-    Student: [
+    student: [
       {
         label: 'Dashboard',
         href: '/dashboard',

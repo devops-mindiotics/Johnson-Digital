@@ -187,6 +187,7 @@ import { createContext, useEffect, useState, useCallback, ReactNode } from 'reac
 import { useRouter } from 'next/navigation';
 import { USER_STORAGE_KEY } from '@/lib/utils/constants';
 import type { User } from '@/types/loginresponse';
+export type UserRole = 'tenantadmin' | 'schooladmin' | 'teacher' | 'student';
 
 interface AuthContextType {
   user: User | null;
