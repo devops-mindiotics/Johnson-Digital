@@ -61,13 +61,13 @@ const studentSidebar = [
 
 export function getSidebarNav(role: string) {
   switch (role) {
-    case 'Super Admin':
+    case 'super admin':
       return superAdminSidebar;
-    case 'School Admin':
+    case 'schooladmin':
       return schoolAdminSidebar;
-    case 'Teacher':
+    case 'teacher':
       return teacherSidebar;
-    case 'Student':
+    case 'student':
       return studentSidebar;
     default:
       return [];
