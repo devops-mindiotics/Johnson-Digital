@@ -157,7 +157,8 @@ export default function AddSchoolPage() {
   }, []);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+    const schoolJSON = JSON.stringify(values, null, 2); // pretty print with 2-space indentation
+  console.log("📝 School Object:", schoolJSON);
   }
 
   return (
@@ -165,7 +166,7 @@ export default function AddSchoolPage() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Add New School</h1>
-          <Link href="/dashboard/schools">
+          <Link href="/homepage/schools">
             <Button variant="outline">Back to Schools</Button>
           </Link>
         </div>
@@ -752,7 +753,7 @@ export default function AddSchoolPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/dashboard/schools")}
+            onClick={() => router.push("/homepage/schools")}
           >
             Cancel
           </Button>

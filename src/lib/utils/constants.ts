@@ -8,3 +8,9 @@ export const ACCESS_TOKEN_KEY = 'accessToken';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 export const USER_STORAGE_KEY = 'educentral-user';
 
+export const SUPERADMIN = 'SUPER_ADMIN';
+export const SCHOOLADMIN = 'schooladmin';
+export const TENANTADMIN = 'TENANT_ADMIN';
+export const TEACHER = 'teacher';
+export const STUDENT = 'student';
+

@@ -16,6 +16,8 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import {  SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+
 const superAdminSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
   { href: '/homepage/schools', icon: School, title: 'Schools' },
@@ -61,13 +63,13 @@ const studentSidebar = [
 
 export function getSidebarNav(role: string) {
   switch (role) {
-    case 'tenantadmin':
+    case TENANTADMIN:
       return superAdminSidebar;
-    case 'schooladmin':
+    case SCHOOLADMIN:
       return schoolAdminSidebar;
-    case 'teacher':
+    case TEACHER:
       return teacherSidebar;
-    case 'student':
+    case STUDENT:
       return studentSidebar;
     default:
       return [];
