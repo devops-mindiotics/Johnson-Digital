@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { DashboardSkeleton } from '@/components/ui/loader';
 import { getRoles } from '@/lib/utils/getRole'; 
 
+import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+
 import SuperAdminDashboard from '@/components/dashboards/super-admin';
 import SchoolAdminDashboard from '@/components/dashboards/school-admin';
 import TeacherDashboard from '@/components/dashboards/teacher';
@@ -31,17 +33,17 @@ export default function Homepage() {
 
    const renderDashboard = () => {
     console.log('🚀 renderDashboard called', userRole);
-    switch (userRole.toLowerCase()) {
-      case 'super admin':
+    switch (userRole) {
+      case SUPERADMIN:
         return <SuperAdminDashboard user={user} />;
-      case 'schooladmin':
+      case SCHOOLADMIN:
         return <SchoolAdminDashboard user={user} />;
-      case 'teacher':
+      case TEACHER:
         return <TeacherDashboard user={user} />;
-      case 'student':
+      case STUDENT:
         return <StudentDashboard user={user} />;
-      case 'tenantadmin':
-        return <SuperAdminDashboard user={user} />; // or another dashboard if needed
+      case TENANTADMIN:
+        return <SuperAdminDashboard user={user} />;
       default:
         console.log('🚀 Invalid user role', userRole);
         return <div>Invalid user role.</div>;

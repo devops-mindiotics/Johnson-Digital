@@ -151,7 +151,7 @@ export default function SchoolsPage() {
                 Manage all the schools on the platform.
               </CardDescription>
             </div>
-            <Link href="/dashboard/schools/add">
+            <Link href="/homepage/schools/add">
             <Button size="icon" className="inline-flex md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
                 <School className="h-5 w-5" />
                 <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
@@ -226,7 +226,7 @@ export default function SchoolsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/schools/${school.id}`)}>
+                          <DropdownMenuItem onClick={() => router.push(`/homepage/schools/${school.id}`)}>
                             View/Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -257,7 +257,7 @@ export default function SchoolsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center">
-                      <Link href={`/dashboard/schools/${school.id}`}>
+                      <Link href={`/homepage/schools/${school.id}`}>
                         <Button size="icon" variant="ghost">
                           <View className="h-4 w-4" />
                           <span className="sr-only">View/Edit</span>
