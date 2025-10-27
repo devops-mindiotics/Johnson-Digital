@@ -31,3 +31,28 @@ export async function createSchool(
     throw err;
   }
 }
+export async function getAllSchools(): Promise<any> {
+  try {
+    const token = localStorage.getItem("sessionJWT");
+ const tenantData = localStorage.getItem("contextInfo");
+      if (!tenantData) return null;
+      const parsed = JSON.parse(tenantData);
+      const tenantId = parsed?.tenantId || null;
+    if (!token) throw new Error("User not authenticated");
+
+    const response = await axios.get(
+      `${API_BASE_URL}/tenants/${tenantId}/schools`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (err: any) {
+    console.error("❌ getSchools error:", err.response?.data || err.message);
+    throw err;
+  }
+}

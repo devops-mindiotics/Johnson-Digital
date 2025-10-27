@@ -1,16 +1,17 @@
-'use client';
-import Link from 'next/link';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+
+import Link from "next/link";
+import { SetStateAction, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -18,8 +19,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   MoreHorizontal,
   PlusCircle,
@@ -28,14 +29,14 @@ import {
   View,
   School,
   Plus,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,100 +46,68 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-
-const initialSchools = [
-  {
-    id: 'sch_1',
-    name: 'Greenwood High',
-    johnsonId: 'JSN-123',
-    board: 'CBSE',
-    status: 'Active',
-    expiry: '2025-12-31',
-    date: '2023-01-15',
-    city: 'Metropolis',
-    state: 'California',
-    licenses: { teachers: 50, students: 500 },
-  },
-  {
-    id: 'sch_2',
-    name: 'Oakridge International',
-    johnsonId: 'JSN-456',
-    board: 'ICSE',
-    status: 'Active',
-    expiry: '2026-06-30',
-    date: '2022-11-20',
-    city: 'Gotham',
-    state: 'New York',
-    licenses: { teachers: 75, students: 750 },
-  },
-  {
-    id: 'sch_3',
-    name: 'Northwood Academy',
-    johnsonId: 'JSN-789',
-    board: 'State Board',
-    status: 'Inactive',
-    expiry: '2024-03-15',
-    date: '2023-05-10',
-    city: 'Star City',
-    state: 'Washington',
-    licenses: { teachers: 40, students: 400 },
-  },
-  {
-    id: 'sch_4',
-    name: 'Sunflower Prep',
-    johnsonId: 'JSN-101',
-    board: 'CBSE',
-    status: 'Active',
-    expiry: '2027-08-21',
-    date: '2021-09-01',
-    city: 'Central City',
-    state: 'Missouri',
-    licenses: { teachers: 60, students: 600 },
-  },
-  {
-    id: 'sch_5',
-    name: 'Riverdale Public School',
-    johnsonId: 'JSN-212',
-    board: 'ICSE',
-    status: 'Trial',
-    expiry: '2024-12-31',
-    date: '2023-08-30',
-    city: 'Riverdale',
-    state: 'Georgia',
-    licenses: { teachers: 30, students: 300 },
-  },
-];
+} from "@/components/ui/alert-dialog";
+import { getAllSchools } from "@/lib/api/schoolApi";
 
 export default function SchoolsPage() {
   const router = useRouter();
-  const [schools, setSchools] = useState(initialSchools);
-  const [schoolToProcess, setSchoolToProcess] = useState(null);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [schoolToProcess, setSchoolToProcess] = useState<any | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-  const [processedSchoolName, setProcessedSchoolName] = useState('');
+  const [processedSchoolName, setProcessedSchoolName] = useState("");
 
-  const openDialog = (school) => {
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const response = await getAllSchools();
+        setSchools(response.data || []);
+      } catch (err: any) {
+        setError(err.message || "Failed to load schools");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSchools();
+  }, []);
+
+  const openDialog = (school: SetStateAction<any | null>) => {
     setSchoolToProcess(school);
   };
 
   const handleStatusChange = () => {
     if (schoolToProcess) {
       const newStatus =
-        schoolToProcess.status === 'Active' || schoolToProcess.status === 'Trial'
-          ? 'Inactive'
-          : 'Active';
+        schoolToProcess.status === "Active" ||
+        schoolToProcess.status === "Trial"
+          ? "Inactive"
+          : "Active";
       const updatedSchools = schools.map((s) =>
         s.id === schoolToProcess.id ? { ...s, status: newStatus } : s
       );
       setSchools(updatedSchools);
-
-      if (newStatus === 'Inactive') {
-        setProcessedSchoolName(schoolToProcess.name);
-        setSuccessDialogOpen(true);
-      }
+      setProcessedSchoolName(schoolToProcess.name);
+      if (newStatus === "Inactive") setSuccessDialogOpen(true);
       setSchoolToProcess(null);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh] text-lg">
+        Loading schools...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-[60vh] text-red-500">
+        Error: {error}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -151,11 +120,15 @@ export default function SchoolsPage() {
                 Manage all the schools on the platform.
               </CardDescription>
             </div>
+
             <Link href="/homepage/schools/add">
-            <Button size="icon" className="inline-flex md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+              <Button
+                size="icon"
+                className="inline-flex md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative"
+              >
                 <School className="h-5 w-5" />
                 <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
-                    <Plus className="h-3 w-3 text-white" />
+                  <Plus className="h-3 w-3 text-white" />
                 </div>
               </Button>
               <Button className="hidden md:inline-flex">
@@ -164,51 +137,65 @@ export default function SchoolsPage() {
               </Button>
             </Link>
           </div>
+
           <div className="relative mt-4">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search schools..." className="pl-8" />
           </div>
         </CardHeader>
+
         <CardContent>
-          {/* Desktop View */}
+          {/* 🖥️ Desktop Table View */}
           <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead rowSpan={2} className="text-center">School Name</TableHead>
-                  <TableHead rowSpan={2} className="text-center">Johnson ID</TableHead>
-                  <TableHead rowSpan={2} className="text-center">Board</TableHead>
-                  <TableHead rowSpan={2} className="text-center">City, State</TableHead>
-                  <TableHead colSpan={2} className="text-center">Licenses</TableHead>
-                  <TableHead rowSpan={2} className="text-center">Expiry Date</TableHead>
-                  <TableHead rowSpan={2} className="text-center">Status</TableHead>
-                  <TableHead rowSpan={2}>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-                <TableRow>
+                  <TableHead className="text-center">School Name</TableHead>
+                  <TableHead className="text-center">Johnson ID</TableHead>
+                  <TableHead className="text-center">Board</TableHead>
+                  <TableHead className="text-center">City, State</TableHead>
                   <TableHead className="text-center">Teachers</TableHead>
                   <TableHead className="text-center">Students</TableHead>
+                  <TableHead className="text-center">Expiry Date</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {schools.map((school) => (
                   <TableRow key={school.id}>
-                    <TableCell className="font-medium">{school.name}</TableCell>
-                    <TableCell>{school.johnsonId}</TableCell>
+                    <TableCell className="font-medium">
+                      {school.schoolName}
+                    </TableCell>
+                    <TableCell>{school.schoolCode}</TableCell>
                     <TableCell>{school.board}</TableCell>
-                    <TableCell>{school.city}, {school.state}</TableCell>
-                    <TableCell className="text-center">25/{school.licenses.teachers}</TableCell>
-                    <TableCell className="text-center">250/{school.licenses.students}</TableCell>
-                    <TableCell className="text-center">{school.expiry}</TableCell>
+                    <TableCell>
+                      {school.address?.city || "—"},{" "}
+                      {school.address?.state || "—"}
+                    </TableCell>
+
+                    <TableCell className="text-center">
+                      {school.totalTeachers ? school.totalTeachers : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {school.totalStudents ? school.totalStudents : "-"}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {school.expiryDate
+                        ? new Date(school.expiryDate)
+                            .toLocaleDateString("en-GB") // gives DD/MM/YYYY
+                            .replace(/\//g, "-") // make it DD-MM-YYYY
+                        : "—"}
+                    </TableCell>
+
                     <TableCell className="text-center">
                       <Badge
                         variant={
-                          school.status === 'Active'
-                            ? 'default'
-                            : school.status === 'Inactive'
-                            ? 'destructive'
-                            : 'secondary'
+                          school.status === "Active"
+                            ? "default"
+                            : school.status === "Inactive"
+                              ? "destructive"
+                              : "secondary"
                         }
                         onClick={() => openDialog(school)}
                         className="cursor-pointer"
@@ -219,21 +206,30 @@ export default function SchoolsPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <Button size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => router.push(`/homepage/schools/${school.id}`)}>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/homepage/schools/${school.id}`)
+                            }
+                          >
                             View/Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className={school.status === 'Inactive' ? '' : 'text-destructive'}
+                            className={
+                              school.status === "Inactive"
+                                ? ""
+                                : "text-destructive"
+                            }
                             onClick={() => openDialog(school)}
                           >
-                            {school.status === 'Inactive' ? 'Activate' : 'Deactivate'}
+                            {school.status === "Inactive"
+                              ? "Activate"
+                              : "Deactivate"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -244,33 +240,35 @@ export default function SchoolsPage() {
             </Table>
           </div>
 
-          {/* Mobile View */}
+          {/* 📱 Mobile View */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {schools.map((school) => (
               <Card key={school.id}>
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-lg font-bold">{school.name}</CardTitle>
+                      <CardTitle className="text-lg font-bold">
+                        {school.name}
+                      </CardTitle>
                       <CardDescription className="text-sm">
-                        {school.johnsonId} &bull; {school.city}, {school.state}
+                        {school.johnsonId} • {school.city}, {school.state}
                       </CardDescription>
                     </div>
                     <div className="flex items-center">
                       <Link href={`/homepage/schools/${school.id}`}>
                         <Button size="icon" variant="ghost">
                           <View className="h-4 w-4" />
-                          <span className="sr-only">View/Edit</span>
                         </Button>
                       </Link>
                       <Button
                         size="icon"
                         variant="ghost"
-                        className={school.status === 'Inactive' ? '' : 'text-destructive'}
+                        className={
+                          school.status === "Inactive" ? "" : "text-destructive"
+                        }
                         onClick={() => openDialog(school)}
                       >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">{school.status === 'Inactive' ? 'Activate' : 'Deactivate'}</span>
                       </Button>
                     </div>
                   </div>
@@ -279,11 +277,11 @@ export default function SchoolsPage() {
                   <div className="flex items-center justify-between text-sm">
                     <Badge
                       variant={
-                        school.status === 'Active'
-                          ? 'default'
-                          : school.status === 'Inactive'
-                          ? 'destructive'
-                          : 'secondary'
+                        school.status === "Active"
+                          ? "default"
+                          : school.status === "Inactive"
+                            ? "destructive"
+                            : "secondary"
                       }
                       onClick={() => openDialog(school)}
                       className="cursor-pointer"
@@ -291,7 +289,10 @@ export default function SchoolsPage() {
                       {school.status}
                     </Badge>
                     <div className="text-muted-foreground">
-                      Expires on <span className="font-medium text-foreground">{school.expiry}</span>
+                      Expires on{" "}
+                      <span className="font-medium text-foreground">
+                        {school.expiry}
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -301,25 +302,36 @@ export default function SchoolsPage() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!schoolToProcess} onOpenChange={() => setSchoolToProcess(null)}>
+      {/* ⚠️ Confirm Status Change */}
+      <AlertDialog
+        open={!!schoolToProcess}
+        onOpenChange={() => setSchoolToProcess(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will change the status of {schoolToProcess?.name} to{' '}
-              {schoolToProcess?.status === 'Active' || schoolToProcess?.status === 'Trial'
-                ? 'Inactive'
-                : 'Active'}
+              This action will change the status of{" "}
+              <span className="font-semibold">{schoolToProcess?.name}</span> to{" "}
+              <span className="font-semibold">
+                {schoolToProcess?.status === "Active" ||
+                schoolToProcess?.status === "Trial"
+                  ? "Inactive"
+                  : "Active"}
+              </span>
               .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleStatusChange}>Confirm</AlertDialogAction>
+            <AlertDialogAction onClick={handleStatusChange}>
+              Confirm
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* ✅ Success Dialog */}
       <AlertDialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
