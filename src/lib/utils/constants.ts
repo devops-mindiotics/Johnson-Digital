@@ -13,5 +13,4 @@ export const SCHOOLADMIN = 'SCHOOL_ADMIN';
 export const TENANTADMIN = 'TENANT_ADMIN';
 export const TEACHER = 'TEACHER';
 export const STUDENT = 'STUDENT';
-export const student='STUDENT';
 
