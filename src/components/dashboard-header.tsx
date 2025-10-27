@@ -5,7 +5,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,ChevronLeft,ChevronRight,Users,UserCircle, Crown
+  User as UserIcon,ChevronLeft,ChevronRight,UserCircle, Crown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,10 +29,10 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
 import { FaUserGraduate, FaChalkboardTeacher } from "react-icons/fa";
+import { FaPeopleArrows } from 'react-icons/fa6';
 import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
-import { GoldBadge } from './ui/gold-badge';
 import { getRoles } from '@/lib/utils/getRole';
 
 export function DashboardHeader() {
@@ -55,15 +55,7 @@ export function DashboardHeader() {
 
   const baseName = user.displayName ? user.displayName.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
   let displayName = baseName;
-let classsubecjt = "VII";
-  // if (userRole !== 'student' && typeof user.gender === 'string' && user.gender) {
-  //     const gender = user.gender.toLowerCase();
-  //     if (gender === 'male') {
-  //         displayName = `Mr. ${baseName}`;
-  //     } else if (gender === 'female') {
-  //         displayName = `Ms. ${baseName}`;
-  //     }
-  // }
+  const displayClass = "V";
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
@@ -79,10 +71,9 @@ let classsubecjt = "VII";
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
-                {userRole === 'student' && true && <GoldBadge />}
                 {userRole === 'student' && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
-                    ({classsubecjt})
+                    ({displayClass})
                 </p>
                 )}
                  {userRole === 'student' && (
@@ -102,7 +93,7 @@ let classsubecjt = "VII";
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
-                    Switch Child <Users className="ml-2 h-4 w-4" />
+                    Switch Child <FaPeopleArrows className="ml-2 h-4 w-4 text-blue-600" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -117,11 +108,10 @@ let classsubecjt = "VII";
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
-                    <Users className="h-5 w-5" />
+                    <FaPeopleArrows className="h-5 w-5 text-blue-600" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {/* <DropdownMenuLabel>Switch Child</DropdownMenuLabel> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>{displayName}</DropdownMenuItem>
                   <DropdownMenuItem>Jane Doe</DropdownMenuItem>
@@ -212,10 +202,9 @@ let classsubecjt = "VII";
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {userRole === 'Student' && true && <GoldBadge />}
-                  {userRole === 'Student' && (
+                  {userRole === 'student' && (
                   <p className="hidden text-sm text-muted-foreground sm:block">
-                      ({userRole})
+                      ({displayClass})
                   </p>
                  )}
                     {userRole === 'student' && (

@@ -15,11 +15,10 @@ const iconComponents = {
     Presentation
 };
 
-// The props interface now accepts classId as a direct string prop.
 interface LessonContentClientPageProps {
   classId: string;
   subjectId: string;
-  subject: any; // Using 'any' for now to match existing structure
+  subject: any;
 }
 
 export default function LessonContentClientPage({ classId, subjectId, subject }: LessonContentClientPageProps) {
@@ -27,18 +26,17 @@ export default function LessonContentClientPage({ classId, subjectId, subject }:
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                {/* The Link now correctly uses the direct classId prop. */}
                 <Link href={`/dashboard/my-classes/${classId}`}>
-                    <Button variant="outline">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Subjects
+                    <Button variant="outline" size="icon">
+                        <ArrowLeft className="h-4 w-4" />
+                        <span className="sr-only">Back to Subjects</span>
                     </Button>
                 </Link>
                 <div className="text-center flex-grow">
                     <h1 className="text-3xl font-bold">{subject.name}</h1>
                     <p className="text-muted-foreground">• Select a chapter to explore resources</p>
                 </div>
-                <div className="w-24" /> 
+                <div className="w-10" /> 
             </div>
 
             <Accordion type="single" collapsible className="w-full space-y-4">

@@ -30,7 +30,7 @@ import { Camera, Crown } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { GoldBadge } from '@/components/ui/gold-badge';
+// import { GoldBadge } from '@/components/ui/gold-badge';
 
 import {
   Dialog,
