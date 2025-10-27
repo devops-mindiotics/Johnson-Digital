@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
 const mockSchoolList = [
     { id: 'sch_1', schoolName: 'Global International School', johnsonSchoolId: 'JSN-123', licenceForStudent: 100, totalStudents: 0 },
@@ -99,9 +100,9 @@ export default function ClassesPage() {
 
     useEffect(() => {
         if (user && schools.length > 0) {
-            if (user.role === 'School Admin') {
+            if (user.role === SCHOOLADMIN) {
                 setSelectedSchool(schools[0].id);
-            } else if (user.role === 'Super Admin' && !selectedSchool) {
+            } else if (user.role === TENANTADMIN && !selectedSchool) {
                 setSelectedSchool(schools[0].id);
             }
         }
@@ -227,13 +228,13 @@ export default function ClassesPage() {
             <div className="flex-1">
                 <CardTitle>Classes Management</CardTitle>
                 <CardDescription>
-                    {(user.role === 'Super Admin' || user.role ==='School Admin')
+                    {(user.role === TENANTADMIN || user.role === SCHOOLADMIN)
                         ? "Configure and manage Classes, Sections, Subjects and Teachers"
                         : `Managing classes for ${selectedSchoolDetails?.schoolName}`
                     }
                 </CardDescription>
             </div>
-            {(user.role === 'Super Admin'  || user.role === 'School Admin')&& (
+            {(user.role === TENANTADMIN  || user.role === SCHOOLADMIN)&& (
                 <div className="w-full sm:w-auto">
                     <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
                         <SelectTrigger className="w-full sm:w-[350px]">
@@ -383,7 +384,7 @@ export default function ClassesPage() {
                 </Accordion>
             ) : (
                 <div className="text-center text-muted-foreground mt-8">
-                    {user.role === 'Super Admin' && !selectedSchool
+                    {user.role === TENANTADMIN && !selectedSchool
                         ? "Please select a school to see the classes."
                         : "Loading school data..."
                     }

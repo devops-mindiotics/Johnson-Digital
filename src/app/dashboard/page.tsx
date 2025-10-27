@@ -1,9 +1,9 @@
 'use client';
 import { useAuth } from '@/hooks/use-auth';
-import SuperAdminDashboard from '@/components/dashboards/super-admin';
-import SchoolAdminDashboard from '@/components/dashboards/school-admin';
-import TeacherDashboard from '@/components/dashboards/teacher';
-import StudentDashboard from '@/components/dashboards/student';
+import SuperAdminDashboard from '@/components/homepage/super-admin';
+import SchoolAdminDashboard from '@/components/homepage/school-admin';
+import TeacherDashboard from '@/components/homepage/teacher';
+import StudentDashboard from '@/components/homepage/student';
 import { DashboardSkeleton } from '@/components/ui/loader';
 
 export default function DashboardPage() {
