@@ -40,6 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
+import { createSchool } from "@/lib/api/schoolApi";
 
 const classes = [
   { id: "nursery", label: "Nursery" },
@@ -156,9 +157,21 @@ export default function AddSchoolPage() {
     setSchools(mockSchoolList);
   }, []);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const schoolJSON = JSON.stringify(values, null, 2); // pretty print with 2-space indentation
-  console.log("📝 School Object:", schoolJSON);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const payload = {
+      data: values, 
+    };
+    console.log("📝 School Object:", payload);
+    try {
+      const tenantData = localStorage.getItem("contextInfo");
+      if (!tenantData) return null;
+      const parsed = JSON.parse(tenantData);
+      const tenantId = parsed?.tenantId || null;
+      const result = await createSchool(tenantId, payload);
+      console.log("✅ School created:", result);
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
