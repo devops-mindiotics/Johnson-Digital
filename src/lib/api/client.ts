@@ -4,10 +4,8 @@ import { getAccessToken, getRefreshToken, setAccessToken, clearTokens } from '@/
 import { refreshAccessToken } from './auth';
 import { API_BASE_URL } from '@/lib/utils/constants';
 
-
 console.log('🌍 API Base URL:dd', API_BASE_URL);
 
- 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -18,20 +16,30 @@ const apiClient: AxiosInstance = axios.create({
 
 // Request interceptor: attach token to every request
 apiClient.interceptors.request.use((config) => {
-  
-console.log('🌍 API Base URL:', API_BASE_URL);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('show-loader'));
+  }
+  console.log('🌍 API Base URL:', API_BASE_URL);
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
- 
+
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hide-loader'));
+    }
+    return response;
+  },
   async (error: AxiosError) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hide-loader'));
+    }
     const originalRequest: any = error.config;
- 
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 

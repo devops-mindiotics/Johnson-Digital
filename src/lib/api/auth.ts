@@ -12,7 +12,7 @@ export async function loginUser(mobile: string, password: string): Promise<Login
   console.log('🌍 API Base URL loginUser:', API_BASE_URL);
 
   console.log("🚀 Unable to login. formattedMobile", { phone });
-  const response = await apiClient.post('/auth/login', { phone, password });
+  const response = await apiClient.post('/auth/login', { data: { phone, password } });
   const data = response.data;
 
   if(data != null){
