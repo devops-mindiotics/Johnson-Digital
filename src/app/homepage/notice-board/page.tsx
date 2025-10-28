@@ -21,6 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { AddNoticeDialog } from '@/components/add-notice-dialog';
+import { getAllSchools } from '@/lib/api/schoolApi';
+import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN, STUDENT } from '@/lib/utils/constants';
+import { getRoles } from '@/lib/utils/getRole';
 
 const initialNotices = [
   {
@@ -65,12 +68,6 @@ const initialNotices = [
   },
 ];
 
-const schools = [
-  { id: '1', name: 'Greenwood High' },
-  { id: '2', name: 'Oakridge International' },
-  { id: '3', name: 'Global Edge School' },
-];
-
 const getAttachmentIcon = (attachment) => {
     if (!attachment) return null;
     const extension = attachment.split('.').pop();
@@ -91,20 +88,41 @@ const getAttachmentIcon = (attachment) => {
 
 export default function NoticeBoardPage() {
   const { user } = useAuth();
+  const userRole = getRoles();
   const [notices, setNotices] = useState(initialNotices);
   const [filteredNotices, setFilteredNotices] = useState(initialNotices);
+  const [schools, setSchools] = useState([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (user?.role === 'Student') {
+    async function fetchSchools() {
+      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+        try {
+          const schoolData = await getAllSchools();
+          if (schoolData && Array.isArray(schoolData)) {
+            setSchools(schoolData);
+          } else {
+            setSchools([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch schools:", error);
+          setSchools([]);
+        }
+      }
+    }
+    fetchSchools();
+  }, [userRole]);
+
+  useEffect(() => {
+    if (userRole === STUDENT) {
       setFilteredNotices(notices.filter(notice => notice.targetAudience === 'Students'));
     } else {
       setFilteredNotices(notices);
     }
-  }, [notices, user]);
+  }, [notices, userRole]);
 
-  const canAddNotice = user?.role === 'Super Admin' || user?.role === 'School Admin';
-  const showSchoolFilter = user?.role === 'Super Admin';
+  const canAddNotice = userRole === SUPERADMIN || userRole === TENANTADMIN || userRole === SCHOOLADMIN;
+  const showSchoolFilter = userRole === SUPERADMIN || userRole === TENANTADMIN;
 
   const handleAddNotice = (newNotice) => {
     setNotices([...notices, { ...newNotice, id: notices.length + 1 }]);
@@ -146,8 +164,11 @@ export default function NoticeBoardPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {schools.map((school) => (
-                      <SelectItem key={school.id} value={school.name}>
-                        {school.id} - {school.name}
+                      <SelectItem key={school.id} value={school.schoolName}>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">{school.schoolCode}</Badge>
+                          <span className="font-medium">{school.schoolName}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

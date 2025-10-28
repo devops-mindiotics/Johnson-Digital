@@ -33,11 +33,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
-
-const mockSchoolList = [
-    { id: 'sch_1', schoolName: 'Global International School', johnsonSchoolId: 'JSN-123', licenceForStudent: 100, totalStudents: 0 },
-    { id: 'sch_2', schoolName: 'Oakridge International School', johnsonSchoolId: 'JSN-124', licenceForStudent: 600, totalStudents: 550 },
-];
+import { getAllSchools } from '@/lib/api/schoolApi';
+import { getRoles } from '@/lib/utils/getRole';
 
 const mockTeachers = [
     { id: 't1', name: 'Mr. John Doe', schoolId: 'sch_1' },
@@ -83,9 +80,10 @@ const initialSectionSubjectTeacherAssignments = [
 
 export default function ClassesPage() {
     const { user } = useAuth();
+    const userRole = getRoles();
     const { toast } = useToast();
     const isMobile = useIsMobile();
-    const [schools, setSchools] = useState(mockSchoolList);
+    const [schools, setSchools] = useState([]);
     const [teachers, setTeachers] = useState(mockTeachers);
     const [allClasses, setAllClasses] = useState(initialClassesData);
     const [sectionsPool, setSectionsPool] = useState(initialSectionsPool);
@@ -99,14 +97,23 @@ export default function ClassesPage() {
     const [currentClass, setCurrentClass] = useState<any | null>(null);
 
     useEffect(() => {
-        if (user && schools.length > 0) {
-            if (user.role === SCHOOLADMIN) {
-                setSelectedSchool(schools[0].id);
-            } else if (user.role === TENANTADMIN && !selectedSchool) {
-                setSelectedSchool(schools[0].id);
+        async function fetchData() {
+          if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+            try {
+              const schoolData = await getAllSchools();
+              if (schoolData && Array.isArray(schoolData)) {
+                setSchools(schoolData);
+              } else {
+                setSchools([]); // Ensure schools is always an array
+              }
+            } catch (error) {
+              console.error("Failed to fetch schools:", error);
+              setSchools([]); // Set to empty array on error
             }
+          }
         }
-    }, [user, schools]);
+        fetchData();
+      }, [user, userRole]);
 
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
 
@@ -228,13 +235,13 @@ export default function ClassesPage() {
             <div className="flex-1">
                 <CardTitle>Classes Management</CardTitle>
                 <CardDescription>
-                    {(user.role === TENANTADMIN || user.role === SCHOOLADMIN)
+                    {(userRole === TENANTADMIN || userRole === SCHOOLADMIN)
                         ? "Configure and manage Classes, Sections, Subjects and Teachers"
                         : `Managing classes for ${selectedSchoolDetails?.schoolName}`
                     }
                 </CardDescription>
             </div>
-            {(user.role === TENANTADMIN  || user.role === SCHOOLADMIN)&& (
+            {(userRole === SUPERADMIN || userRole === TENANTADMIN) && (
                 <div className="w-full sm:w-auto">
                     <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
                         <SelectTrigger className="w-full sm:w-[350px]">
@@ -243,7 +250,10 @@ export default function ClassesPage() {
                         <SelectContent>
                             {schools.map(school => (
                                 <SelectItem key={school.id} value={school.id}>
-                                    {school.johnsonSchoolId} - {school.schoolName}
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="secondary">{school.schoolCode}</Badge>
+                                      <span className="font-medium">{school.schoolName}</span>
+                                    </div>
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -384,7 +394,7 @@ export default function ClassesPage() {
                 </Accordion>
             ) : (
                 <div className="text-center text-muted-foreground mt-8">
-                    {user.role === TENANTADMIN && !selectedSchool
+                    {(userRole === TENANTADMIN || userRole === SUPERADMIN) && !selectedSchool
                         ? "Please select a school to see the classes."
                         : "Loading school data..."
                     }

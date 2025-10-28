@@ -26,27 +26,29 @@ export async function createSchool(
   }
 }
 
-export async function getAllSchools(): Promise<any> {
+export async function getAllSchools(): Promise<any[]> {
   try {
     const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) return { data: [] }; // Return an empty array if no tenant data
+    if (!tenantData) return [];
     const parsed = JSON.parse(tenantData);
     const token = localStorage.getItem("contextJWT");
 
     const tenantId = parsed?.tenantId || null;
 
-    if (!tenantId) return { data: [] }; // Return an empty array if no tenant ID
+    if (!tenantId) return [];
 
       const response = await apiClient.get(`/tenants/${tenantId}/schools`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    // Ensure the response has a data property that is an array
-    return response.data;
+    if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
+        return response.data.data.records;
+    }
+    
+    return [];
   } catch (err: any) {
     console.error("❌ getSchools error:", err.response?.data || err.message);
-    // In case of an error, return an object with an empty data array
-    return { data: [] };
+    return [];
   }
 }

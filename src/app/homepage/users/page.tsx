@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DashboardSkeleton } from '@/components/ui/loader';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-auth';
+import { getAllSchools } from '@/lib/api/schoolApi';
+import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
+import { getRoles } from '@/lib/utils/getRole';
 import './users.css';
 
 const mockUsers = [
@@ -103,20 +106,13 @@ const mockUsers = [
   },
 ];
 
-const mockSchools = [
-  { name: 'Greenwood High', id: 'JSN-123' },
-  { name: 'Oakridge International', id: 'JSN-456' },
-  { name: 'Northwood Academy', id: 'JSN-789' },
-  { name: 'Sunflower Prep', id: 'JSN-101' },
-  { name: 'Riverdale Public School', id: 'JSN-212' },
-  { name: 'Greenwood High', id: 'JSN-123' },
-];
-
 export default function UsersPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const userRole = getRoles();
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
   const [userToUpdate, setUserToUpdate] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,15 +123,29 @@ export default function UsersPage() {
   const [processedUserName, setProcessedUserName] = useState('');
 
   useEffect(() => {
-    setTimeout(() => {
+    async function fetchData() {
+      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+        try {
+          const schoolData = await getAllSchools();
+          if (schoolData && Array.isArray(schoolData)) {
+            setSchools(schoolData);
+          } else {
+            setSchools([]); // Ensure schools is always an array
+          }
+        } catch (error) {
+          console.error("Failed to fetch schools:", error);
+          setSchools([]); // Set to empty array on error
+        }
+      }
       let displayUsers = mockUsers;
-      if (user && user.role !== 'Super Admin') {
+      if (user && userRole !== SUPERADMIN && userRole !== TENANTADMIN) {
         displayUsers = mockUsers.filter(u => u.school === user.school);
       }
       setUsers(displayUsers);
       setIsLoading(false);
-    }, 2000);
-  }, [user]);
+    }
+    fetchData();
+  }, [user, userRole]);
 
   const handleStatusChange = () => {
     if (userToUpdate) {
@@ -154,7 +164,7 @@ export default function UsersPage() {
     }
   };
 
-  const filteredBySchool = selectedSchool === 'all' || user.role !== 'Super Admin'
+  const filteredBySchool = selectedSchool === 'all'
     ? users
     : users.filter((user) => user.school === selectedSchool);
 
@@ -201,16 +211,19 @@ export default function UsersPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          {user && user.role === 'Super Admin' && (
+          {(userRole === SUPERADMIN || userRole === TENANTADMIN) && (
             <Select onValueChange={setSelectedSchool} defaultValue="all">
               <SelectTrigger>
                 <SelectValue placeholder="Filter by school" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Schools</SelectItem>
-                {mockSchools.map((school, index) => (
-                  <SelectItem key={index} value={school.name}>
-                    {school.id} - {school.name}
+                {schools.map((school) => (
+                  <SelectItem key={school.id} value={school.schoolName}>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{school.schoolCode}</Badge>
+                      <span className="font-medium">{school.schoolName}</span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -233,7 +246,7 @@ export default function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                {user && user.role === 'Super Admin' && <TableHead>School</TableHead>}
+                {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableHead>School</TableHead>}
                 <TableHead>Role</TableHead>
                 <TableHead>Class</TableHead>
                 <TableHead>Expires on</TableHead>
@@ -258,7 +271,7 @@ export default function UsersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  {user && user.role === 'Super Admin' && <TableCell>{u.schoolId} - {u.school}</TableCell>}
+                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolId} - {u.school}</TableCell>}
                   <TableCell>{u.role}</TableCell>
                   <TableCell>
                     {u.role === 'Student' ? `${u.class}-${u.section}` : 'N/A'}
@@ -324,7 +337,7 @@ export default function UsersPage() {
                 </DropdownMenu>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                {user && user.role === 'Super Admin' &&
+                {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
                   <div>
                     <div className="font-semibold">School</div>
                     <div>{u.schoolId} - {u.school}</div>

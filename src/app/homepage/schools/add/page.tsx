@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +40,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
-import { createSchool } from "@/lib/api/schoolApi";
+import { createSchool, getAllSchools } from "@/lib/api/schoolApi";
+import { Badge } from "@/components/ui/badge";
 
 const classes = [
   { id: "nursery", label: "Nursery" },
@@ -59,34 +60,6 @@ const seriesOptions = [
   { id: "other", label: "Other" },
 ];
 
-const mockSchoolList = [
-  {
-    id: "sch_2",
-    schoolName: "Oakridge International School",
-    johnsonSchoolId: "JSN-124",
-  },
-  {
-    id: "sch_3",
-    schoolName: "Delhi Public School",
-    johnsonSchoolId: "JSN-125",
-  },
-  {
-    id: "sch_4",
-    schoolName: "National Public School",
-    johnsonSchoolId: "JSN-126",
-  },
-  {
-    id: "sch_5",
-    schoolName: "Oakridge International School",
-    johnsonSchoolId: "JSN-124",
-  },
-  {
-    id: "sch_6",
-    schoolName: "Delhi Public School",
-    johnsonSchoolId: "JSN-125",
-  },
-];
-
 const classConfigurationSchema = z.object({
   class: z.string().min(1, "Class is required"),
   sections: z.coerce.number().min(1, "Number of sections is required"),
@@ -94,43 +67,41 @@ const classConfigurationSchema = z.object({
 });
 
 const formSchema = z.object({
-  schoolName: z.string().min(1, "School Name is required"),
-  trustSocietyName: z.string(),
-  schoolBoard: z.enum(["State Board", "CBSE", "ICSE"]),
-  schoolType: z.enum(["Co-Education", "Girls", "Boys"]),
-  affiliationNo: z.string(),
-  schoolLogo: z.any(),
-  schoolWebsite: z.string().url().optional(),
-  isBranch: z.boolean().default(false),
-  parentSchool: z.string().optional(),
-  email: z.string().email(),
-  principalName: z.string().min(1, "Principal Name is required"),
-  principalMobile: z.string().min(1, "Principal Mobile is required"),
-  inchargeName: z.string().min(1, "Incharge Name is required"),
-  inchargeMobile: z.string().min(1, "Incharge Mobile is required"),
-  address: z.string().min(1, "Address is required"),
-  city: z.string().min(1, "City is required"),
-  district: z.string().min(1, "District is required"),
-  state: z.string().min(1, "State is required"),
-  pincode: z.string().min(1, "Pincode is required"),
-  instagram: z.string().url().optional(),
-  linkedIn: z.string().url().optional(),
-  classConfigurations: z.array(classConfigurationSchema),
-  status: z.enum(["Active", "Inactive", "Pending", "Trial"]).default("Pending"),
-  expiryDate: z.string().min(1, "Expiry Date is required"),
-  totalTeachers: z.coerce
-    .number()
-    .min(0, "Total teachers must be a positive number"),
-  totalStudents: z.coerce
-    .number()
-    .min(0, "Total students must be a positive number"),
-});
+    schoolName: z.string().min(1, "School Name is required"),
+    trustSocietyName: z.string().optional(),
+    schoolBoard: z.enum(["State Board", "CBSE", "ICSE"], { required_error: "School Board is required" }),
+    schoolType: z.enum(["Co-Education", "Girls", "Boys"], { required_error: "School Type is required" }),
+    affiliationNo: z.string().optional(),
+    schoolLogo: z.any().optional(),
+    schoolWebsite: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    isBranch: z.boolean().default(false),
+    parentSchool: z.string().optional(),
+    email: z.string().email({ message: "Invalid email address" }),
+    principalName: z.string().min(1, "Principal Name is required"),
+    principalMobile: z.string().regex(/^\d{10}$/, "Principal Mobile must be 10 digits"),
+    inchargeName: z.string().min(1, "Incharge Name is required"),
+    inchargeMobile: z.string().regex(/^\d{10}$/, "Incharge Mobile must be 10 digits"),
+    address: z.string().min(1, "Address is required"),
+    city: z.string().min(1, "City is required"),
+    district: z.string().min(1, "District is required"),
+    state: z.string().min(1, "State is required"),
+    pincode: z.string().regex(/^\d{6}$/, "Pincode must be 6 digits"),
+    instagram: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    linkedIn: z.string().url({ message: "Invalid URL" }).optional().or(z.literal('')),
+    classConfigurations: z.array(classConfigurationSchema),
+    status: z.enum(["Active", "Inactive", "Pending", "Trial"]).default("Pending"),
+    expiryDate: z.string().min(1, "Expiry Date is required"),
+    totalTeachers: z.coerce
+      .number()
+      .min(0, "Total teachers must be a positive number"),
+    totalStudents: z.coerce
+      .number()
+      .min(0, "Total students must be a positive number"),
+  });
 
 export default function AddSchoolPage() {
   const router = useRouter();
-  const [schools, setSchools] = useState<
-    { id: string; schoolName: string; johnsonSchoolId: string }[]
-  >([]);
+  const [schools, setSchools] = useState<any[]>([]);
 
   const getExpiryDate = () => {
     const today = new Date();
@@ -154,7 +125,20 @@ export default function AddSchoolPage() {
   });
 
   useEffect(() => {
-    setSchools(mockSchoolList);
+    async function fetchSchools() {
+        try {
+          const schoolData = await getAllSchools();
+          if (schoolData && Array.isArray(schoolData)) {
+            setSchools(schoolData);
+          } else {
+            setSchools([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch schools:", error);
+          setSchools([]);
+        }
+      }
+      fetchSchools();
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -196,7 +180,7 @@ export default function AddSchoolPage() {
                 name="schoolName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>School Name *</FormLabel>
+                    <FormLabel>School Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Greenwood High" {...field} />
                     </FormControl>
@@ -225,7 +209,7 @@ export default function AddSchoolPage() {
                 name="schoolBoard"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>School Board *</FormLabel>
+                    <FormLabel>School Board <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -250,7 +234,7 @@ export default function AddSchoolPage() {
                 name="schoolType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>School Type *</FormLabel>
+                    <FormLabel>School Type <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -277,7 +261,7 @@ export default function AddSchoolPage() {
                 name="affiliationNo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Affiliation No./School Code</FormLabel>
+                    <FormLabel>Affiliation No.</FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., CBSE/AFF/12345" {...field} />
                     </FormControl>
@@ -316,7 +300,7 @@ export default function AddSchoolPage() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
+                    <FormLabel>Status <span className="text-red-500">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -342,7 +326,7 @@ export default function AddSchoolPage() {
                 name="expiryDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Expiry Date *</FormLabel>
+                    <FormLabel>Expiry Date <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -389,9 +373,12 @@ export default function AddSchoolPage() {
                           {schools.map((school) => (
                             <SelectItem
                               key={school.id}
-                              value={`${school.johnsonSchoolId}-${school.schoolName}`}
+                              value={school.id}
                             >
-                              {school.johnsonSchoolId} - {school.schoolName}
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary">{school.schoolCode}</Badge>
+                                <span className="font-medium">{school.schoolName}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -577,7 +564,7 @@ export default function AddSchoolPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-Mail *</FormLabel>
+                    <FormLabel>E-Mail <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., admin@school.com" {...field} />
                     </FormControl>
@@ -590,7 +577,7 @@ export default function AddSchoolPage() {
                 name="principalName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Principal Name *</FormLabel>
+                    <FormLabel>Principal Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., John Doe" {...field} />
                     </FormControl>
@@ -603,7 +590,7 @@ export default function AddSchoolPage() {
                 name="principalMobile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Principal Mobile Number *</FormLabel>
+                    <FormLabel>Principal Mobile Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 9876543210" {...field} />
                     </FormControl>
@@ -616,7 +603,7 @@ export default function AddSchoolPage() {
                 name="inchargeName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Incharge Name *</FormLabel>
+                    <FormLabel>Incharge Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Jane Smith" {...field} />
                     </FormControl>
@@ -629,7 +616,7 @@ export default function AddSchoolPage() {
                 name="inchargeMobile"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Incharge Mobile Number *</FormLabel>
+                    <FormLabel>Incharge Mobile Number <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 9876543211" {...field} />
                     </FormControl>
@@ -653,7 +640,7 @@ export default function AddSchoolPage() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address *</FormLabel>
+                    <FormLabel>Address <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 123 Main Street" {...field} />
                     </FormControl>
@@ -666,7 +653,7 @@ export default function AddSchoolPage() {
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City *</FormLabel>
+                    <FormLabel>City <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Bangalore" {...field} />
                     </FormControl>
@@ -679,7 +666,7 @@ export default function AddSchoolPage() {
                 name="district"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>District *</FormLabel>
+                    <FormLabel>District <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Bangalore Urban" {...field} />
                     </FormControl>
@@ -692,7 +679,7 @@ export default function AddSchoolPage() {
                 name="state"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State *</FormLabel>
+                    <FormLabel>State <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., Karnataka" {...field} />
                     </FormControl>
@@ -705,7 +692,7 @@ export default function AddSchoolPage() {
                 name="pincode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pincode *</FormLabel>
+                    <FormLabel>Pincode <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="e.g., 560001" {...field} />
                     </FormControl>
