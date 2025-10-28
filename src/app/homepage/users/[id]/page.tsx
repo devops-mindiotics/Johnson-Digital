@@ -1,4 +1,4 @@
-// app/dashboard/users/[id]/page.tsx
+// app/homepage/users/[id]/page.tsx
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,7 +106,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
           <CardTitle>User not found</CardTitle>
         </CardHeader>
         <CardContent>
-          <Link href="/dashboard/users">
+          <Link href="/homepage/users">
             <Button variant="outline">Back to Users</Button>
           </Link>
         </CardContent>
@@ -119,7 +119,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>View User Details</CardTitle>
-          <Link href={`/dashboard/users/${user.id}/edit`}>
+          <Link href={`/homepage/users/${user.id}/edit`}>
             <Button size="icon">
               <Pencil className="h-4 w-4" />
             </Button>
@@ -228,7 +228,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
       )}
 
       <div className="mt-8">
-        <Link href="/dashboard/users">
+        <Link href="/homepage/users">
           <Button variant="outline">Back</Button>
         </Link>
       </div>
@@ -356,7 +356,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
 //             </CardHeader>
 //             <CardContent>
 //                 <p>The user you are looking for does not exist.</p>
-//                 <Button variant="outline" className="mt-4" onClick={() => router.push('/dashboard/users')}>Back to Users</Button>
+//                 <Button variant="outline" className="mt-4" onClick={() => router.push('/homepage/users')}>Back to Users</Button>
 //             </CardContent>
 //         </Card>
 //     );
@@ -367,7 +367,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
 //         <Card>
 //             <CardHeader className="flex flex-row items-center justify-between">
 //                 <CardTitle>View User Details</CardTitle>
-//                 <Button onClick={() => router.push(`/dashboard/users/${user.id}/edit`)} size="icon">
+//                 <Button onClick={() => router.push(`/homepage/users/${user.id}/edit`)} size="icon">
 //                     <Pencil className="h-4 w-4" />
 //                 </Button>
 //             </CardHeader>
@@ -471,7 +471,7 @@ export default function ViewUserPage({ params }: { params: { id: string } }) {
 //         )}
 
 //         <div className="mt-8">
-//             <Button variant="outline" onClick={() => router.push('/dashboard/users')}>Back</Button>
+//             <Button variant="outline" onClick={() => router.push('/homepage/users')}>Back</Button>
 //         </div>
 //     </div>
 //   );

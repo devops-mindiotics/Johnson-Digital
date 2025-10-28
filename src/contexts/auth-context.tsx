@@ -165,7 +165,7 @@
 //     }
 //     setUser(fullUserData);
 //     localStorage.setItem('educentral-user', JSON.stringify(fullUserData));
-//     router.push('/dashboard');
+//     router.push('/homepage');
 //   }, [router]);
 
 //   const logout = useCallback(() => {
@@ -186,8 +186,11 @@
 import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { USER_STORAGE_KEY } from '@/lib/utils/constants';
-import type { User } from '@/types/loginresponse';
-// export type UserRole = 'tenantadmin' | 'schooladmin' | 'teacher' | 'student';
+//import type {  User } from '@/types/loginresponse';
+import type { User as LoginUser } from '@/types/loginresponse';
+
+ //export type UserRole = 'tenantadmin' | 'schooladmin' | 'teacher' | 'student';
+export type User = LoginUser;
 
 interface AuthContextType {
   user: User | null;

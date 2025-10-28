@@ -188,13 +188,13 @@ export default function UsersPage() {
               <Upload className="mr-2 h-4 w-4" />
               Bulk Import
             </Button>
-            <Button size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative" onClick={() => router.push('/dashboard/users/add')}>
+            <Button size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative" onClick={() => router.push('/homepage/users/add')}>
                 <User className="h-5 w-5" />
                 <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
                     <Plus className="h-3 w-3 text-white" />
                 </div>
             </Button>
-            <Button className="hidden md:flex" onClick={() => router.push('/dashboard/users/add')}>
+            <Button className="hidden md:flex" onClick={() => router.push('/homepage/users/add')}>
               <User className="mr-2 h-4 w-4" />
               Add User
             </Button>
@@ -285,7 +285,7 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/dashboard/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'Active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -318,7 +318,7 @@ export default function UsersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push(`/dashboard/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'Active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

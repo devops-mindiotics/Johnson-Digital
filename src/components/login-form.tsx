@@ -61,7 +61,7 @@ export function LoginForm() {
           status: response?.data?.user?.status ?? 'active',
           createdAt: response?.data?.user?.createdAt ?? '',
           updatedAt: response?.data?.user?.updatedAt ?? '',
-          globalRoles: response?.data?.user?.globalRoles ?? null,
+          globalRoles: response?.data?.user?.roles ?? null,
         };
 
         login(user);

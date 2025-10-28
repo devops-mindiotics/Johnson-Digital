@@ -28,7 +28,7 @@ export default function LessonContentClientPage({ classId, subjectId, subject }:
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 {/* The Link now correctly uses the direct classId prop. */}
-                <Link href={`/dashboard/my-classes/${classId}`}>
+                <Link href={`/homepage/my-classes/${classId}`}>
                     <Button variant="outline">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Subjects

@@ -25,10 +25,10 @@ export default function TeacherDashboard({ user }: { user: User }) {
   ];
 
   const modules = [
-    { name: 'Start Learning', icon: PlaySquare, color: 'text-blue-600', href: '/dashboard/my-classes' },
-    { name: 'Diary', icon: BookOpen, color: 'text-green-600', href: '/dashboard/diary' },
-    { name: 'Assignments', icon: ClipboardList, color: 'text-yellow-600', href: '/dashboard/assignments' },
-    { name: 'Notice', icon: Bell, color: 'text-red-600', href: '/dashboard/notice-board' },
+    { name: 'Start Learning', icon: PlaySquare, color: 'text-blue-600', href: '/homepage/my-classes' },
+    { name: 'Diary', icon: BookOpen, color: 'text-green-600', href: '/homepage/diary' },
+    { name: 'Assignments', icon: ClipboardList, color: 'text-yellow-600', href: '/homepage/assignments' },
+    { name: 'Notice', icon: Bell, color: 'text-red-600', href: '/homepage/notice-board' },
   ];
 
   return (

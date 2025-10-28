@@ -1,4 +1,4 @@
-// app/dashboard/schools/[id]/page.tsx
+// app/homepage/schools/[id]/page.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -123,7 +123,7 @@ export default function SchoolDetailsPage({ params }: { params: { id: string } }
           <CardTitle>School not found</CardTitle>
         </CardHeader>
         <CardContent>
-          <Link href="/dashboard/schools">
+          <Link href="/homepage/schools">
             <Button variant="outline" className="mt-2">Back to Schools</Button>
           </Link>
         </CardContent>
@@ -157,13 +157,13 @@ export default function SchoolDetailsPage({ params }: { params: { id: string } }
               </div>
             </div>
             <div className="shrink-0">
-                <Link href={`/dashboard/schools/${school.id}/edit`} className="sm:hidden">
+                <Link href={`/homepage/schools/${school.id}/edit`} className="sm:hidden">
                     <Button size="icon" variant="outline">
                         <Pencil className="h-5 w-5" />
                         <span className="sr-only">Edit School</span>
                     </Button>
                 </Link>
-                <Link href={`/dashboard/schools/${school.id}/edit`} className="hidden sm:block">
+                <Link href={`/homepage/schools/${school.id}/edit`} className="hidden sm:block">
                     <Button>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit School

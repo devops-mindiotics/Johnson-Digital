@@ -56,7 +56,7 @@ export default function EditUserClient({
 
   function onSubmit(values: FormValues) {
     console.log(values); // call external API if needed
-    router.push('/dashboard/users');
+    router.push('/homepage/users');
   }
 
   return (
@@ -245,7 +245,7 @@ export default function EditUserClient({
 
           <div className="flex gap-4">
             <Button type="submit">Update User</Button>
-            <Button type="button" variant="outline" onClick={() => router.push('/dashboard/users')}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/homepage/users')}>Cancel</Button>
           </div>
         </form>
       </Form>

@@ -3,8 +3,8 @@ import { Suspense, useEffect, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarFooter } from '@/components/ui/sidebar';
-import { DashboardHeader } from '@/components/dashboard-header';
-import { DashboardFooter } from '@/components/dashboard-footer';
+import { HomepageHeader } from '@/components/homepage-header';
+import { HomepageFooter } from '@/components/homepage-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { SidebarHeader } from '@/components/sidebar-header';
 import { SidebarFooterNav } from '@/components/sidebar-footer-nav';
@@ -44,13 +44,13 @@ export default function HomePageLayout({ children }: { children: ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <div className="flex flex-1 flex-col overflow-hidden">
-            <DashboardHeader />
+            <HomepageHeader />
             <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
               <Suspense fallback={<DashboardSkeleton />}>
                 {children}
               </Suspense>
             </main>
-            <DashboardFooter />
+            <HomepageFooter />
         </div>
       </div>
     </SidebarProvider>

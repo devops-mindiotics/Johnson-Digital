@@ -1,4 +1,4 @@
-// app/dashboard/users/[id]/edit/page.tsx
+// app/homepage/users/[id]/edit/page.tsx
 import { notFound } from 'next/navigation';
 
 // IDs to export
@@ -191,7 +191,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 //   function onSubmit(values: z.infer<typeof formSchema>) {
 //     console.log(values);
 //     // Here you would typically call an API to update the user data
-//     router.push('/dashboard/users');
+//     router.push('/homepage/users');
 //   }
 
 //   const type = form.watch('type');
@@ -635,7 +635,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 //                 )}
 //                 <div className="flex gap-4">
 //                     <Button type="submit">Update User</Button>
-//                     <Button variant="outline" onClick={() => router.push('/dashboard/users')}>Cancel</Button>
+//                     <Button variant="outline" onClick={() => router.push('/homepage/users')}>Cancel</Button>
 //                 </div>
 //             </form>
 //         </Form>

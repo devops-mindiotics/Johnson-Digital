@@ -37,7 +37,7 @@ import { getRoles } from '@/lib/utils/getRole';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
 
-export function DashboardHeader() {
+export function HomepageHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -134,11 +134,11 @@ export function DashboardHeader() {
     </Button>
   </DropdownMenuTrigger>
   <DropdownMenuContent align="end">
-    <DropdownMenuItem onClick={() => router.push('/dashboard/schools/add')}>
+    <DropdownMenuItem onClick={() => router.push('/homepage/schools/add')}>
       <School className="mr-2 h-4 w-4 text-blue-600" />
       Add School
     </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => router.push('/dashboard/content?add=true')}>
+    <DropdownMenuItem onClick={() => router.push('/homepage/content?add=true')}>
       <ClipboardList className="mr-2 h-4 w-4 text-green-600" />
       Add Content
     </DropdownMenuItem>
@@ -151,7 +151,7 @@ export function DashboardHeader() {
           <>
             <div className="hidden md:flex items-center gap-2">
   <Button 
-    onClick={() => router.push('/dashboard/users/add?type=Student')}
+    onClick={() => router.push('/homepage/users/add?type=Student')}
     className="flex items-center gap-2"
   >
     <FaUserGraduate size={18} />
@@ -159,7 +159,7 @@ export function DashboardHeader() {
   </Button>
 
   <Button 
-    onClick={() => router.push('/dashboard/users/add?type=Teacher')}
+    onClick={() => router.push('/homepage/users/add?type=Teacher')}
     className="flex items-center gap-2"
   >
     <FaChalkboardTeacher size={18} />
@@ -171,7 +171,7 @@ export function DashboardHeader() {
   <Button
     size="icon"
     className="rounded-full bg-blue-50 hover:bg-blue-100"
-    onClick={() => router.push('/dashboard/users/add?type=Student')}
+    onClick={() => router.push('/homepage/users/add?type=Student')}
   >
     <UserPlus className="h-5 w-5 text-blue-600" />
     <span className="sr-only">Add Student</span>
@@ -180,7 +180,7 @@ export function DashboardHeader() {
   <Button
     size="icon"
     className="rounded-full bg-green-50 hover:bg-green-100"
-    onClick={() => router.push('/dashboard/users/add?type=Teacher')}
+    onClick={() => router.push('/homepage/users/add?type=Teacher')}
   >
     <UserCheck className="h-5 w-5 text-green-600" />
     <span className="sr-only">Add Teacher</span>
@@ -229,14 +229,14 @@ export function DashboardHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href="/dashboard/profile" passHref>
+              <Link href="/homepage/profile" passHref>
                 <DropdownMenuItem>
                   <UserCircle className="mr-2 h-4 w-4 text-purple-500" />
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
               {(userRole === STUDENT || userRole === TEACHER) && (
-  <Link href="/dashboard/settings" passHref>
+  <Link href="/homepage/settings" passHref>
   </Link>
 )}
 

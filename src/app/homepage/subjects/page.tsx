@@ -62,7 +62,7 @@ export default function SubjectsPage() {
                                     <CardTitle className="text-xl">{subject.name}</CardTitle>
                                 </CardHeader>
                                 <CardFooter>
-                                    <Button className="w-full" onClick={() => handleNavigation(`/dashboard/my-classes/${studentClassId}/${subject.id}`)}>View Content</Button>
+                                    <Button className="w-full" onClick={() => handleNavigation(`/homepage/my-classes/${studentClassId}/${subject.id}`)}>View Content</Button>
                                 </CardFooter>
                             </Card>
                         ))}

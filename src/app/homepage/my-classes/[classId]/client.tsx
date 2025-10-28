@@ -39,7 +39,7 @@ export default function ClassDetailsClientPage({ classId, subjects }: ClassDetai
                                 </CardHeader>
                                 <CardFooter>
                                     {/* The link is now built with the direct classId prop, which is guaranteed to be correct. */}
-                                    <Button className="w-full" onClick={() => handleNavigation(`/dashboard/my-classes/${classId}/${subject.id}`)}>View Content</Button>
+                                    <Button className="w-full" onClick={() => handleNavigation(`/homepage/my-classes/${classId}/${subject.id}`)}>View Content</Button>
                                 </CardFooter>
                             </Card>
                         ))}

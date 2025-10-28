@@ -23,7 +23,7 @@ export default function EVSPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4 mb-4">
-                <Link href="/dashboard" passHref>
+                <Link href="/homepage" passHref>
                     <Button variant="outline" size="icon" aria-label="Go back to dashboard">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>

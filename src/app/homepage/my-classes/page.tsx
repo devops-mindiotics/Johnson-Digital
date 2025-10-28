@@ -83,7 +83,7 @@ export default function MyClassesPage() {
                                     <CardTitle className="text-xl">{subject.name}</CardTitle>
                                 </CardHeader>
                                 <CardFooter>
-                                    <Button className="w-full" onClick={() => handleNavigation(`/dashboard/my-classes/${studentClassId}/${subject.id}`)}>View Content</Button>
+                                    <Button className="w-full" onClick={() => handleNavigation(`/homepage/my-classes/${studentClassId}/${subject.id}`)}>View Content</Button>
                                 </CardFooter>
                             </Card>
                         ))
@@ -91,7 +91,7 @@ export default function MyClassesPage() {
                              <Card 
                                 key={c.id} 
                                 className="cursor-pointer hover:shadow-lg transition-shadow flex flex-col justify-between"
-                                onClick={() => handleNavigation(`/dashboard/my-classes/${c.id}`)}
+                                onClick={() => handleNavigation(`/homepage/my-classes/${c.id}`)}
                             >
                                 <CardHeader>
                                     <CardTitle className="text-xl">{c.name}</CardTitle>

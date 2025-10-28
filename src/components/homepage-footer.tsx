@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-export function DashboardFooter({ className }: { className?: string }) {
+export function HomepageFooter({ className }: { className?: string }) {
     return (
         <footer className={cn("relative border-t bg-background/80 p-4 backdrop-blur-sm", className)}>
             <div className="container mx-auto text-center text-sm text-muted-foreground">

@@ -7,10 +7,18 @@ export async function createSchool(
   schoolPayload: any
 ): Promise<SchoolCreateResponse> {
   try {
-    const response = await apiClient.post(
-      `/tenants/${tenantId}/schools`,
-      schoolPayload
-    );
+        const token = localStorage.getItem("contextJWT");
+
+   const response = await apiClient.post(
+  `/tenants/${tenantId}/schools`,
+  schoolPayload,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
+
     return response.data;
   } catch (err: any) {
     console.error("❌ createSchool error:", err.response?.data || err.message);
@@ -23,13 +31,19 @@ export async function getAllSchools(): Promise<any> {
     const tenantData = localStorage.getItem("contextInfo");
     if (!tenantData) return { data: [] }; // Return an empty array if no tenant data
     const parsed = JSON.parse(tenantData);
+    const token = localStorage.getItem("contextJWT");
+
     const tenantId = parsed?.tenantId || null;
 
     if (!tenantId) return { data: [] }; // Return an empty array if no tenant ID
 
-    const response = await apiClient.get(`/tenants/${tenantId}/schools`);
+      const response = await apiClient.get(`/tenants/${tenantId}/schools`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     // Ensure the response has a data property that is an array
-    return response.data && Array.isArray(response.data.data) ? response.data : { data: [] };
+    return response.data;
   } catch (err: any) {
     console.error("❌ getSchools error:", err.response?.data || err.message);
     // In case of an error, return an object with an empty data array

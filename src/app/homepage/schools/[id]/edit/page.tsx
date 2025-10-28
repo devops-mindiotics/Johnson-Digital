@@ -184,7 +184,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 
 //   async function onSubmit(values: z.infer<typeof formSchema>) {
 //     console.log('Updated school data:', values);
-//     router.push('/dashboard/schools'); 
+//     router.push('/homepage/schools'); 
 //   }
 
 //   return (
@@ -192,7 +192,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 //       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 //         <div className="flex items-center justify-between">
 //             <h1 className="text-2xl font-bold">Edit School</h1>
-//             <Link href="/dashboard/schools">
+//             <Link href="/homepage/schools">
 //               <Button variant="outline">Back to Schools</Button>
 //             </Link>
 //         </div>
@@ -649,7 +649,7 @@ export default async function Page({ params }: { params: { id: string } }) {
 //         </Card>
 
 //         <div className="flex justify-end space-x-4">
-//             <Button type="button" variant="outline" onClick={() => router.push('/dashboard/schools')}>Cancel</Button>
+//             <Button type="button" variant="outline" onClick={() => router.push('/homepage/schools')}>Cancel</Button>
 //             <Button type="submit">Update School</Button>
 //         </div>
 //       </form>

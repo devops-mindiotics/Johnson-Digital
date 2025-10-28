@@ -62,7 +62,7 @@ export default function SchoolsPage() {
     const fetchSchools = async () => {
       try {
         const response = await getAllSchools();
-        setSchools(response.data || []);
+        setSchools(response.data.records || []);
       } catch (err: any) {
         setError(err.message || "Failed to load schools");
       } finally {
