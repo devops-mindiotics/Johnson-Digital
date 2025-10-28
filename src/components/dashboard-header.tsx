@@ -34,12 +34,14 @@ import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
 import { getRoles } from '@/lib/utils/getRole';
+import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+
 
 export function DashboardHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const showBackButton = pathname !== '/dashboard';
+  const showBackButton = pathname !== '/homepage';
 
   if (!user) return null;
 
@@ -51,11 +53,11 @@ export function DashboardHeader() {
   };
 
   
-  const userRole = getRoles() || 'student';
+  const userRole = getRoles() || STUDENT;
 
   const baseName = user.displayName ? user.displayName.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
   let displayName = baseName;
-  const displayClass = "V";
+  const displayClass = "Class-V";
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
@@ -71,12 +73,12 @@ export function DashboardHeader() {
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{displayName}</p>
-                {userRole === 'student' && (
+                {userRole === STUDENT && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
                     ({displayClass})
                 </p>
                 )}
-                 {userRole === 'student' && (
+                 {userRole === STUDENT && (
                     <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                         <Crown className="w-3 h-3 mr-1" />
                         Premium
@@ -86,7 +88,7 @@ export function DashboardHeader() {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        {userRole === 'student' && (
+        {userRole === STUDENT && (
           <>
             {/* Web view */}
             <div className="hidden items-center gap-2 md:flex">
@@ -121,7 +123,7 @@ export function DashboardHeader() {
           </>
         )}
 
-        {userRole === 'tenantadmin' && (
+        {userRole === TENANTADMIN && (
             <DropdownMenu>
   <DropdownMenuTrigger asChild>
     <Button 
@@ -145,7 +147,7 @@ export function DashboardHeader() {
 
         )}
 
-        {userRole === 'schooladmin' && (
+        {userRole === SCHOOLADMIN && (
           <>
             <div className="hidden md:flex items-center gap-2">
   <Button 
@@ -202,12 +204,12 @@ export function DashboardHeader() {
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {userRole === 'student' && (
+                  {userRole === STUDENT && (
                   <p className="hidden text-sm text-muted-foreground sm:block">
                       ({displayClass})
                   </p>
                  )}
-                    {userRole === 'student' && (
+                    {userRole === STUDENT && (
                         <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
                         <Crown className="w-3 h-3 mr-1" />
                         Premium
@@ -233,7 +235,7 @@ export function DashboardHeader() {
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
-              {(userRole === 'student' || userRole === 'teacher') && (
+              {(userRole === STUDENT || userRole === TEACHER) && (
   <Link href="/dashboard/settings" passHref>
   </Link>
 )}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/hooks/use-auth";
 import { classSubjects } from "@/lib/data"; // Import from the single source of truth
+import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
 // Data for teacher's view of assigned classes
 const assignedClasses = [
@@ -24,7 +25,7 @@ const studentClassMap = {
 export default function MyClassesPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth(); // Correctly use isLoading
-  const isStudent = user?.role === 'Student';
+  const isStudent = user?.roles === STUDENT;
 
   let studentClassId = null;
 

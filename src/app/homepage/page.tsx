@@ -8,10 +8,10 @@ import { getRoles } from '@/lib/utils/getRole';
 
 import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
-import SuperAdminDashboard from '@/components/dashboards/super-admin';
-import SchoolAdminDashboard from '@/components/dashboards/school-admin';
-import TeacherDashboard from '@/components/dashboards/teacher';
-import StudentDashboard from '@/components/dashboards/student';
+import SuperAdminDashboard from '@/components/homepage/super-admin';
+import SchoolAdminDashboard from '@/components/homepage/school-admin';
+import TeacherDashboard from '@/components/homepage/teacher';
+import StudentDashboard from '@/components/homepage/student';
 
 export default function Homepage() {
   const { user, isLoading } = useAuth();
@@ -29,7 +29,7 @@ export default function Homepage() {
   }
 
   
-  const userRole = getRoles() || 'student';
+  const userRole = getRoles() || STUDENT;
 
    const renderDashboard = () => {
     console.log('🚀 renderDashboard called', userRole);

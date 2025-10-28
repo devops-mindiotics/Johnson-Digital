@@ -32,7 +32,7 @@ export interface User {
   status?: string;
   createdAt?: string;
   updatedAt?: string;
-  globalRoles?: string[] | null;
+  roles?: string[] | null;
 }
 
 export interface TenantRole {

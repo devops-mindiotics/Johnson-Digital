@@ -128,7 +128,7 @@ export default function ProfileClient({ user }: { user: any }) {
     setIsSuccessDialogOpen(true);
   };
 
-  const baseName = user.name.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '');
+  const baseName = user?.name?.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') ?? 'User';
   let displayName = baseName;
 
   if (user.role !== 'Student') {
