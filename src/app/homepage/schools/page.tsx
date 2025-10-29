@@ -47,7 +47,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { getAllSchools } from "@/lib/api/schoolApi";
+import { getAllSchools, updateSchool } from "@/lib/api/schoolApi";
 
 export default function SchoolsPage() {
   const router = useRouter();
@@ -76,17 +76,22 @@ export default function SchoolsPage() {
     setSchoolToProcess(school);
   };
 
-  const handleStatusChange = () => {
+  const handleStatusChange = async () => {
     if (schoolToProcess) {
       const newStatus =
-        schoolToProcess.status === "Active" ||
+        schoolToProcess.status === "active" ||
         schoolToProcess.status === "Trial"
           ? "Inactive"
-          : "Active";
-      const updatedSchools = schools.map((s) =>
-        s.id === schoolToProcess.id ? { ...s, status: newStatus } : s
-      );
-      setSchools(updatedSchools);
+          : "active";
+        const updatedSchool = { ...schoolToProcess, status: newStatus };
+
+      try {
+        await updateSchool(schoolToProcess.id, updatedSchool);
+        router.push("/homepage/schools");
+      } catch (error) {
+        console.error("Failed to update school:", error);
+      }
+      setSchools(updatedSchool);
       setProcessedSchoolName(schoolToProcess.name);
       if (newStatus === "Inactive") setSuccessDialogOpen(true);
       setSchoolToProcess(null);
@@ -323,9 +328,14 @@ export default function SchoolsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setSchoolToProcess(null)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleStatusChange}>
-              Confirm
+              {schoolToProcess?.status === "active" ||
+              schoolToProcess?.status === "Trial"
+                ? "Inactive"
+                : "active"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

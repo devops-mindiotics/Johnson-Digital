@@ -1,4 +1,3 @@
-
 import apiClient from "./client";
 import type { SchoolCreateResponse } from "@/types/school/schoolCreateResponse";
 
@@ -8,7 +7,7 @@ interface ApiContext {
 }
 
 function getClientContext(): ApiContext {
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     throw new Error("This function can only be run on the client");
   }
   const tenantData = localStorage.getItem("contextInfo");
@@ -51,8 +50,12 @@ export async function getAllSchools(context?: ApiContext): Promise<any[]> {
         Authorization: `Bearer ${token}`,
       },
     });
-    if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
-        return response.data.data.records;
+    if (
+      response.data &&
+      response.data.data &&
+      Array.isArray(response.data.data.records)
+    ) {
+      return response.data.data.records;
     }
     return [];
   } catch (err: any) {
@@ -61,16 +64,22 @@ export async function getAllSchools(context?: ApiContext): Promise<any[]> {
   }
 }
 
-export async function getSchoolById(schoolId: string, context?: ApiContext): Promise<any> {
+export async function getSchoolById(
+  schoolId: string,
+  context?: ApiContext
+): Promise<any> {
   try {
     const { tenantId, token } = context || getClientContext();
     if (!schoolId) return null;
 
-    const response = await apiClient.get(`/tenants/${tenantId}/schools/${schoolId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await apiClient.get(
+      `/tenants/${tenantId}/schools/${schoolId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     return response.data;
   } catch (err: any) {
@@ -88,7 +97,7 @@ export async function updateSchool(
     const { tenantId, token } = context || getClientContext();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}`,
-      schoolPayload,
+      { data: schoolPayload },
       {
         headers: {
           Authorization: `Bearer ${token}`,
