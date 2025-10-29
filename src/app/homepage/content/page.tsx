@@ -34,6 +34,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getAllSeries } from '@/lib/api/masterApi';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
@@ -374,12 +375,27 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
     const [newValues, setNewValues] = useState({ series: '', package: '', subject: '', lesson: '', contentName: '' });
     const [selectedContentType, setSelectedContentType] = useState('');
     const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
+    const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
     const [showPackageDropdown, setShowPackageDropdown] = useState(false);
     const [showContentNameInput, setShowContentNameInput] = useState(false);
     const [showNewSeriesInput, setShowNewSeriesInput] = useState(false);
     const [showNewPackageInput, setShowNewPackageInput] = useState(false);
     const [showNewSubjectInput, setShowNewSubjectInput] = useState(false);
     const [showNewLessonInput, setShowNewLessonInput] = useState(false);
+
+    useEffect(() => {
+        async function fetchSeries() {
+            try {
+                const series = await getAllSeries();
+                setSeriesOptions(series);
+            } catch (error) {
+                console.error("Failed to fetch series:", error);
+            }
+        }
+        if (isOpen) {
+            fetchSeries();
+        }
+    }, [isOpen]);
 
     const resetForm = () => {
         setNewValues({ series: '', package: '', subject: '', lesson: '', contentName: '' });
@@ -473,8 +489,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                                 <SelectValue placeholder="Select a series" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="NCERT">NCERT</SelectItem>
-                                <SelectItem value="ABC">ABC</SelectItem>
+                                {seriesOptions.map((series) => (
+                                    <SelectItem key={series.id} value={series.id}>{series.name}</SelectItem>
+                                ))}
                                 <SelectItem value="new">Add new series...</SelectItem>
                             </SelectContent>
                         </Select>

@@ -20,7 +20,7 @@ apiClient.interceptors.request.use((config) => {
     window.dispatchEvent(new Event('show-loader'));
   }
   console.log('🌍 API Base URL:', API_BASE_URL);
-  const token = getAccessToken();
+  const token = typeof window !== 'undefined' ? localStorage.getItem('contextJWT') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

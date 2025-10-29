@@ -13,7 +13,8 @@ import {
   Bug,
   BookOpen,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  HelpCircle
 } from 'lucide-react';
 
 import {  SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
@@ -27,6 +28,7 @@ const superAdminSidebar = [
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/homepage/banners', icon: Image, title: 'Banners' },
   { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/faq', icon: HelpCircle, title: 'FAQ' },
   { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
@@ -38,6 +40,7 @@ const schoolAdminSidebar = [
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/homepage/banners', icon: Image, title: 'Banners' },
   { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/faq', icon: HelpCircle, title: 'FAQ' },
   { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
@@ -48,6 +51,7 @@ const teacherSidebar = [
   { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments' },
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/faq', icon: HelpCircle, title: 'FAQ' },
   { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 
@@ -58,6 +62,7 @@ const studentSidebar = [
   { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments' },
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/homepage/profile', icon: User, title: 'Profile' },
+  { href: '/homepage/faq', icon: HelpCircle, title: 'FAQ' },
   { href: '/homepage/report', icon: Bug, title: 'Report' },
 ];
 

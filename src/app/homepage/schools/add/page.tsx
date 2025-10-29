@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { createSchool, getAllSchools } from "@/lib/api/schoolApi";
+import { getAllSeries } from "@/lib/api/masterApi";
 import { Badge } from "@/components/ui/badge";
 
 const classes = [
@@ -52,12 +53,6 @@ const classes = [
   { id: "3", label: "III" },
   { id: "4", label: "IV" },
   { id: "5", label: "V" },
-];
-
-const seriesOptions = [
-  { id: "mirac", label: "Mirac" },
-  { id: "marvel", label: "Marvel" },
-  { id: "other", label: "Other" },
 ];
 
 const classConfigurationSchema = z.object({
@@ -102,6 +97,7 @@ const formSchema = z.object({
 export default function AddSchoolPage() {
   const router = useRouter();
   const [schools, setSchools] = useState<any[]>([]);
+  const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
 
   const getExpiryDate = () => {
     const today = new Date();
@@ -125,20 +121,32 @@ export default function AddSchoolPage() {
   });
 
   useEffect(() => {
-    async function fetchSchools() {
+    async function fetchData() {
         try {
-          const schoolData = await getAllSchools();
+          const [schoolData, seriesData] = await Promise.all([
+            getAllSchools(),
+            getAllSeries(),
+          ]);
+
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
           } else {
             setSchools([]);
           }
+
+          if (seriesData && Array.isArray(seriesData)) {
+            setSeriesOptions(seriesData);
+          } else {
+            setSeriesOptions([]);
+          }
+
         } catch (error) {
-          console.error("Failed to fetch schools:", error);
+          console.error("Failed to fetch data:", error);
           setSchools([]);
+          setSeriesOptions([]);
         }
       }
-      fetchSchools();
+      fetchData();
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -497,7 +505,7 @@ export default function AddSchoolPage() {
                               <SelectContent>
                                 {seriesOptions.map((s) => (
                                   <SelectItem key={s.id} value={s.id}>
-                                    {s.label}
+                                    {s.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
