@@ -41,19 +41,8 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { createSchool, getAllSchools } from "@/lib/api/schoolApi";
-import { getAllSeries } from "@/lib/api/masterApi";
+import { getAllSeries, getAllClasses } from "@/lib/api/masterApi";
 import { Badge } from "@/components/ui/badge";
-
-const classes = [
-  { id: "nursery", label: "Nursery" },
-  { id: "lkg", label: "LKG" },
-  { id: "ukg", label: "UKG" },
-  { id: "1", label: "I" },
-  { id: "2", label: "II" },
-  { id: "3", label: "III" },
-  { id: "4", label: "IV" },
-  { id: "5", label: "V" },
-];
 
 const classConfigurationSchema = z.object({
   class: z.string().min(1, "Class is required"),
@@ -98,6 +87,7 @@ export default function AddSchoolPage() {
   const router = useRouter();
   const [schools, setSchools] = useState<any[]>([]);
   const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
+  const [classOptions, setClassOptions] = useState<any[]>([]);
 
   const getExpiryDate = () => {
     const today = new Date();
@@ -123,9 +113,10 @@ export default function AddSchoolPage() {
   useEffect(() => {
     async function fetchData() {
         try {
-          const [schoolData, seriesData] = await Promise.all([
+          const [schoolData, seriesData, classData] = await Promise.all([
             getAllSchools(),
             getAllSeries(),
+            getAllClasses(),
           ]);
 
           if (schoolData && Array.isArray(schoolData)) {
@@ -140,10 +131,17 @@ export default function AddSchoolPage() {
             setSeriesOptions([]);
           }
 
+          if (classData && Array.isArray(classData)) {
+            setClassOptions(classData);
+          } else {
+            setClassOptions([]);
+          }
+
         } catch (error) {
           console.error("Failed to fetch data:", error);
           setSchools([]);
           setSeriesOptions([]);
+          setClassOptions([]);
         }
       }
       fetchData();
@@ -475,9 +473,9 @@ export default function AddSchoolPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {classes.map((c) => (
+                                {classOptions.map((c) => (
                                   <SelectItem key={c.id} value={c.id}>
-                                    {c.label}
+                                    {c.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

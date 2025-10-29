@@ -34,7 +34,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getAllSeries } from '@/lib/api/masterApi';
+import { getAllSeries, getAllClasses } from '@/lib/api/masterApi';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
@@ -376,6 +376,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
     const [selectedContentType, setSelectedContentType] = useState('');
     const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
+    const [classesOptions, setClassesOptions] = useState<any[]>([]);
     const [showPackageDropdown, setShowPackageDropdown] = useState(false);
     const [showContentNameInput, setShowContentNameInput] = useState(false);
     const [showNewSeriesInput, setShowNewSeriesInput] = useState(false);
@@ -392,8 +393,17 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 console.error("Failed to fetch series:", error);
             }
         }
+        async function fetchClasses() {
+            try {
+                const classes = await getAllClasses();
+                setClassesOptions(classes);
+            } catch (error) {
+                console.error("Failed to fetch classes:", error);
+            }
+        }
         if (isOpen) {
             fetchSeries();
+            fetchClasses();
         }
     }, [isOpen]);
 
@@ -471,13 +481,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectValue placeholder="Select a class" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Nursery">Class - Nursery</SelectItem>
-                            <SelectItem value="LKG">Class - LKG</SelectItem>
-                            <SelectItem value="UKG">Class - UKG</SelectItem>
-                            <SelectItem value="I">Class - I</SelectItem>
-                            <SelectItem value="II">Class - II</SelectItem>
-                            <SelectItem value="10">Class - 10</SelectItem>
-                            <SelectItem value="12">Class - 12</SelectItem>
+                            {classesOptions.map((classOption) => (
+                                <SelectItem key={classOption.id} value={classOption.id}>{classOption.name}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>

@@ -68,3 +68,34 @@ export async function createSeries(seriesName: string): Promise<any> {
         throw err;
     }
 }
+
+export async function getAllClasses(): Promise<any[]> {
+    try {
+      const tenantData = localStorage.getItem("contextInfo");
+      if (!tenantData) return [];
+      const parsed = JSON.parse(tenantData);
+      const token = localStorage.getItem("contextJWT");
+  
+      const tenantId = parsed?.tenantId || null;
+  
+      if (!tenantId) return [];
+  
+      const response = await apiClient.get(
+        `/tenants/${tenantId}/masters/classes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      }
+  
+      return [];
+    } catch (err: any) {
+      console.error("❌ getAllClasses error:", err.response?.data || err.message);
+      throw err;
+    }
+  }
