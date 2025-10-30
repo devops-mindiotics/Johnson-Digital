@@ -8,23 +8,12 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-  } from "@/components/ui/alert-dialog"
-import {
     Accordion,
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
   } from "@/components/ui/accordion"
-import { MoreHorizontal, Pencil, PlusCircle, Trash2 } from 'lucide-react';
+import { Pencil, PlusCircle, Trash2 } from 'lucide-react';
 import { AddSectionDialog } from '@/components/add-section-dialog';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -32,63 +21,19 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
-import { getAllSchools } from '@/lib/api/schoolApi';
+import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN } from '@/lib/utils/constants';
+import { getAllSchools, getClasses, updateClass } from '@/lib/api/schoolApi';
 import { getRoles } from '@/lib/utils/getRole';
-
-const mockTeachers = [
-    { id: 't1', name: 'Mr. John Doe', schoolId: 'sch_1' },
-    { id: 't2', name: 'Ms. Jane Smith', schoolId: 'sch_1' },
-    { id: 't3', name: 'Mrs. Emily White', schoolId: 'sch_2' },
-    { id: 't4', name: 'Mr. Robert Brown', schoolId: 'sch_2' },
-];
-
-const initialClassesData = [
-  { id: 'c1', name: 'Class 10', schoolId: 'sch_1' },
-  { id: 'c2', name: 'Class 9', schoolId: 'sch_1' },
-  { id: 'c3', name: 'Class 8', schoolId: 'sch_2' },
-];
-
-const initialSectionsPool = [
-    { id: 'sp1', name: 'Section A', schoolId: 'sch_1' },
-    { id: 'sp2', name: 'Section B', schoolId: 'sch_1' },
-    { id: 'sp3', name: 'Section C', schoolId: 'sch_1' },
-    { id: 'sp4', name: 'Section Alpha', schoolId: 'sch_2' },
-];
-
-const initialSectionAssignments = [
-    { id: 'sa1', classId: 'c1', sectionPoolId: 'sp1', licenses: 30, status: 'active' as const, classTeacherId: 't1' },
-    { id: 'sa2', classId: 'c1', sectionPoolId: 'sp2', licenses: 25, status: 'active' as const, classTeacherId: 't2' },
-    { id: 'sa3', classId: 'c2', sectionPoolId: 'sp1', licenses: 30, status: 'inactive' as const, classTeacherId: null },
-];
-
-const allSchoolSubjects = [
-    { id: 'sub1', name: 'Mathematics' },
-    { id: 'sub2', name: 'Science' },
-    { id: 'sub3', name: 'English' },
-    { id: 'sub4', name: 'History' },
-    { id: 'sub5', name: 'Geography' },
-    { id: 'sub6', name: 'Social Studies' },
-    { id: 'sub7', name: 'Physics' },
-];
-
-const initialSectionSubjectTeacherAssignments = [
-    { id: 'ssta1', sectionAssignmentId: 'sa1', subjectId: 'sub1', teacherId: 't1' },
-    { id: 'ssta2', sectionAssignmentId: 'sa1', subjectId: 'sub2', teacherId: 't2' },
-    { id: 'ssta3', sectionAssignmentId: 'sa2', subjectId: 'sub1', teacherId: 't1' },
-];
 
 export default function ClassesPage() {
     const { user } = useAuth();
     const userRole = getRoles();
     const { toast } = useToast();
     const isMobile = useIsMobile();
-    const [schools, setSchools] = useState([]);
-    const [teachers, setTeachers] = useState(mockTeachers);
-    const [allClasses, setAllClasses] = useState(initialClassesData);
-    const [sectionsPool, setSectionsPool] = useState(initialSectionsPool);
-    const [sectionAssignments, setSectionAssignments] = useState(initialSectionAssignments);
-    const [sectionSubjectTeacherAssignments, setSectionSubjectTeacherAssignments] = useState(initialSectionSubjectTeacherAssignments);
+    const [schools, setSchools] = useState<any[]>([]);
+    const [allClasses, setAllClasses] = useState<any[]>([]);
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [subjects, setSubjects] = useState<any[]>([]);
 
     const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
     
@@ -97,35 +42,68 @@ export default function ClassesPage() {
     const [currentClass, setCurrentClass] = useState<any | null>(null);
 
     useEffect(() => {
-        async function fetchData() {
+        async function fetchSchools() {
           if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
             try {
               const schoolData = await getAllSchools();
               if (schoolData && Array.isArray(schoolData)) {
                 setSchools(schoolData);
               } else {
-                setSchools([]); // Ensure schools is always an array
+                setSchools([]);
               }
             } catch (error) {
               console.error("Failed to fetch schools:", error);
-              setSchools([]); // Set to empty array on error
+              setSchools([]);
             }
           }
         }
-        fetchData();
+        fetchSchools();
       }, [user, userRole]);
 
-    const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
+      useEffect(() => {
+        async function fetchClasses() {
+          if (selectedSchool) {
+            try {
+              const classData = await getClasses(selectedSchool);
+              if (classData && Array.isArray(classData)) {
+                setAllClasses(classData.map(c => ({ ...c, classId: c.id })));
 
-    const assignedLicenses = sectionAssignments.reduce((acc, s) => {
-        const sectionClass = allClasses.find(c => c.id === s.classId);
-        if (sectionClass && sectionClass.schoolId === selectedSchool && s.status === 'active') {
-            return acc + s.licenses;
+                const extractedTeachers = classData.flatMap(c => c.sections?.flatMap((s: any) => s.subjects?.map((sub: any) => ({ id: sub.teacherId, name: sub.subjectTeacherName, schoolId: selectedSchool }))) || []);
+                const uniqueTeachers = Array.from(new Set(extractedTeachers.map(t => t.id))).map(id => extractedTeachers.find(t => t.id === id));
+                setTeachers(uniqueTeachers);
+
+                const extractedSubjects = classData.flatMap(c => c.sections?.flatMap((s: any) => s.subjects?.map((sub: any) => ({ id: sub.subjectId, name: sub.subjectName }))) || []);
+                const uniqueSubjects = Array.from(new Set(extractedSubjects.map(s => s.id))).map(id => extractedSubjects.find(s => s.id === id));
+                setSubjects(uniqueSubjects);
+              } else {
+                setAllClasses([]);
+              }
+            } catch (error) {
+              console.error("Failed to fetch classes:", error);
+              setAllClasses([]);
+            }
+          }
         }
-        return acc;
-    }, 0);
+        fetchClasses();
+      }, [selectedSchool]);
 
-    const availableLicenses = selectedSchoolDetails ? selectedSchoolDetails.licenceForStudent - assignedLicenses : 0;
+    const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
+    const availableLicenses = selectedSchoolDetails?.licenceForStudent - allClasses.reduce((acc, c) => acc + c.licensesCount, 0);
+
+    const handleUpdateConfiguration = async (classId: string, updatedData: any) => {
+        if (!selectedSchool) return;
+        try {
+            await updateClass(selectedSchool, classId, updatedData);
+            toast({ title: "Success", description: "Class configuration updated successfully." });
+            const classData = await getClasses(selectedSchool);
+            if (classData && Array.isArray(classData)) {
+                setAllClasses(classData.map(c => ({ ...c, classId: c.id })));
+            }
+        } catch (error) {
+            console.error("Failed to update class configuration:", error);
+            toast({ title: "Error", description: "Failed to update class configuration." });
+        }
+    };
 
     const handleOpenAddSectionDialog = (classInfo: any) => {
         setCurrentClass(classInfo);
@@ -133,99 +111,57 @@ export default function ClassesPage() {
         setIsSectionDialogOpen(true);
     };
 
-    const handleOpenEditSectionDialog = (assignment: any) => {
-        const classInfo = allClasses.find(c => c.id === assignment.classId);
+    const handleOpenEditSectionDialog = (section: any, classInfo: any) => {
         setCurrentClass(classInfo);
-        setEditingAssignment(assignment);
+        setEditingAssignment(section);
         setIsSectionDialogOpen(true);
     };
 
-    const handleSaveSection = (values: { sectionOption: 'noSection' | 'addSection'; sectionName?: string; sectionPoolId?: string; licenses: number }) => {
-        if (!selectedSchool || !currentClass) return;
+    const handleSaveSection = (values: any) => {
+        if (!currentClass) return;
 
-        if (values.sectionOption === 'noSection') {
-            if (editingAssignment) {
-                setSectionAssignments(sectionAssignments.map(sa => 
-                    sa.id === editingAssignment.id ? { ...sa, sectionPoolId: 'NO_SECTION_ASSIGNED', licenses: values.licenses } : sa
-                ));
-            } else {
-                const newAssignment = {
-                    id: `sa${Date.now()}`,
-                    classId: currentClass.id,
-                    sectionPoolId: 'NO_SECTION_ASSIGNED',
-                    licenses: values.licenses,
-                    status: 'active' as const,
-                    classTeacherId: null,
-                };
-                setSectionAssignments([...sectionAssignments, newAssignment]);
+        const newOrUpdatedSections = editingAssignment
+            ? currentClass.sections.map((s: any) => s.sectionId === editingAssignment.sectionId ? { ...s, name: values.sectionName, licensesCount: values.licenses } : s)
+            : [...(currentClass.sections || []), { sectionId: `new-section-${Date.now()}`, name: values.sectionName, licensesCount: values.licenses, subjects: [] }];
+
+        handleUpdateConfiguration(currentClass.classId, { sections: newOrUpdatedSections });
+    };
+
+    const handleDeleteSection = (classId: string, sectionIdentifier: string, sectionIndex: number) => {
+        const targetClass = allClasses.find(c => c.classId === classId);
+        if (!targetClass) return;
+
+        const updatedSections = targetClass.sections.filter((s: any, index: number) => (s.sectionId || `section-${index}`) !== (sectionIdentifier || `section-${sectionIndex}`));
+        handleUpdateConfiguration(classId, { sections: updatedSections });
+    };
+
+    const handleAddSubject = (classId: string, sectionIdentifier: string, sectionIndex: number) => {
+        const targetClass = allClasses.find(c => c.classId === classId);
+        if (!targetClass) return;
+
+        const newSubject = { subjectId: `new-subject-${Date.now()}`, subjectName: "New Subject", teacherId: null };
+        const updatedSections = targetClass.sections.map((s: any, index: number) => {
+            if ((s.sectionId || `section-${index}`) === (sectionIdentifier || `section-${sectionIndex}`)) {
+                return { ...s, subjects: [...(s.subjects || []), newSubject] };
             }
-        } else {
-            let poolId = values.sectionPoolId;
-            if (values.sectionName) {
-                const newPoolSection = {
-                    id: `sp${Date.now()}`,
-                    name: values.sectionName,
-                    schoolId: selectedSchool,
-                };
-                setSectionsPool([...sectionsPool, newPoolSection]);
-                poolId = newPoolSection.id;
+            return s;
+        });
+        handleUpdateConfiguration(classId, { sections: updatedSections });
+    };
+
+    const handleDeleteSubject = (classId: string, sectionIdentifier: string, sectionIndex: number, subjectIdentifier: string, subjectIndex: number) => {
+        const targetClass = allClasses.find(c => c.classId === classId);
+        if (!targetClass) return;
+
+        const updatedSections = targetClass.sections.map((s: any, sIndex: number) => {
+            if ((s.sectionId || `section-${sIndex}`) === (sectionIdentifier || `section-${sectionIndex}`)) {
+                const updatedSubjects = s.subjects.filter((sub: any, subIndex: number) => (sub.subjectId || `subject-${subIndex}`) !== (subjectIdentifier || `subject-${subjectIndex}`));
+                return { ...s, subjects: updatedSubjects };
             }
-
-            if (!poolId) return;
-
-            if (editingAssignment) {
-                setSectionAssignments(sectionAssignments.map(sa => 
-                    sa.id === editingAssignment.id ? { ...sa, sectionPoolId: poolId, licenses: values.licenses } : sa
-                ));
-            } else {
-                const newAssignment = {
-                    id: `sa${Date.now()}`,
-                    classId: currentClass.id,
-                    sectionPoolId: poolId,
-                    licenses: values.licenses,
-                    status: 'active' as const,
-                    classTeacherId: null,
-                };
-                setSectionAssignments([...sectionAssignments, newAssignment]);
-            }
-        }
+            return s;
+        });
+        handleUpdateConfiguration(classId, { sections: updatedSections });
     };
-
-    const handleDeleteAssignment = (assignmentId: string) => {
-        setSectionAssignments(sectionAssignments.map(sa => 
-            sa.id === assignmentId ? { ...sa, status: sa.status === 'active' ? 'inactive' : 'active' } : sa
-        ));
-    };
-
-    const handleAddSubject = (sectionAssignmentId: string) => {
-        const newSubjectAssignment = {
-            id: `ssta${Date.now()}`,
-            sectionAssignmentId,
-            subjectId: allSchoolSubjects[0].id, // Default to first subject
-            teacherId: null,
-        };
-        setSectionSubjectTeacherAssignments([...sectionSubjectTeacherAssignments, newSubjectAssignment]);
-    };
-
-    const handleUpdateSubject = (id: string, subjectId: string) => {
-        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.map(ssta => 
-            ssta.id === id ? { ...ssta, subjectId } : ssta
-        ));
-    };
-
-    const handleUpdateSubjectTeacher = (id: string, teacherId: string) => {
-        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.map(ssta => 
-            ssta.id === id ? { ...ssta, teacherId } : ssta
-        ));
-    };
-
-    const handleDeleteSubject = (id: string) => {
-        setSectionSubjectTeacherAssignments(sectionSubjectTeacherAssignments.filter(ssta => ssta.id !== id));
-    };
-
-    const filteredClasses = selectedSchool ? allClasses.filter(c => c.schoolId === selectedSchool) : [];
-    const schoolSectionsPool = selectedSchool ? sectionsPool.filter(sp => sp.schoolId === selectedSchool) : [];
-    const schoolTeachers = selectedSchool ? teachers.filter(t => t.schoolId === selectedSchool) : [];
 
   if (!user) return <div>Loading...</div>
 
@@ -266,72 +202,50 @@ export default function ClassesPage() {
             <CardContent className="p-0">
             {selectedSchool ? (
                 <Accordion type="single" collapsible className="w-full">
-                {filteredClasses.map((c) => (
-                    <AccordionItem value={c.id} key={c.id}>
+                {allClasses.map((c) => (
+                    <AccordionItem value={c.classId} key={c.classId}>
                     <AccordionTrigger>
                         <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center pr-4 gap-2">
                             <div>
                                 <span className="font-semibold">Class - {c.name}</span>
                                 <p className="text-sm text-muted-foreground">
-                                    (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {availableLicenses})
+                                    (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {c.licensesCount})
                                 </p>
                             </div>
-                            {isMobile ? (
-                                <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenAddSectionDialog(c);
-                                    }}
-                                    className="mt-2 sm:mt-0"
-                                >
-                                    <PlusCircle className="h-4 w-4" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOpenAddSectionDialog(c);
-                                    }}
-                                    className="mt-2 sm:mt-0"
-                                >
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add Section
-                                </Button>
-                            )}
+                            <Button
+                                variant="outline"
+                                size={isMobile ? "icon" : "sm"}
+                                onClick={(e) => { e.stopPropagation(); handleOpenAddSectionDialog(c); }}
+                                className="mt-2 sm:mt-0"
+                            >
+                                <PlusCircle className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
+                                {isMobile ? null : "Add Section"}
+                            </Button>
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-4 pt-2">
-                            {sectionAssignments.filter(sa => sa.classId === c.id).map(assignment => {
-                                const isNoSection = assignment.sectionPoolId === 'NO_SECTION_ASSIGNED';
-                                const sectionInfo = isNoSection ? null : sectionsPool.find(sp => sp.id === assignment.sectionPoolId);
-                                const subjectsForSection = sectionSubjectTeacherAssignments.filter(ssta => ssta.sectionAssignmentId === assignment.id);
-
-                                return (
-                                    <div key={assignment.id} className="py-2 px-4 rounded-md border">
+                            {c.sections?.map((section: any, sectionIndex: number) => (
+                                    <div key={section.sectionId || `section-${sectionIndex}`} className="py-2 px-4 rounded-md border">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                                             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                                <span className="font-semibold">{isNoSection ? "No Sections" : sectionInfo?.name}</span>
+                                                <span className="font-semibold">{section.name}</span>
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
                                                     <Select
-                                                        value={assignment.classTeacherId || undefined}
+                                                        value={section.classTeacherId || undefined}
                                                         onValueChange={(teacherId) => {
-                                                            const updatedAssignments = sectionAssignments.map(sa =>
-                                                                sa.id === assignment.id ? { ...sa, classTeacherId: teacherId } : sa
+                                                            const updatedSections = c.sections.map((s: any, sIndex: number) =>
+                                                                (s.sectionId || `section-${sIndex}`) === (section.sectionId || `section-${sectionIndex}`) ? { ...s, classTeacherId: teacherId } : s
                                                             );
-                                                            setSectionAssignments(updatedAssignments);
+                                                            handleUpdateConfiguration(c.classId, { sections: updatedSections });
                                                         }}
                                                     >
                                                         <SelectTrigger className="w-full sm:w-[250px]">
                                                             <SelectValue placeholder="Assign Class Teacher" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {schoolTeachers.map(teacher => (
+                                                            {teachers.map(teacher => (
                                                                 <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
                                                             ))}
                                                         </SelectContent>
@@ -339,54 +253,68 @@ export default function ClassesPage() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm text-muted-foreground">Licenses: {assignment.licenses}</span>
-                                                <Badge variant={assignment.status === 'active' ? 'default' : 'secondary'}>{assignment.status}</Badge>
-                                                <Button variant="ghost" size="icon" onClick={() => handleOpenEditSectionDialog(assignment)}>
+                                                <span className="text-sm text-muted-foreground">Licenses: {section.licensesCount}</span>
+                                                <Button variant="ghost" size="icon" onClick={() => handleOpenEditSectionDialog(section, c)}>
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteAssignment(assignment.id)}>
-                                                    <Trash2 className={`h-4 w-4 ${assignment.status === 'inactive' ? 'text-green-500' : 'text-destructive'}`} />
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(c.classId, section.sectionId, sectionIndex)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </div>
                                         </div>
                                         <div className="mt-4">
                                             <h4 className="font-semibold text-sm mb-2">Subjects & Teachers</h4>
                                             <div className="space-y-2">
-                                                {subjectsForSection.map(subjectAssignment => (
-                                                    <div key={subjectAssignment.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                                        <Select value={subjectAssignment.subjectId} onValueChange={(subjectId) => handleUpdateSubject(subjectAssignment.id, subjectId)}>
+                                                {section.subjects?.map((subject: any, subjectIndex: number) => (
+                                                    <div key={subject.subjectId || `subject-${subjectIndex}`} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                                        <Select value={subject.subjectId || undefined} onValueChange={(subjectId) => {
+                                                            const updatedSubjects = section.subjects.map((sub: any, subIndex: number) => 
+                                                                (sub.subjectId || `subject-${subIndex}`) === (subject.subjectId || `subject-${subjectIndex}`) ? { ...sub, subjectId: subjectId } : sub
+                                                            );
+                                                            const updatedSections = c.sections.map((s: any, sIndex: number) =>
+                                                                (s.sectionId || `section-${sIndex}`) === (section.sectionId || `section-${sectionIndex}`) ? { ...s, subjects: updatedSubjects } : s
+                                                            );
+                                                            handleUpdateConfiguration(c.classId, { sections: updatedSections });
+                                                        }}>
                                                             <SelectTrigger className="w-full sm:w-[200px]">
                                                                 <SelectValue placeholder="Select Subject" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                {allSchoolSubjects.map(sub => (
+                                                                {subjects.map(sub => (
                                                                     <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
-                                                        <Select value={subjectAssignment.teacherId || undefined} onValueChange={(teacherId) => handleUpdateSubjectTeacher(subjectAssignment.id, teacherId)}>
+                                                        <Select value={subject.teacherId || subject.subjectTeacherId || undefined} onValueChange={(teacherId) => {
+                                                            const updatedSubjects = section.subjects.map((sub: any, subIndex: number) => 
+                                                                (sub.subjectId || `subject-${subIndex}`) === (subject.subjectId || `subject-${subjectIndex}`) ? { ...sub, teacherId: teacherId, subjectTeacherId: teacherId } : sub
+                                                            );
+                                                            const updatedSections = c.sections.map((s: any, sIndex: number) =>
+                                                                (s.sectionId || `section-${sIndex}`) === (section.sectionId || `section-${sectionIndex}`) ? { ...s, subjects: updatedSubjects } : s
+                                                            );
+                                                            handleUpdateConfiguration(c.classId, { sections: updatedSections });
+                                                        }}>
                                                             <SelectTrigger className="w-full sm:w-[250px]">
                                                                 <SelectValue placeholder="Assign Subject Teacher" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                {schoolTeachers.map(teacher => (
+                                                                {teachers.map(teacher => (
                                                                     <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteSubject(subjectAssignment.id)}>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteSubject(c.classId, section.sectionId, sectionIndex, subject.subjectId, subjectIndex)}>
                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <Button variant="outline" size="sm" className="mt-2" onClick={() => handleAddSubject(assignment.id)}>
+                                            <Button variant="outline" size="sm" className="mt-2" onClick={() => handleAddSubject(c.classId, section.sectionId, sectionIndex)}>
                                                 <PlusCircle className="mr-2 h-4 w-4" /> Add Subject
                                             </Button>
                                         </div>
                                     </div>
-                                );
-                            })}
+                                ))}
                         </div>
                     </AccordionContent>
                     </AccordionItem>
@@ -409,8 +337,7 @@ export default function ClassesPage() {
             onSave={handleSaveSection} 
             availableLicenses={availableLicenses}
             initialData={editingAssignment}
-            sectionsPool={schoolSectionsPool}
-            key={`add-section-${editingAssignment?.id || currentClass?.id}`}
+            key={`add-section-${editingAssignment?.sectionId || currentClass?.classId}`}
         />
       </CardContent>
     </Card>

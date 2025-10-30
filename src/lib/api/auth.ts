@@ -1,28 +1,22 @@
 // src/lib/api/auth.ts
 import apiClient from './client';
-import { setTokens,setJWT } from '@/lib/utils/token';
+import { setJWT } from '@/lib/utils/token';
 import type { LoginResponse } from '@/types/loginresponse';
 import { API_BASE_URL } from '@/lib/utils/constants';
 import { saveRoles } from '@/lib/utils/getRole';
 
 // Login API call
 export async function loginUser(mobile: string, password: string): Promise<LoginResponse> {
-  //  const phone = mobile.startsWith('+91') ? mobile : `+91${mobile}`;
   const phone = mobile;
   console.log('🌍 API Base URL loginUser:', API_BASE_URL);
 
-  console.log("🚀 Unable to login. formattedMobile", { phone });
+  console.log("🚀 Logging in with...", { phone });
   const response = await apiClient.post('/auth/login', { data: { phone, password } });
   const data = response.data;
 
-  if(data != null){
+  if (data) {
     setJWT(data);
     saveRoles(data);
-  }
-  
-  if (data?.data?.tokens) {
-    setTokens(data.data.tokens.accessToken, data.data.tokens.refreshToken);
-    
   }
 
   return data;

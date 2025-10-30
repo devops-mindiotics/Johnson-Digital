@@ -1,9 +1,9 @@
 'use client';
-// app/homepage/schools/[id]/page.tsx
+// app/homepage/schools/[id]/client.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from '@/components/ui/card';
@@ -30,7 +30,6 @@ import {
   BookOpenCheck,
   Library,
 } from 'lucide-react';
-import { getSchoolById } from '@/lib/api/schoolApi';
 
 // Presentational bits (no hooks)
 function DetailItem({
@@ -64,34 +63,7 @@ function PersonnelCard({ title, name, mobile }: { title: string, name: string, m
   );
 }
 
-export default function SchoolDetailsPage({ params }: { params: { id: string } }) {
-    const [school, setSchool] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchSchool = async () => {
-            try {
-                const schoolData = await getSchoolById(params.id);
-                if (!schoolData) {
-                    notFound();
-                } else {
-                    setSchool(schoolData.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch school data:", error);
-                // Handle error appropriately
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSchool();
-    }, [params.id]);
-
-  if (loading) {
-      return <div>Loading...</div>
-  }
-
+export default function SchoolDetailsClient({ school }: { school: any }) {
   if (!school) {
     return notFound();
   }

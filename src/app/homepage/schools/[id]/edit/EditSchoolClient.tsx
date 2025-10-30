@@ -1,4 +1,4 @@
-  'use client';
+'use client';
 import { useRouter } from "next/navigation";
 import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,13 +51,23 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+type SchoolData = FormValues & { id: string };
 type SchoolItem = { id: string; schoolName: string; schoolCode: string };
+
+const formatDate = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export default function EditSchoolClient({
   initialSchool,
   schoolList,
 }: {
-  initialSchool: FormValues;
+  initialSchool: SchoolData;
   schoolList: SchoolItem[];
 }) {
   const router = useRouter();
@@ -68,7 +78,13 @@ export default function EditSchoolClient({
   });
 
   useEffect(() => {
-    form.reset(initialSchool);
+    if (initialSchool) {
+      const formattedSchool = {
+        ...initialSchool,
+        expiryDate: formatDate(initialSchool.expiryDate),
+      };
+      form.reset(formattedSchool);
+    }
   }, [initialSchool, form]);
 
   async function onSubmit(values: FormValues) {

@@ -40,7 +40,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
-import { createSchool, getAllSchools } from "@/lib/api/schoolApi";
+import { createSchool, getAllSchools, createClass } from "@/lib/api/schoolApi";
 import { getAllSeries, getAllClasses } from "@/lib/api/masterApi";
 import { Badge } from "@/components/ui/badge";
 
@@ -148,17 +148,41 @@ export default function AddSchoolPage() {
   }, []);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const payload = {
-      data: values, 
-    };
-    console.log("📝 School Object:", payload);
     try {
       const tenantData = localStorage.getItem("contextInfo");
       if (!tenantData) return null;
       const parsed = JSON.parse(tenantData);
       const tenantId = parsed?.tenantId || null;
-      const result = await createSchool(tenantId, payload);
-      console.log("✅ School created:", result);
+
+      const { classConfigurations, ...schoolData } = values;
+
+      const schoolPayload = {
+        data: schoolData,
+      };
+      console.log("📝 School Object:", schoolPayload);
+
+      const schoolResult = await createSchool(tenantId, schoolPayload);
+      console.log("✅ School created:", schoolResult);
+
+      const schoolId = schoolResult.data.id;
+
+      if (schoolId && classConfigurations && classConfigurations.length > 0) {
+        for (const config of classConfigurations) {
+          const classPayload = {
+            data: {
+              school_id: schoolId,
+              class_id: config.class,
+              series_id: config.series,
+              no_of_sections: config.sections,
+            },
+          };
+          console.log("📝 Class Object:", classPayload);
+          const classResult = await createClass(schoolId, classPayload);
+          console.log("✅ Class created:", classResult);
+        }
+      }
+
+      router.push("/homepage/schools");
     } catch (e) {
       console.error(e);
     }

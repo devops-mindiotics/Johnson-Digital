@@ -1,40 +1,45 @@
-// app/homepage/schools/[id]/edit/page.tsx
+'use client';
 import { notFound } from "next/navigation";
-import { cookies } from 'next/headers';
 import { getSchoolById, getAllSchools } from "@/lib/api/schoolApi";
 import EditSchoolClient from "./EditSchoolClient";
-import AuthCookieSetter from '@/lib/AuthCookieSetter';
+import { useEffect, useState } from "react";
 
-function getApiContext() {
-  const cookieStore = cookies();
-  const tenantData = cookieStore.get("contextInfo")?.value;
-  const token = cookieStore.get("contextJWT")?.value;
+export default function Page({ params }: { params: { id: string } }) {
+  const [school, setSchool] = useState(null);
+  const [schools, setSchools] = useState([]);
 
-  if (!tenantData || !token) {
-    return null;
+  useEffect(() => {
+    const fetchSchools = async () => {
+      try {
+        const allSchools = await getAllSchools();
+        setSchools(allSchools);
+      } catch (error) {
+        console.error("Failed to fetch schools:", error);
+      }
+    };
+    fetchSchools();
+  }, []);
+
+  useEffect(() => {
+    const fetchSchool = async () => {
+      if (params.id) {
+        try {
+          const schoolData = await getSchoolById(params.id);
+          if (!schoolData || !schoolData.data) {
+            notFound();
+          }
+          setSchool(schoolData.data);
+        } catch (error) {
+          console.error("Failed to fetch school data:", error);
+        }
+      }
+    };
+    fetchSchool();
+  }, [params.id]);
+
+  if (!school) {
+    return <div>Loading...</div>
   }
 
-  const decodedTenantData = decodeURIComponent(tenantData);
-  const tenantId = JSON.parse(decodedTenantData).tenantId;
-  if (!tenantId) throw new Error("Tenant ID not found in cookies.");
-  return { tenantId, token };
-}
-
-export default async function Page({ params }: { params: { id: string } }) {
-  const apiContext = getApiContext();
-
-  if (!apiContext) {
-    return <AuthCookieSetter />;
-  }
-
-  const schoolData = await getSchoolById(params.id, apiContext);
-
-  if (!schoolData || !schoolData.data) {
-    notFound();
-  }
-
-  // Assuming getAllSchools returns a flat array of school objects
-  const allSchools = await getAllSchools(apiContext); 
-
-  return <EditSchoolClient initialSchool={schoolData.data} schoolList={allSchools} />;
+  return <EditSchoolClient initialSchool={school} schoolList={schools} />;
 }

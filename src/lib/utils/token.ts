@@ -21,8 +21,13 @@ export function setAccessToken(token: string) {
   }
 }
 
+// This function will get the right token for API calls
 export function getAccessToken(): string | null {
   if (typeof window !== 'undefined') {
+    const contextJwt = localStorage.getItem(CONTEXT_JWT);
+    if (contextJwt) {
+        return contextJwt;
+    }
     return localStorage.getItem(ACCESS_TOKEN_KEY);
   }
   return null;
@@ -35,19 +40,28 @@ export function getRefreshToken(): string | null {
   return null;
 }
 
+export function setRefreshToken(token: string) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  }
+}
+
 export function clearTokens() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(SESSION_JWT);
+    localStorage.removeItem(CONTEXT_JWT);
   }
 }
 
 export function setJWT(loginResponse: LoginResponse) {
-  if (typeof window === 'undefined') return; 
+  if (typeof window === 'undefined') return;
 
   const sessionJwt = loginResponse?.data?.sessionJwt ?? '';
   const contextJwt = loginResponse?.data?.contextJwt ?? '';
- 
+  const tokens = loginResponse?.data?.tokens;
+
   localStorage.removeItem(SESSION_JWT);
   localStorage.removeItem(CONTEXT_JWT);
 
@@ -57,6 +71,16 @@ export function setJWT(loginResponse: LoginResponse) {
 
   if (isValidToken(contextJwt)) {
     localStorage.setItem(CONTEXT_JWT, contextJwt.trim());
+    setAccessToken(contextJwt.trim());
+  }
+
+  if (tokens && isValidToken(tokens.refreshToken)) {
+    setRefreshToken(tokens.refreshToken.trim());
+  }
+  
+  // if there's an access token in tokens, lets use that
+  if (tokens && isValidToken(tokens.accessToken)) {
+      setAccessToken(tokens.accessToken.trim())
   }
 }
 

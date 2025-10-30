@@ -18,6 +18,7 @@ export interface LoginData {
   tenantRoles?: TenantRole[] | null;
   schools?: SchoolRole[] | null;
   contextJwt?: string | null;
+  tokens?: Tokens | null; 
   requiresSelection?: boolean | null;
 }
 
