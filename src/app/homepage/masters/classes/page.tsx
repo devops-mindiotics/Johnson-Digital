@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -33,10 +34,10 @@ interface Class {
 
 export default function MasterClassesPage() {
   const isMobile = useIsMobile();
+  const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
 
   useEffect(() => {
-    // Fetch classes from API
     const fetchClasses = async () => {
       try {
         const response = await getAllClasses();
@@ -51,17 +52,18 @@ export default function MasterClassesPage() {
 
   const handleAdd = () => {
     console.log('Add new class');
-    // Logic to open an add dialog or navigate to an add page
   };
 
   const handleEdit = (id: string) => {
     console.log('Edit class', id);
-    // Logic to open an edit dialog or navigate to an edit page
   };
 
   const handleDelete = (id: string) => {
     console.log('Delete class', id);
-    // Logic to delete the class
+  };
+
+  const handleViewStudents = (classId: string) => {
+    router.push(`/homepage/masters/classes/${classId}/students`);
   };
 
   return (
@@ -96,6 +98,9 @@ export default function MasterClassesPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewStudents(c.id)}>
+                          View Students
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEdit(c.id)}>
                           Edit
                         </DropdownMenuItem>
