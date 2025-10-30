@@ -14,7 +14,8 @@ import {
   BookOpen,
   LogOut,
   ShieldCheck,
-  HelpCircle
+  HelpCircle,
+  Box
 } from 'lucide-react';
 
 import {  SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
@@ -23,7 +24,18 @@ const superAdminSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
   { href: '/homepage/schools', icon: School, title: 'Schools' },
   { href: '/homepage/users', icon: Users, title: 'Users' },
-  { href: '/homepage/classes', icon: Book, title: 'Classes' },
+  {
+    icon: GraduationCap,
+    title: 'Masters',
+    children: [
+      { href: '/homepage/masters/series', icon: ClipboardList, title: 'Series' },
+      { href: '/homepage/masters/packages', icon: Box, title: 'Packages' },
+      { href: '/homepage/masters/classes', icon: School, title: 'Classes' },
+      { href: '/homepage/masters/subjects', icon: Book, title: 'Subjects' },
+      { href: '/homepage/masters/lessons', icon: BookOpen, title: 'Lessons' },
+      { href: '/homepage/masters/content-types', icon: PenSquare, title: 'Content Types' },
+    ],
+  },
   { href: '/homepage/content', icon: FolderKanban, title: 'Content' },
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
   { href: '/homepage/banners', icon: Image, title: 'Banners' },

@@ -1,5 +1,6 @@
 import apiClient from "./client";
 import type { SchoolCreateResponse } from "@/types/school/schoolCreateResponse";
+import { getAllClasses, getAllSeries } from "./masterApi";
 
 function getTenantId(): string {
   if (typeof window === "undefined") {
@@ -172,7 +173,7 @@ export async function deleteClass(
   classId: string
 ): Promise<any> {
   try {
-    const tenantId = getTenaantId();
+    const tenantId = getTenantId();
     const response = await apiClient.delete(
       `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}`
     );
@@ -180,5 +181,110 @@ export async function deleteClass(
   } catch (err: any) {
     console.error("❌ deleteClass error:", err.response?.data || err.message);
     throw err;
+  }
+}
+
+export async function createSection(
+  schoolId: string,
+  classId: string,
+  sectionPayload: any
+): Promise<any> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.post(
+      `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/sections`,
+      sectionPayload
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("❌ createSection error:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+export async function getSectionsByClass(schoolId: string, classId: string): Promise<any[]> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.get(
+      `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/sections`
+    );
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (err: any) {
+    console.error("❌ getSectionsByClass error:", err.response?.data || err.message);
+    return [];
+  }
+}
+
+export async function getSectionById(
+  schoolId: string,
+  classId: string,
+  sectionId: string
+): Promise<any> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.get(
+      `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/sections/${sectionId}`
+    );
+    return response.data?.data;
+  } catch (err: any) {
+    console.error("❌ getSectionById error:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+export async function updateSection(
+  schoolId: string,
+  classId: string,
+  sectionId: string,
+  sectionPayload: any
+): Promise<any> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.put(
+      `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/sections/${sectionId}`,
+      sectionPayload
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("❌ updateSection error:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+export async function deleteSection(
+  schoolId: string,
+  classId: string,
+  sectionId: string
+): Promise<any> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.delete(
+      `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/sections/${sectionId}`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("❌ deleteSection error:", err.response?.data || err.message);
+    throw err;
+  }
+}
+
+export async function getMasterClass(): Promise<any[]> {
+  try {
+    return await getAllClasses();
+  } catch (err: any) {
+    console.error("❌ getMasterClass error:", err.response?.data || err.message);
+    return [];
+  }
+}
+  
+export async function getMasterSeries(): Promise<any[]> {
+  try {
+    return await getAllSeries();
+  } catch (err: any) {
+    console.error("❌ getMasterSeries error:", err.response?.data || err.message);
+    return [];
   }
 }

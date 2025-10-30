@@ -30,7 +30,7 @@ const sectionAssignmentSchema = z.object({
     sectionOption: z.enum(['noSection', 'addSection']),
     sectionPoolId: z.string().optional(),
     sectionName: z.string().optional(),
-    licenses: z.coerce.number().min(1, 'Licenses must be greater than 0'),
+    licenses: z.coerce.number().int({ message: "Only digits are allowed" }).min(1, 'Licenses must be greater than 0'),
 }).superRefine((data, ctx) => {
     if (data.sectionOption === 'addSection') {
         if (!data.sectionPoolId && !data.sectionName) {
