@@ -1,6 +1,7 @@
 import apiClient from "./client";
 import type { SchoolCreateResponse } from "@/types/school/schoolCreateResponse";
 import { getAllClasses, getAllSeries } from "./masterApi";
+import type { CreateClassRequest, CreateClassResponse } from "@/types/school/class";
 
 function getTenantId(): string {
   if (typeof window === "undefined") {
@@ -84,8 +85,8 @@ export async function updateSchool(
 
 export async function createClass(
   schoolId: string,
-  classPayload: any
-): Promise<any> {
+  classPayload: CreateClassRequest
+): Promise<CreateClassResponse> {
   try {
     const tenantId = getTenantId();
     const response = await apiClient.post(

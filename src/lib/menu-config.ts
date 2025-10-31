@@ -93,7 +93,7 @@ import {
         color: 'text-white',
       },
       {
-        label: 'Classes',
+        label: 'Class Config',
         href: '/homepage/classes',
         icon: Presentation,
         color: 'text-white',

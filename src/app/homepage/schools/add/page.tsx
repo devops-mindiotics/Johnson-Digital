@@ -41,13 +41,14 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { createSchool, getAllSchools, createClass } from "@/lib/api/schoolApi";
-import { getAllSeries, getAllClasses } from "@/lib/api/masterApi";
+import { getAllSeries, getAllClasses, getAllPackages } from "@/lib/api/masterApi";
 import { Badge } from "@/components/ui/badge";
 
 const classConfigurationSchema = z.object({
   class: z.string().min(1, "Class is required"),
   sections: z.coerce.number().min(1, "Number of sections is required"),
-  series: z.string().min(1, "Series is required"),
+  series: z.string().optional(),
+  package: z.string().optional(),
 });
 
 const formSchema = z.object({
@@ -88,6 +89,8 @@ export default function AddSchoolPage() {
   const [schools, setSchools] = useState<any[]>([]);
   const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
   const [classOptions, setClassOptions] = useState<any[]>([]);
+  const [packageOptions, setPackageOptions] = useState<any[]>([]);
+  const [showDropdowns, setShowDropdowns] = useState<Record<number, { series?: boolean, package?: boolean }>>({});
 
   const getExpiryDate = () => {
     const today = new Date();
@@ -99,7 +102,7 @@ export default function AddSchoolPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       isBranch: false,
-      classConfigurations: [{ class: "", sections: 1, series: "" }],
+      classConfigurations: [{ class: "", sections: 1, series: "", package: "" }],
       status: "Pending",
       expiryDate: getExpiryDate(),
     },
@@ -113,10 +116,11 @@ export default function AddSchoolPage() {
   useEffect(() => {
     async function fetchData() {
         try {
-          const [schoolData, seriesData, classData] = await Promise.all([
+          const [schoolData, seriesData, classData, packageData] = await Promise.all([
             getAllSchools(),
             getAllSeries(),
             getAllClasses(),
+            getAllPackages(),
           ]);
 
           if (schoolData && Array.isArray(schoolData)) {
@@ -136,12 +140,18 @@ export default function AddSchoolPage() {
           } else {
             setClassOptions([]);
           }
+          if (packageData && Array.isArray(packageData)) {
+            setPackageOptions(packageData);
+          } else {
+            setPackageOptions([]);
+          }
 
         } catch (error) {
           console.error("Failed to fetch data:", error);
           setSchools([]);
           setSeriesOptions([]);
           setClassOptions([]);
+          setPackageOptions([]);
         }
       }
       fetchData();
@@ -172,7 +182,8 @@ export default function AddSchoolPage() {
             data: {
               school_id: schoolId,
               class_id: config.class,
-              series_id: config.series,
+              series_id: config.series || "NA",
+              package_id: config.package || "NA",
               no_of_sections: config.sections,
             },
           };
@@ -187,6 +198,16 @@ export default function AddSchoolPage() {
       console.error(e);
     }
   }
+
+  const toggleDropdown = (index: number, type: 'series' | 'package') => {
+    setShowDropdowns(prev => ({
+      ...prev,
+      [index]: {
+        ...prev[index],
+        [type]: !prev[index]?.[type]
+      }
+    }));
+  };
 
   return (
     <Form {...form}>
@@ -474,6 +495,7 @@ export default function AddSchoolPage() {
                 <TableRow>
                   <TableHead>Class</TableHead>
                   <TableHead>Series</TableHead>
+                  <TableHead>Package</TableHead>
                   <TableHead>Licences</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -510,32 +532,68 @@ export default function AddSchoolPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <FormField
-                        control={form.control}
-                        name={`classConfigurations.${index}.series`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a series" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {seriesOptions.map((s) => (
-                                  <SelectItem key={s.id} value={s.id}>
-                                    {s.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {showDropdowns[index]?.series ? (
+                        <FormField
+                          control={form.control}
+                          name={`classConfigurations.${index}.series`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a series" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {seriesOptions.map((s) => (
+                                    <SelectItem key={s.id} value={s.id}>
+                                      {s.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <Button variant="outline" onClick={() => toggleDropdown(index, 'series')}>Add Series</Button>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {showDropdowns[index]?.package ? (
+                        <FormField
+                          control={form.control}
+                          name={`classConfigurations.${index}.package`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a package" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {packageOptions.map((p) => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <Button variant="outline" onClick={() => toggleDropdown(index, 'package')}>Add Package</Button>
+                      )}
                     </TableCell>
                     <TableCell>
                       <FormField
@@ -572,7 +630,7 @@ export default function AddSchoolPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => append({ class: "", sections: 1, series: "" })}
+              onClick={() => append({ class: "", sections: 1, series: "", package: "" })}
               className="mt-4"
             >
               Add Class
