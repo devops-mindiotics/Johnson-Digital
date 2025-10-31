@@ -164,12 +164,54 @@ export default function AddSchoolPage() {
       const parsed = JSON.parse(tenantData);
       const tenantId = parsed?.tenantId || null;
 
-      const { classConfigurations, ...schoolData } = values;
+      const { classConfigurations, ...formData } = values;
 
       const schoolPayload = {
-        data: schoolData,
+        schoolName: formData.schoolName,
+        trustName: formData.trustSocietyName,
+        board: formData.schoolBoard,
+        type: formData.schoolType,
+        affiliationNo: formData.affiliationNo,
+        logoUrl: formData.schoolLogo ? await handleFileUpload(formData.schoolLogo) : "",
+        website: formData.schoolWebsite,
+        status: formData.status.toLowerCase(),
+        expiryDate: new Date(formData.expiryDate).toISOString(),
+        email: formData.email,
+        contacts: [
+          {
+            role: "principal",
+            name: formData.principalName,
+            mobile: formData.principalMobile,
+          },
+          {
+            role: "incharge",
+            name: formData.inchargeName,
+            mobile: formData.inchargeMobile,
+          },
+        ],
+        address: {
+          line1: formData.address,
+          city: formData.city,
+          district: formData.district,
+          state: formData.state,
+          pincode: formData.pincode,
+        },
+        isBranch: formData.isBranch,
+        parentSchool: formData.isBranch
+          ? {
+              schoolId: schools.find(s => s.id === formData.parentSchool)?.id || "",
+              schoolName: schools.find(s => s.id === formData.parentSchool)?.schoolName || "",
+            }
+          : undefined,
+        socialLinks: {
+          instagram: formData.instagram,
+          linkedin: formData.linkedIn,
+        },
+        totalTeachers: formData.totalTeachers,
+        totalStudents: formData.totalStudents,
       };
-      console.log("📝 School Object:", schoolPayload);
+
+      console.log("📝 School Object:", { data: schoolPayload });
 
       const schoolResult = await createSchool(tenantId, schoolPayload);
       console.log("✅ School created:", schoolResult);
@@ -198,6 +240,13 @@ export default function AddSchoolPage() {
       console.error(e);
     }
   }
+
+  async function handleFileUpload(file: any): Promise<string> {
+    // Replace this with your actual file upload logic
+    console.log("Uploading file:", file);
+    return new Promise((resolve) => setTimeout(() => resolve("https://cdn.schools.com/logos/springfield.png"), 1000));
+  }
+
 
   const toggleDropdown = (index: number, type: 'series' | 'package') => {
     setShowDropdowns(prev => ({

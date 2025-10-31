@@ -22,7 +22,7 @@ export async function createSchool(
   try {
     const response = await apiClient.post(
       `/tenants/${tenantId}/schools`,
-      schoolPayload
+      { data: schoolPayload }
     );
     return response.data;
   } catch (err: any) {
