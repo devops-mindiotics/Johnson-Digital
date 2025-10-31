@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/contexts/auth-context';
+import { LoadingProvider } from '@/contexts/loading-context';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/components/Providers';
@@ -30,11 +31,12 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        { <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider> 
-        }
+        <AuthProvider>
+          <LoadingProvider>
+            {children}
+            <Toaster />
+          </LoadingProvider>
+        </AuthProvider>
       </body>
     </html>
   );

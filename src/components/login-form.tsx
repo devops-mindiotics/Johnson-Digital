@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { handleApiError } from '@/lib/utils/error-handler';
 import { loginUser } from '@/lib/api/auth';
 
@@ -22,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
 //import type { User } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { useLoading } from '@/contexts/loading-context';
 
 const FormSchema = z.object({
   mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
@@ -30,7 +31,7 @@ const FormSchema = z.object({
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { showLoader, hideLoader, isLoading } = useLoading();
   const { login } = useAuth();
   const { toast } = useToast();
 
@@ -46,7 +47,7 @@ export function LoginForm() {
 
 
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
-    setIsLoading(true);
+    showLoader();
     try {
       const response = await loginUser(values.mobile, values.password);
       console.log("🚀 Unable to login. response", { response });
@@ -74,7 +75,7 @@ export function LoginForm() {
 
       handleApiError(error, 'Unable to login. Please check your credentials.');
     } finally {
-      setIsLoading(false);
+      hideLoader();
     }
   };
 
@@ -153,14 +154,7 @@ export function LoginForm() {
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              'Sign In'
-            )}
+            {'Sign In'}
           </Button>
         </form>
       </Form>

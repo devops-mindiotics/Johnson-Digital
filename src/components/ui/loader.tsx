@@ -1,14 +1,13 @@
 'use client';
-import { Skeleton } from '@/components/ui/skeleton';
 
-export function DashboardSkeleton() {
+import { Loader2 } from 'lucide-react';
+
+export function PopUpLoader() {
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex justify-between">
-        <Skeleton className="h-10 w-1/4" />
-        <Skeleton className="h-10 w-10 rounded-full" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="animate-spin text-white">
+        <Loader2 className="h-16 w-16" />
       </div>
-      <Skeleton className="h-[calc(100vh-12rem)] w-full" />
     </div>
   );
 }

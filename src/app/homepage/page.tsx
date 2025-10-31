@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { DashboardSkeleton } from '@/components/ui/loader';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { getRoles } from '@/lib/utils/getRole'; 
 
 import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';

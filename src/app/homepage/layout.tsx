@@ -8,7 +8,7 @@ import { HomepageFooter } from '@/components/homepage-footer';
 import { SidebarNav } from '@/components/sidebar-nav';
 import { SidebarHeader } from '@/components/sidebar-header';
 import { SidebarFooterNav } from '@/components/sidebar-footer-nav';
-import { DashboardSkeleton } from '@/components/ui/loader';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 
 
 export default function HomePageLayout({ children }: { children: ReactNode }) {
