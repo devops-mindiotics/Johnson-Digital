@@ -21,7 +21,7 @@ const banners = [
 ];
 
 const modules = [
-    { name: 'Start Learning', icon: PlaySquare, color: 'text-blue-600', href: '/homepage/my-classes' },
+    { name: 'Start Learning', icon: PlaySquare, color: 'text-blue-600', href: '/homepage/subjects' },
     { name: 'Diary', icon: BookOpen, color: 'text-green-600', href: '/homepage/diary' },
     { name: 'Assignments', icon: ClipboardList, color: 'text-yellow-600', href: '/homepage/assignments' },
     { name: 'Notice', icon: Bell, color: 'text-red-600', href: '/homepage/notice-board' },

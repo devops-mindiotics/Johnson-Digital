@@ -24,6 +24,7 @@ const superAdminSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
   { href: '/homepage/schools', icon: School, title: 'Schools' },
   { href: '/homepage/users', icon: Users, title: 'Users' },
+  { href: '/homepage/classes', icon: Book, title: 'Classes' },
   {
     icon: GraduationCap,
     title: 'Masters',
@@ -69,7 +70,7 @@ const teacherSidebar = [
 
 const studentSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/homepage/my-classes', icon: BookOpen, title: 'Start Learning' },
+  { href: '/homepage/subjects', icon: BookOpen, title: 'Start Learning' },
   { href: '/homepage/diary', icon: PenSquare, title: 'Diary' },
   { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments' },
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board' },
