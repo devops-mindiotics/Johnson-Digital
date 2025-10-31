@@ -10,7 +10,7 @@ import { MoreHorizontal, PlusCircle, Search, Upload, FileUp, User, Plus } from '
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DashboardSkeleton } from '@/components/ui/loader';
+import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSchools } from '@/lib/api/schoolApi';
