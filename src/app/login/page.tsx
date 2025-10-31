@@ -10,7 +10,6 @@ export default function LoginPage() {
         <CardContent className="p-6 sm:p-8">
             <div className="flex flex-col items-center text-center mb-6">
                 <Logo />
-                <h1 className="text-xl font-bold mt-2">Johnson Digital</h1>
             </div>
             <LoginForm />
         </CardContent>

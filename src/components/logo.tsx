@@ -1,16 +1,29 @@
-import { BookOpenCheck } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import Image from "next/image";
+import { cn } from "@/lib/utils";
 
-export function Logo({ className, iconOnly = false }: { className?: string, iconOnly?: boolean }) {
+interface LogoProps {
+  className?: string;
+  iconOnly?: boolean;
+}
+
+export function Logo({ className, iconOnly = false }: LogoProps) {
   return (
     <div
       className={cn(
-        'flex items-center justify-center gap-2 font-extrabold text-blue-700',
+        "flex items-center justify-center gap-2 font-extrabold text-blue-700",
         className
       )}
     >
-      <BookOpenCheck className="h-8 w-8" />
-      {!iconOnly && <span className="text-2xl">EduCentral</span>}
+      {/* ✅ Correct public path (no local disk path) */}
+      <Image
+        src="/JPDigital-Blue.svg"
+        alt="Johnson Logo"
+        width={200}
+        height={200}
+        priority
+      />
+
+      
     </div>
   );
 }

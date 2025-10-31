@@ -25,7 +25,9 @@ export const subjectLessons = {
     'math-10': {
         name: 'Mathematics',
         chapters: [
-            { id: 'ch1', name: "Chapter 1: Numbers", resources: [ { name: "Animation Video", icon: "PlayCircle",videoUrl: "https://veera-smartkids.s3.ap-south-1.amazonaws.com/videos/2023eleraning/Class1/02Adverb.mp4" }, { name: "Content Book", icon: "BookOpen" }, { name: "Work Book", icon: "Clipboard" }, { name: "Lesson Plan", icon: "FileText" }, { name: "PPT", icon: "Presentation" }, { name: "Answer Key", icon: "Key" } ] },
+            { id: 'ch1', name: "Chapter 1: Numbers", resources: [ { name: "Animation Video", icon: "PlayCircle",type:"Video",videoUrl: "https://veera-smartkids.s3.ap-south-1.amazonaws.com/videos/2023eleraning/Class1/02Adverb.mp4" }, { name: "Content Book", icon: "BookOpen",type:"PDF" ,  embedScript: "<script src='//pubhtml5.com/plugin/LightBox/js/pubhtml5-light-box-api-min.js'></script>",
+  htmlContent: "<div class='pubhtml5-light-box' data-href='https://online.pubhtml5.com/wjgsx/zqjg/'></div>"
+}, { name: "Work Book", icon: "Clipboard" }, { name: "Lesson Plan", icon: "FileText" }, { name: "PPT", icon: "Presentation" }, { name: "Answer Key", icon: "Key" } ] },
             { id: 'ch2', name: "Chapter 2: Algebra", resources: [ { name: "Animation Video", icon: "PlayCircle" ,videoUrl: "https://veera-smartkids.s3.ap-south-1.amazonaws.com/videos/2023eleraning/Class1/02Adverb.mp4"}, { name: "Content Book", icon: "BookOpen" }, { name: "Work Book", icon: "Clipboard" }, { name: "Lesson Plan", icon: "FileText" }, { name: "PPT", icon: "Presentation" }, { name: "Answer Key", icon: "Key" } ] },
         ]
     },
