@@ -14,7 +14,6 @@ import { useState, useEffect } from 'react';
 import { getAllSchools, getClasses, createClass, getMasterClass, getMasterSeries } from '@/lib/api/schoolApi';
 import { getAllPackages } from '@/lib/api/masterApi';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2 } from 'lucide-react';
 
 export function ConfigureSchoolDialog({ isOpen, onClose }) {
   const { toast } = useToast();
@@ -26,15 +25,19 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
   const [masterPackages, setMasterPackages] = useState<any[]>([]);
 
   const [newClassId, setNewClassId] = useState('');
-  const [newClassName, setNewClassName] = useState('');
   const [newClassSeries, setNewClassSeries] = useState('');
   const [newClassPackage, setNewClassPackage] = useState('');
   const [newClassLicenses, setNewClassLicenses] = useState('');
-  const [sections, setSections] = useState<any[]>([]);
+
+  // State for showing dropdowns
+  const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
+  const [showPackageDropdown, setShowPackageDropdown] = useState(false);
+
 
   useEffect(() => {
     async function fetchInitialData() {
       try {
+        // As per d), checking the master GET APIs integration. They are being called here.
         const [schoolData, masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
           getAllSchools(),
           getMasterClass(),
@@ -58,6 +61,7 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
     async function fetchClasses() {
       if (selectedSchool) {
         try {
+          // As per b), integrating getClasses API
           const classData = await getClasses(selectedSchool);
           setClasses(classData || []);
         } catch (error) {
@@ -71,32 +75,38 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
   }, [selectedSchool]);
 
   const handleAddClass = async () => {
-    if (!selectedSchool || !newClassId || !newClassSeries || !newClassPackage || !newClassLicenses) {
-      toast({ title: "Error", description: "Please fill in all class details." });
+    // As per f), Series and Package are not mandatory.
+    if (!selectedSchool || !newClassId || !newClassLicenses) {
+      toast({ title: "Error", description: "Please select a school, class, and enter license count." });
       return;
     }
 
     const selectedClass = masterClasses.find(c => c.id === newClassId);
+    
+    // As per f), if not selected, send 'NA'
     const selectedSeries = masterSeries.find(s => s.id === newClassSeries);
+    const seriesId = newClassSeries ? selectedSeries.id : 'NA';
+    const seriesName = newClassSeries ? selectedSeries.name : 'NA';
+
     const selectedPackage = masterPackages.find(p => p.id === newClassPackage);
+    const packageId = newClassPackage ? selectedPackage.id : 'NA';
+    const packageName = newClassPackage ? selectedPackage.name : 'NA';
 
     const classPayload = {
       data: {
         classId: newClassId,
         name: selectedClass.name,
-        seriesId: newClassSeries,
-        seriesName: selectedSeries.name,
-        packageId: newClassPackage,
-        packageName: selectedPackage.name,
+        seriesId: seriesId,
+        seriesName: seriesName,
+        packageId: packageId,
+        packageName: packageName,
         licensesCount: parseInt(newClassLicenses, 10),
-        sections: sections.map(s => ({
-          name: s.name,
-          licensesCount: s.licensesCount,
-        })),
+        // as per a), sections are removed.
       }
     };
 
     try {
+      // As per g), integrating createClass API.
       await createClass(selectedSchool, classPayload);
       toast({ title: "Success", description: "Class added successfully." });
       resetForm();
@@ -110,26 +120,11 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
 
   const resetForm = () => {
     setNewClassId('');
-    setNewClassName('');
     setNewClassSeries('');
     setNewClassPackage('');
     setNewClassLicenses('');
-    setSections([]);
-  };
-
-  const handleAddSection = () => {
-    setSections([...sections, { name: '', licensesCount: 0 }]);
-  };
-
-  const handleRemoveSection = (index: number) => {
-    const newSections = sections.filter((_, i) => i !== index);
-    setSections(newSections);
-  };
-
-  const handleSectionChange = (index: number, field: string, value: any) => {
-    const newSections = [...sections];
-    newSections[index][field] = value;
-    setSections(newSections);
+    setShowSeriesDropdown(false);
+    setShowPackageDropdown(false);
   };
 
   return (
@@ -159,9 +154,12 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
             <div>
               <h3 className="text-lg font-semibold mb-2">Existing Classes</h3>
               <div className="space-y-2 mb-4">
+                {/* As per b), showing existing classes with details */}
                 {classes.map(c => (
-                  <div key={c.id} className="flex items-center justify-between p-2 border rounded-md">
+                  <div key={c.id} className="grid grid-cols-4 items-center justify-between p-2 border rounded-md">
                     <span>{c.name}</span>
+                    <span className="text-sm text-muted-foreground">Series: {c.seriesName}</span>
+                    <span className="text-sm text-muted-foreground">Package: {c.packageName}</span>
                     <span className="text-sm text-muted-foreground">Licenses: {c.licensesCount}</span>
                   </div>
                 ))}
@@ -179,26 +177,38 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Select onValueChange={setNewClassSeries} value={newClassSeries || undefined}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Series" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {masterSeries.map(ms => (
-                                <SelectItem key={ms.id} value={ms.id}>{ms.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                     <Select onValueChange={setNewClassPackage} value={newClassPackage || undefined}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Package" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {masterPackages.map(mp => (
-                                <SelectItem key={mp.id} value={mp.id}>{mp.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    
+                    {/* As per e), showing dropdown on click */}
+                    {!showSeriesDropdown ? (
+                        <Button variant="outline" onClick={() => setShowSeriesDropdown(true)}>Select Series</Button>
+                    ) : (
+                        <Select onValueChange={setNewClassSeries} value={newClassSeries || undefined}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Series" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {masterSeries.map(ms => (
+                                    <SelectItem key={ms.id} value={ms.id}>{ms.name}</SelectItem>
+                                ))}\
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    {!showPackageDropdown ? (
+                        <Button variant="outline" onClick={() => setShowPackageDropdown(true)}>Select Package</Button>
+                    ) : (
+                        <Select onValueChange={setNewClassPackage} value={newClassPackage || undefined}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {masterPackages.map(mp => (
+                                    <SelectItem key={mp.id} value={mp.id}>{mp.name}</SelectItem>
+                                ))}\
+                            </SelectContent>
+                        </Select>
+                    )}
+
                     <Input
                         type="number"
                         placeholder="Total Licenses"
@@ -207,31 +217,7 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
                     />
               </div>
 
-              <div className="mt-4">
-                <h4 className="text-md font-semibold mb-2">Sections</h4>
-                {sections.map((section, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <Input
-                      placeholder={`Section ${index + 1} Name`}
-                      value={section.name}
-                      onChange={(e) => handleSectionChange(index, 'name', e.target.value)}
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Licenses"
-                      value={section.licensesCount}
-                      onChange={(e) => handleSectionChange(index, 'licensesCount', parseInt(e.target.value, 10))}
-                    />
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSection(index)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={handleAddSection}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Section
-                </Button>
-              </div>
+              {/* as per a), sections UI is removed. */}
 
             </div>
           )}
