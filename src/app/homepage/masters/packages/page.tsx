@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -37,40 +37,64 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getAllPackages, createPackage, updatePackage, deletePackage } from '@/lib/api/masterApi';
 
 // Define the type for a package item
 interface Package {
   id: string;
   name: string;
   description: string;
+  code: string;
+  status: string;
 }
 
-// Dummy data for packages
-const initialPackagesData: Package[] = [
-  { id: '1', name: 'Basic Package', description: 'Includes basic features' },
-  { id: '2', name: 'Standard Package', description: 'Includes standard features' },
-  { id: '3', name: 'Premium Package', description: 'Includes all premium features and support' },
-];
-
 const PackagesPage = () => {
-  const [packagesData, setPackagesData] = useState<Package[]>(initialPackagesData);
+  const [packagesData, setPackagesData] = useState<Package[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
 
-  const handleAdd = (newPackage: Omit<Package, 'id'>) => {
-    setPackagesData([...packagesData, { ...newPackage, id: Date.now().toString() }]);
-    setIsAddDialogOpen(false);
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const data = await getAllPackages();
+      setPackagesData(data);
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+    }
   };
 
-  const handleUpdate = (updatedPackage: Package) => {
-    setPackagesData(packagesData.map(pkg => pkg.id === updatedPackage.id ? updatedPackage : pkg));
-    setIsEditDialogOpen(false);
-    setSelectedPackage(null);
+  const handleAdd = async (newPackage: Omit<Package, 'id'>) => {
+    try {
+      await createPackage(newPackage);
+      fetchPackages();
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating package:", error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setPackagesData(packagesData.filter(pkg => pkg.id !== id));
+  const handleUpdate = async (updatedPackage: Package) => {
+    try {
+      await updatePackage(updatedPackage.id, updatedPackage);
+      fetchPackages();
+      setIsEditDialogOpen(false);
+      setSelectedPackage(null);
+    } catch (error) {
+      console.error("Error updating package:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deletePackage(id);
+      fetchPackages();
+    } catch (error) {
+      console.error("Error deleting package:", error);
+    }
   };
   
   const openEditDialog = (pkg: Package) => {
@@ -168,21 +192,24 @@ interface PackageDialogProps {
 const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, onSave, title }) => {
     const [name, setName] = useState(pkg?.name || '');
     const [description, setDescription] = useState(pkg?.description || '');
+    const [code, setCode] = useState(pkg?.code || '');
 
     React.useEffect(() => {
         if (isOpen) {
             if (pkg) {
                 setName(pkg.name);
                 setDescription(pkg.description);
+                setCode(pkg.code);
             } else {
                 setName('');
                 setDescription('');
+                setCode('');
             }
         }
     }, [pkg, isOpen]);
 
     const handleSave = () => {
-        onSave({ ...pkg, name, description });
+        onSave({ ...pkg, name, description, code, status: 'active' });
     };
 
     return (
@@ -199,6 +226,10 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="description" className="text-right">Description</Label>
                         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="code" className="text-right">Code</Label>
+                        <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>

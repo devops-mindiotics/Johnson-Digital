@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getAllSeries, createSeries, updateSeries, deleteSeries } from '@/lib/api/masterApi';
 
 // Define the type for a series item
 interface Series {
@@ -45,32 +46,53 @@ interface Series {
   description: string;
 }
 
-// Dummy data for series
-const initialSeriesData: Series[] = [
-  { id: '1', name: 'Series A', description: 'Description for Series A' },
-  { id: '2', name: 'Series B', description: 'Description for Series B' },
-  { id: '3', name: 'Series C', description: 'This is a longer description for Series C to see how it fits.' },
-];
-
 const SeriesPage = () => {
-  const [seriesData, setSeriesData] = useState<Series[]>(initialSeriesData);
+  const [seriesData, setSeriesData] = useState<Series[]>([]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedSeries, setSelectedSeries] = useState<Series | null>(null);
 
-  const handleAdd = (newSeries: Omit<Series, 'id'>) => {
-    setSeriesData([...seriesData, { ...newSeries, id: Date.now().toString() }]);
-    setIsAddDialogOpen(false);
+  useEffect(() => {
+    fetchSeries();
+  }, []);
+
+  const fetchSeries = async () => {
+    try {
+      const data = await getAllSeries();
+      setSeriesData(data);
+    } catch (error) {
+      console.error("Error fetching series:", error);
+    }
   };
 
-  const handleUpdate = (updatedSeries: Series) => {
-    setSeriesData(seriesData.map(series => series.id === updatedSeries.id ? updatedSeries : series));
-    setIsEditDialogOpen(false);
-    setSelectedSeries(null);
+  const handleAdd = async (newSeries: Omit<Series, 'id'>) => {
+    try {
+      await createSeries(newSeries);
+      fetchSeries();
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating series:", error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setSeriesData(seriesData.filter(series => series.id !== id));
+  const handleUpdate = async (updatedSeries: Series) => {
+    try {
+      await updateSeries(updatedSeries.id, updatedSeries);
+      fetchSeries();
+      setIsEditDialogOpen(false);
+      setSelectedSeries(null);
+    } catch (error) {
+      console.error("Error updating series:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSeries(id);
+      fetchSeries();
+    } catch (error) {
+      console.error("Error deleting series:", error);
+    }
   };
   
   const openEditDialog = (series: Series) => {
