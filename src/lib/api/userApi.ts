@@ -383,3 +383,69 @@ export async function deleteTeacher(teacherId: string): Promise<any> {
         throw err;
     }
 }
+
+export async function getUsersByTenant(): Promise<any[]> {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) {
+            throw new Error("Tenant ID not found in context");
+        }
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/users`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+
+        return [];
+    } catch (err: any) {
+        console.error("❌ getUsersByTenant error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export async function getUsersBySchool(schoolId: string): Promise<any[]> {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) {
+            throw new Error("Tenant ID not found in context");
+        }
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/schools/${schoolId}/users`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+            return response.data.data;
+        }
+
+        return [];
+    } catch (err: any) {
+        console.error("❌ getUsersBySchool error:", err.response?.data || err.message);
+        throw err;
+    }
+}
