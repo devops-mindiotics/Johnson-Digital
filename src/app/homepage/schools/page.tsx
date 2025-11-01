@@ -48,6 +48,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getAllSchools, updateSchool } from "@/lib/api/schoolApi";
+import { useLoading } from '@/contexts/loading-context';
+
 
 export default function SchoolsPage() {
   const router = useRouter();
@@ -57,15 +59,18 @@ export default function SchoolsPage() {
   const [schoolToProcess, setSchoolToProcess] = useState<any | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedSchoolName, setProcessedSchoolName] = useState("");
+const { showLoader, hideLoader } = useLoading();
 
   useEffect(() => {
     const fetchSchools = async () => {
+       showLoader();
       try {
         const response = await getAllSchools();
         setSchools(response || []);
       } catch (err: any) {
         setError(err.message || "Failed to load schools");
       } finally {
+          hideLoader();
         setLoading(false);
       }
     };
@@ -86,11 +91,14 @@ export default function SchoolsPage() {
         const updatedSchool = { ...schoolToProcess, status: newStatus };
 
       try {
+        showLoader(); 
         await updateSchool(schoolToProcess.id, updatedSchool);
         router.push("/homepage/schools");
       } catch (error) {
         console.error("Failed to update school:", error);
-      }
+      }finally {
+      hideLoader(); // 👈 hide loader after API
+    }
       setSchools(updatedSchool);
       setProcessedSchoolName(schoolToProcess.name);
       if (newStatus === "Inactive") setSuccessDialogOpen(true);

@@ -4,8 +4,6 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { LoadingProvider } from '@/contexts/loading-context';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { Providers } from '@/components/Providers';
-import { G } from '@genkit-ai/googleai';
 import { GlobalLoader } from '@/components/GlobalLoader';
 
 export const metadata: Metadata = {

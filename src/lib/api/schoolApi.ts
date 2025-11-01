@@ -88,6 +88,7 @@ export async function createClass(
   classPayload: CreateClassRequest
 ): Promise<CreateClassResponse> {
   try {
+    
     const tenantId = getTenantId();
     const response = await apiClient.post(
       `/tenants/${tenantId}/schools/${schoolId}/classes`,
