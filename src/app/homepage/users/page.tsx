@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle, Search, Upload, FileUp, User, Plus } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search, Upload, FileUp, User as UserIcon, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,100 +14,13 @@ import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSchools } from '@/lib/api/schoolApi';
+import { getUsersByTenant, getUsersBySchool } from '@/lib/api/userApi';
 import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
 import './users.css';
 
-const mockUsers = [
-  {
-    id: 'usr_5e88488a7558f62f3e36f4d7',
-    name: 'Aarav Sharma',
-    email: 'aarav@example.com',
-    mobile: '+91-9876543210',
-    role: 'Teacher',
-    school: 'Greenwood High',
-    schoolId: 'JSN-123',
-    class: '10',
-    section: 'A',
-    experience: '5 years',
-    status: 'Active',
-    expiresOn: '2025-06-30',
-    avatar: 'https://picsum.photos/100/100?q=11',
-  },
-  {
-    id: 'usr_5e88488a7558f62f3e36f4d8',
-    name: 'Diya Patel',
-    email: 'diya@example.com',
-    mobile: '+91-9876543211',
-    role: 'Student',
-    school: 'Oakridge International',
-    schoolId: 'JSN-456',
-    class: '9',
-    section: 'B',
-    status: 'Active',
-    expiresOn: '2026-03-15',
-    avatar: 'https://picsum.photos/100/100?q=12',
-  },
-  {
-    id: 'usr_5e88488a7558f62f3e36f4d9',
-    name: 'Rohan Gupta',
-    email: 'rohan@example.com',
-    mobile: '+91-9876543212',
-    role: 'School Admin',
-    school: 'Northwood Academy',
-    schoolId: 'JSN-789',
-    status: 'Inactive',
-    expiresOn: 'N/A',
-    avatar: 'https://picsum.photos/100/100?q=13',
-  },
-  {
-    id: 'usr_5e88488a7558f62f3e36f4da',
-    name: 'Priya Singh',
-    email: 'priya@example.com',
-    mobile: '+91-9876543213',
-    role: 'Teacher',
-    school: 'Sunflower Prep',
-    schoolId: 'JSN-101',
-    class: '12',
-    section: 'C',
-    experience: '8 years',
-    status: 'Active',
-    expiresOn: '2024-11-20',
-    avatar: 'https://picsum.photos/100/100?q=14',
-  },
-  {
-    id: 'usr_5e88488a7558f62f3e36f4db',
-    name: 'Arjun Kumar',
-    email: 'arjun@example.com',
-    mobile: '+91-9876543214',
-    role: 'Student',
-    school: 'Riverdale Public School',
-    schoolId: 'JSN-212',
-    class: '8',
-    section: 'A',
-    status: 'Active',
-    expiresOn: '2025-09-01',
-    avatar: 'https://picsum.photos/100/100?q=15',
-  },
-  {
-    id: 'usr_5e88488a7558f62f3e36f4dc',
-    name: 'Sneha Reddy',
-    email: 'sneha@example.com',
-    mobile: '+91-9876543215',
-    role: 'Teacher',
-    school: 'Greenwood High',
-    schoolId: 'JSN-123',
-    class: '11',
-    section: 'B',
-    experience: '3 years',
-    status: 'Active',
-    expiresOn: '2025-06-30',
-    avatar: 'https://picsum.photos/100/100?q=16',
-  },
-];
-
 export default function UsersPage() {
-  const { user } = useAuth();
+  const { user: authUser } = useAuth();
   const router = useRouter();
   const userRole = getRoles();
   const [isLoading, setIsLoading] = useState(true);
@@ -124,28 +37,33 @@ export default function UsersPage() {
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
           const schoolData = await getAllSchools();
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
-          } else {
-            setSchools([]); // Ensure schools is always an array
           }
         } catch (error) {
           console.error("Failed to fetch schools:", error);
-          setSchools([]); // Set to empty array on error
         }
       }
-      let displayUsers = mockUsers;
-      if (user && userRole !== SUPERADMIN && userRole !== TENANTADMIN) {
-        displayUsers = mockUsers.filter(u => u.school === user.school);
+      try {
+        let userData = [];
+        if (selectedSchool === 'all') {
+            userData = await getUsersByTenant();
+        } else {
+            userData = await getUsersBySchool(selectedSchool);
+        }
+        setUsers(userData);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setUsers(displayUsers);
-      setIsLoading(false);
     }
     fetchData();
-  }, [user, userRole]);
+  }, [authUser, userRole, selectedSchool]);
 
   const handleStatusChange = () => {
     if (userToUpdate) {
@@ -164,16 +82,12 @@ export default function UsersPage() {
     }
   };
 
-  const filteredBySchool = selectedSchool === 'all'
-    ? users
-    : users.filter((user) => user.school === selectedSchool);
-
   const filteredUsers = searchTerm
-    ? filteredBySchool.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    ? users.filter(u =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : filteredBySchool;
+    : users;
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -199,13 +113,13 @@ export default function UsersPage() {
               Bulk Import
             </Button>
             <Button size="icon" className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative" onClick={() => router.push('/homepage/users/add')}>
-                <User className="h-5 w-5" />
+                <UserIcon className="h-5 w-5" />
                 <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
                     <Plus className="h-3 w-3 text-white" />
                 </div>
             </Button>
             <Button className="hidden md:flex" onClick={() => router.push('/homepage/users/add')}>
-              <User className="mr-2 h-4 w-4" />
+              <UserIcon className="mr-2 h-4 w-4" />
               Add User
             </Button>
           </div>
@@ -219,7 +133,7 @@ export default function UsersPage() {
               <SelectContent>
                 <SelectItem value="all">All Schools</SelectItem>
                 {schools.map((school) => (
-                  <SelectItem key={school.id} value={school.schoolName}>
+                  <SelectItem key={school.id} value={school.id}>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">{school.schoolCode}</Badge>
                       <span className="font-medium">{school.schoolName}</span>
@@ -248,7 +162,6 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableHead>School</TableHead>}
                 <TableHead>Role</TableHead>
-                <TableHead>Class</TableHead>
                 <TableHead>Expires on</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -271,16 +184,13 @@ export default function UsersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolId} - {u.school}</TableCell>}
-                  <TableCell>{u.role}</TableCell>
-                  <TableCell>
-                    {u.role === 'Student' ? `${u.class}-${u.section}` : 'N/A'}
-                  </TableCell>
-                  <TableCell>{u.expiresOn}</TableCell>
+                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolId}</TableCell>}
+                  <TableCell>{u.roles.join(', ')}</TableCell>
+                  <TableCell>{u.expiresOn || 'N/A'}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        u.status === 'Active' ? 'default' : 'destructive'
+                        u.status === 'active' ? 'default' : 'destructive'
                       }
                       onClick={() => setUserToUpdate(u)}
                       className="cursor-pointer"
@@ -299,7 +209,7 @@ export default function UsersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'Active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -332,7 +242,7 @@ export default function UsersPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'Active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -340,27 +250,21 @@ export default function UsersPage() {
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
                   <div>
                     <div className="font-semibold">School</div>
-                    <div>{u.schoolId} - {u.school}</div>
+                    <div>{u.schoolId}</div>
                   </div>
                 }
                 <div>
                   <div className="font-semibold">Role</div>
-                  <div>{u.role}</div>
-                </div>
-                <div>
-                  <div className="font-semibold">Class</div>
-                  <div>
-                    {u.role === 'Student' ? `${u.class}-${u.section}`: 'N/A'}
-                  </div>
+                  <div>{u.roles.join(', ')}</div>
                 </div>
                 <div>
                   <div className="font-semibold">Expires on</div>
-                  <div>{u.expiresOn}</div>
+                  <div>{u.expiresOn || 'N/A'}</div>
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <div className="font-semibold">Status</div>
-                <Badge variant={u.status === 'Active' ? 'default' : 'destructive'} onClick={() => setUserToUpdate(u)} className="cursor-pointer">
+                <Badge variant={u.status === 'active' ? 'default' : 'destructive'} onClick={() => setUserToUpdate(u)} className="cursor-pointer">
                   {u.status}
                 </Badge>
               </div>
@@ -373,7 +277,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will change the status of {userToUpdate?.name} to {userToUpdate?.status === 'Active' ? 'Inactive' : 'Active'}.
+              This action will change the status of {userToUpdate?.name} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
