@@ -10,11 +10,18 @@ export function GlobalLoader() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="flex flex-col items-center justify-center rounded-lg bg-white p-8">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        <p className="mt-4 text-lg font-medium text-gray-700">Loading...</p>
-      </div>
-    </div>
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+  <div className="flex flex-col items-center justify-center">
+    <img
+      src="/JPSwan-Blue.svg"
+      alt="Loading..."
+      className="h-20 w-20 animate-pulse"
+    />
+    <p className="mt-4 text-lg font-semibold text-white tracking-wide">
+      Loading...
+    </p>
+  </div>
+</div>
+
   );
 }
