@@ -75,7 +75,7 @@ export function LoginForm() {
 
       handleApiError(error, 'Unable to login. Please check your credentials.');
     } finally {
-      hideLoader();
+       setTimeout(() => hideLoader(), 800);
     }
   };
 
