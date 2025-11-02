@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Paperclip, Megaphone, Calendar, User, Users, FileText, Image, Video, Plus } from 'lucide-react';
+import { Paperclip, Megaphone, Calendar, User, Users, FileText, Image, Video, Plus, Trash2, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
@@ -24,49 +24,7 @@ import { AddNoticeDialog } from '@/components/add-notice-dialog';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN, STUDENT } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
-
-const initialNotices = [
-  {
-    id: 1,
-    title: 'Annual Sports Day Postponed',
-    description: 'The Annual Sports Day originally scheduled for August 20th has been postponed to August 27th due to expected heavy rainfall. We apologize for any inconvenience caused.',
-    date: '2024-08-15',
-    author: 'Mr. David Green',
-    targetAudience: 'Students',
-    noticeType: 'Event',
-    attachment: 'sports_day_postponement.pdf',
-  },
-  {
-    id: 2,
-    title: 'Parent-Teacher Meeting Schedule',
-    description: 'The Parent-Teacher meeting for the first term will be held on Saturday, August 24th, from 9:00 AM to 1:00 PM. Please book your slots online through the parent portal.',
-    date: '2024-08-12',
-    author: 'School Administration',
-    targetAudience: 'Teachers',
-    noticeType: 'Academics',
-    attachment: null,
-  },
-  {
-    id: 3,
-    title: 'Library Closure for Maintenance',
-    description: 'The school library will be closed for annual maintenance and stock-taking from August 16th to August 19th. Please return all borrowed books by August 15th.',
-    date: '2024-08-10',
-    author: 'Ms. Emily White',
-    targetAudience: 'All School Admins',
-    noticeType: 'Facilities',
-    attachment: 'library_closure.png',
-  },
-    {
-    id: 4,
-    title: 'Science Fair Video Submissions',
-    description: 'Last day for science fair video submissions is September 5th.',
-    date: '2024-08-08',
-    author: 'Mr. Robert Fox',
-    targetAudience: 'Students',
-    noticeType: 'Competition',
-    attachment: 'science_fair.mp4',
-  },
-];
+import { getNotices, createNotice, updateNotice, deleteNotice } from '@/lib/api/noticeApi';
 
 const getAttachmentIcon = (attachment) => {
     if (!attachment) return null;
@@ -89,10 +47,12 @@ const getAttachmentIcon = (attachment) => {
 export default function NoticeBoardPage() {
   const { user } = useAuth();
   const userRole = getRoles();
-  const [notices, setNotices] = useState(initialNotices);
-  const [filteredNotices, setFilteredNotices] = useState(initialNotices);
+  const [notices, setNotices] = useState([]);
+  const [filteredNotices, setFilteredNotices] = useState([]);
   const [schools, setSchools] = useState([]);
+  const [selectedSchool, setSelectedSchool] = useState(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingNotice, setEditingNotice] = useState(null);
 
   useEffect(() => {
     async function fetchSchools() {
@@ -114,8 +74,30 @@ export default function NoticeBoardPage() {
   }, [userRole]);
 
   useEffect(() => {
+    const fetchNotices = async () => {
+        try {
+            const params = {
+                schoolId: selectedSchool,
+                role: user.role,
+                classId: user.classId,
+                sectionId: user.sectionId
+            };
+            const noticeData = await getNotices(user.tenantId, params);
+            setNotices(noticeData.data);
+        } catch (error) {
+            console.error("Failed to fetch notices:", error);
+        }
+    };
+
+    fetchNotices();
+  }, [user, selectedSchool]);
+
+  useEffect(() => {
     if (userRole === STUDENT) {
-      setFilteredNotices(notices.filter(notice => notice.targetAudience === 'Students'));
+      setFilteredNotices(notices.filter(notice => 
+        notice.targetAudience.roles.includes('STUDENT') || 
+        notice.targetAudience.roles.includes('ALL')
+      ));
     } else {
       setFilteredNotices(notices);
     }
@@ -124,9 +106,34 @@ export default function NoticeBoardPage() {
   const canAddNotice = userRole === SUPERADMIN || userRole === TENANTADMIN || userRole === SCHOOLADMIN;
   const showSchoolFilter = userRole === SUPERADMIN || userRole === TENANTADMIN;
 
-  const handleAddNotice = (newNotice) => {
-    setNotices([...notices, { ...newNotice, id: notices.length + 1 }]);
-    setIsAddDialogOpen(false);
+  const handleAddOrUpdateNotice = async (data) => {
+    try {
+        if (editingNotice) {
+            const updatedNotice = await updateNotice(user.tenantId, editingNotice.id, data);
+            setNotices(notices.map(n => n.id === editingNotice.id ? updatedNotice.data : n));
+        } else {
+            const newNotice = await createNotice(user.tenantId, data);
+            setNotices([...notices, newNotice.data]);
+        }
+        setIsAddDialogOpen(false);
+        setEditingNotice(null);
+    } catch (error) {
+        console.error('Failed to save notice:', error);
+    }
+  };
+
+  const handleDeleteNotice = async (id) => {
+    try {
+        await deleteNotice(user.tenantId, id);
+        setNotices(notices.filter(n => n.id !== id));
+    } catch (error) {
+        console.error('Failed to delete notice:', error);
+    }
+  };
+
+  const openEditDialog = (notice) => {
+    setEditingNotice(notice);
+    setIsAddDialogOpen(true);
   };
 
   return (
@@ -135,13 +142,13 @@ export default function NoticeBoardPage() {
             <h1 className="text-2xl font-bold">Notice Board</h1>
             {canAddNotice && (
                 <>
-                    <Button onClick={() => setIsAddDialogOpen(true)} className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
+                    <Button onClick={() => { setEditingNotice(null); setIsAddDialogOpen(true); }} className="md:hidden bg-gradient-to-r from-blue-500 to-purple-500 text-white relative">
                         <Megaphone className="h-5 w-5" />
                         <div className="absolute top-[-4px] right-[-4px] bg-green-500 rounded-full p-0.5">
                             <Plus className="h-3 w-3 text-white" />
                         </div>
                     </Button>
-                    <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <Button onClick={() => { setEditingNotice(null); setIsAddDialogOpen(true);}} className="hidden md:flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                         <Megaphone className="h-5 w-5" />
                         Add Notice
                     </Button>
@@ -158,13 +165,14 @@ export default function NoticeBoardPage() {
               </CardDescription>
             </div>
            {showSchoolFilter && (<div className="flex w-full md:w-auto items-center justify-between md:justify-start gap-4">
-                <Select>
+                <Select onValueChange={setSelectedSchool}>
                   <SelectTrigger className="w-full md:w-[250px]">
                     <SelectValue placeholder="Select a school" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={null}>All Schools</SelectItem>
                     {schools.map((school) => (
-                      <SelectItem key={school.id} value={school.schoolName}>
+                      <SelectItem key={school.id} value={school.id}>
                         <div className="flex items-center gap-2">
                           <Badge variant="secondary">{school.schoolCode}</Badge>
                           <span className="font-medium">{school.schoolName}</span>
@@ -193,23 +201,33 @@ export default function NoticeBoardPage() {
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <User className="h-4 w-4 text-primary" />
-                                        <span>{notice.author}</span>
+                                        <span>{notice.createdBy}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Users className="h-3.5 w-3.5" />
-                                        <span>{notice.targetAudience}</span>
+                                        <span>{notice.targetAudience.roles.join(', ')}</span>
                                     </div>
                                 </div>
                                 <p className="text-sm text-foreground">{notice.description}</p>
-                                {notice.attachment && (
+                                {notice.attachments && notice.attachments.length > 0 && (
                                     <a href="#" className="flex items-center gap-2 text-sm text-blue-500 hover:underline mt-2">
-                                        {getAttachmentIcon(notice.attachment)}
-                                        {notice.attachment}
+                                        {getAttachmentIcon(notice.attachments[0].fileName)}
+                                        {notice.attachments[0].fileName}
                                     </a>
                                 )}
                             </div>
-                            <div className="flex-shrink-0 mt-2 md:mt-0">
-                                <Badge variant="secondary">{notice.noticeType}</Badge>
+                            <div className="flex-shrink-0 mt-2 md:mt-0 flex items-center gap-2">
+                                {canAddNotice && (
+                                    <>
+                                        <Button variant="outline" size="icon" onClick={() => openEditDialog(notice)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="destructive" size="icon" onClick={() => handleDeleteNotice(notice.id)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </>
+                                )}
+                                <Badge variant="secondary">{notice.type}</Badge>
                             </div>
                         </div>
                        {index < filteredNotices.length - 1 && <Separator className="my-6" />}
@@ -222,8 +240,9 @@ export default function NoticeBoardPage() {
       <AddNoticeDialog
         isOpen={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onAddNotice={handleAddNotice}
+        onAddNotice={handleAddOrUpdateNotice}
         schools={schools}
+        notice={editingNotice}
       />
     </div>
   );

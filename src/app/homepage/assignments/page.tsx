@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FileDown, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CreateAssignmentDialog } from '@/components/create-assignment-dialog';
 import { SubmitAssignmentDialog } from '@/components/submit-assignment-dialog';
 import { ViewAssignmentDialog } from '@/components/view-assignment-dialog';
@@ -29,107 +29,78 @@ import { ReviewAssignmentDialog } from '@/components/review-assignment-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DatePicker } from '@/components/ui/date-picker';
-
-const initialAssignments = [
-  {
-    id: 1,
-    subject: 'Mathematics',
-    title: 'Algebra II Worksheet',
-    teacher: 'Mrs. Davis',
-    assignedDate: '2024-08-12',
-    dueDate: '2024-08-19',
-    status: 'Assigned',
-    description: 'Complete the attached worksheet on algebraic equations.',
-    class: '1',
-    section: 'A',
-  },
-  {
-    id: 2,
-    subject: 'History',
-    title: 'Essay on the Roman Empire',
-    teacher: 'Mr. Black',
-    assignedDate: '2024-08-10',
-    dueDate: '2024-08-24',
-    status: 'Submitted',
-    description: 'Write a 1000-word essay on the fall of the Roman Empire.',
-    class: '2',
-    section: 'B',
-  },
-  {
-    id: 3,
-    subject: 'Science',
-    title: 'Lab Report: Photosynthesis',
-    teacher: 'Ms. White',
-    assignedDate: '2024-08-05',
-    dueDate: '2024-08-12',
-    status: 'Checked',
-    description: 'Submit your lab report on the photosynthesis experiment.',
-    class: '1',
-    section: 'A',
-  },
-  {
-    id: 4,
-    subject: 'English',
-    title: 'Book Report: To Kill a Mockingbird',
-    teacher: 'Ms. Blue',
-    assignedDate: '2024-08-01',
-    dueDate: '2024-08-15',
-    status: 'Checked',
-    description: 'Write a 500-word book report on To Kill a Mockingbird.',
-    class: '3',
-    section: 'C',
-  },
-];
+import { getHomeworks, createHomework, updateHomework, submitHomework } from '@/lib/api/homeworkApi';
 
 export default function AssignmentsPage() {
   const { user } = useAuth();
   const isTeacher = user?.role === 'Teacher' || user?.role === 'School Admin';
   const isMobile = useIsMobile();
 
-  const [assignments, setAssignments] = useState(initialAssignments);
+  const [assignments, setAssignments] = useState([]);
   const [filters, setFilters] = useState<{ class: string; section: string; date: string | undefined }>({ class: '', section: '', date: undefined });
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchHomeworks = async () => {
+      try {
+        const params = {
+            classId: filters.class === 'all' ? undefined : filters.class,
+            sectionId: filters.section === 'all' ? undefined : filters.section,
+            date: filters.date,
+        };
+        const homeworkData = await getHomeworks(user.tenantId, user.schoolId, params);
+        setAssignments(homeworkData.data);
+      } catch (error) {
+        console.error("Failed to fetch homeworks:", error);
+      }
+    };
+
+    fetchHomeworks();
+  }, [user, filters]);
 
   const handleFilterChange = (filterType: string, value: string | undefined) => {
     setFilters({ ...filters, [filterType]: value });
   };
 
-  const handleCreateAssignment = (data: any) => {
-    const newAssignment = {
-      ...data,
-      id: assignments.length + 1,
-      teacher: user?.name,
-      assignedDate: new Date().toISOString().split('T')[0],
-      status: 'Assigned',
-    };
-    setAssignments([...assignments, newAssignment]);
+  const handleCreateAssignment = async (data: any) => {
+    try {
+        const newAssignment = await createHomework(user.tenantId, user.schoolId, data);
+        setAssignments([...assignments, newAssignment.data]);
+    } catch (error) {
+        console.error('Failed to create assignment:', error);
+    }
   };
 
-  const handleSubmitAssignment = (assignmentId: number) => {
-    setAssignments(
-      assignments.map((assignment) =>
-        assignment.id === assignmentId ? { ...assignment, status: 'Submitted' } : assignment
-      )
-    );
+  const handleSubmitAssignment = async (assignmentId: number, submissionData: any) => {
+    try {
+        await submitHomework(user.tenantId, user.schoolId, user.classId, user.id, assignmentId, submissionData);
+        setAssignments(
+            assignments.map((assignment) =>
+              assignment.id === assignmentId ? { ...assignment, status: 'Submitted' } : assignment
+            )
+          );
+    } catch (error) {
+        console.error('Failed to submit assignment:', error);
+    }
   };
 
-  const handleReviewAssignment = (assignmentId: number, newStatus: 'Assigned' | 'Checked') => {
-    setAssignments(
-      assignments.map((assignment) =>
-        assignment.id === assignmentId ? { ...assignment, status: newStatus } : assignment
-      )
-    );
+  const handleReviewAssignment = async (assignmentId: number, reviewData: any) => {
+    try {
+        const updatedAssignment = await updateHomework(user.tenantId, user.schoolId, assignmentId, reviewData);
+        setAssignments(
+            assignments.map((assignment) =>
+              assignment.id === assignmentId ? updatedAssignment.data : assignment
+            )
+          );
+    } catch (error) {
+        console.error('Failed to review assignment:', error);
+    }
+
   };
 
-  const filteredAssignments = assignments.filter(assignment => {
-    return (filters.class ? assignment.class === filters.class : true) &&
-           (filters.section ? assignment.section === filters.section : true) &&
-           (filters.date ? assignment.dueDate === filters.date : true);
-  })
-
-  const assigned = filteredAssignments.filter((assignment) => assignment.status === 'Assigned');
-  const submitted = filteredAssignments.filter((assignment) => assignment.status === 'Submitted');
-  const checked = filteredAssignments.filter((assignment) => assignment.status === 'Checked');
+  const assigned = assignments.filter((assignment) => assignment.status === 'assigned');
+  const submitted = assignments.filter((assignment) => assignment.status === 'submitted');
+  const checked = assignments.filter((assignment) => assignment.status === 'reviewed' || assignment.status === 'completed');
 
   const renderTable = (data: typeof assignments) => (
         <Table>
@@ -152,19 +123,19 @@ export default function AssignmentsPage() {
                     <CardHeader>
                         <CardTitle className="text-base">{item.title}</CardTitle>
                         <div className="flex items-center pt-2">
-                            <CardDescription>{item.subject}</CardDescription>
+                            <CardDescription>{item.subjectId}</CardDescription>
                             <div className="flex flex-grow justify-end items-center gap-2">
-                                {user?.role === 'Student' && item.status === 'Assigned' && (
+                                {user?.role === 'Student' && item.status === 'assigned' && (
                                     <SubmitAssignmentDialog
-                                    onSubmit={() => handleSubmitAssignment(item.id)}
+                                    onSubmit={(submissionData) => handleSubmitAssignment(item.id, submissionData)}
                                     isIcon
                                     />
                                 )}
-                                {isTeacher && item.status === 'Submitted' && (
+                                {isTeacher && item.status === 'submitted' && (
                                     <ReviewAssignmentDialog
                                     assignment={item}
-                                    onReassign={() => handleReviewAssignment(item.id, 'Assigned')}
-                                    onComplete={() => handleReviewAssignment(item.id, 'Checked')}
+                                    onReassign={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'assigned' })}
+                                    onComplete={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'completed' })}
                                     />
                                 )}
                                 <Button variant="outline" size="icon">
@@ -181,7 +152,7 @@ export default function AssignmentsPage() {
                     </div>
                     <div className="flex justify-between mb-4">
                     <span className="font-semibold">Status:</span>
-                      <Badge variant={item.status === 'Checked' ? 'default' : 'secondary'}>
+                      <Badge variant={item.status === 'completed' ? 'default' : 'secondary'}>
                         {item.status}
                       </Badge>
                     </div>
@@ -189,27 +160,27 @@ export default function AssignmentsPage() {
                 </Card>
               ) : (
                 <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.subject}</TableCell>
+                  <TableCell className="font-medium">{item.subjectId}</TableCell>
                   <TableCell>{item.title}</TableCell>
-                  {user?.role !== 'Teacher' && <TableCell>{item.teacher}</TableCell>}
+                  {user?.role !== 'Teacher' && <TableCell>{item.createdBy.name}</TableCell>}
                   <TableCell>{item.dueDate}</TableCell>
                   <TableCell>
-                    <Badge variant={item.status === 'Checked' ? 'default' : 'secondary'}>
+                    <Badge variant={item.status === 'completed' ? 'default' : 'secondary'}>
                       {item.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {user?.role === 'Student' && item.status === 'Assigned' && (
+                      {user?.role === 'Student' && item.status === 'assigned' && (
                         <SubmitAssignmentDialog
-                          onSubmit={() => handleSubmitAssignment(item.id)}
+                          onSubmit={(submissionData) => handleSubmitAssignment(item.id, submissionData)}
                         />
                       )}
-                       {isTeacher && item.status === 'Submitted' && (
+                       {isTeacher && item.status === 'submitted' && (
                         <ReviewAssignmentDialog 
                           assignment={item} 
-                          onReassign={() => handleReviewAssignment(item.id, 'Assigned')}
-                          onComplete={() => handleReviewAssignment(item.id, 'Checked')}
+                          onReassign={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'assigned' })}
+                          onComplete={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'completed' })}
                         />
                       )}
                       <Button variant="outline" size="sm">

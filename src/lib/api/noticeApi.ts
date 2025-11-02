@@ -1,154 +1,96 @@
-'use client';
 
-import apiClient from "./client";
+import { apiClient } from "./client";
+import { NOTICE_ENDPOINT } from "./endpoint";
 
-export async function createNotice(noticeData: any): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) throw new Error("Context info not found");
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId;
-
-    if (!tenantId) throw new Error("Tenant ID not found");
-
-    const response = await apiClient.post(
-      `/tenants/${tenantId}/masters/notices`,
-      { data: noticeData },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data.data;
-  } catch (err: any) {
-    console.error("❌ createNotice error:", err.response?.data || err.message);
-    throw err;
-  }
+export interface NoticeAttachment {
+  fileName: string;
+  fileUrl: string;
 }
 
-export async function getAllNotices(
-  page = 1,
-  limit = 10,
-  status = "active",
-  search = ""
-): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) return { records: [], pagination: {} };
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId || null;
-
-    if (!tenantId) return { records: [], pagination: {} };
-
-    const response = await apiClient.get(
-      `/tenants/${tenantId}/masters/notices?page=${page}&limit=${limit}&status=${status}&search=${search}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data && response.data.data) {
-        return {
-            records: response.data.data.notices,
-            pagination: response.data.data.meta.pagination,
-          };
-    }
-
-    return { records: [], pagination: {} };
-  } catch (err: any) {
-    console.error("❌ getAllNotices error:", err.response?.data || err.message);
-    throw err;
-  }
+export interface TargetAudience {
+  roles: string[];
+  schools?: string[];
+  classes?: string[];
+  sections?: string[];
 }
 
-export async function getNoticeById(noticeId: string): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) return null;
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId || null;
-
-    if (!tenantId) return null;
-
-    const response = await apiClient.get(
-      `/tenants/${tenantId}/masters/notices/${noticeId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data && response.data.data) {
-      return response.data.data;
-    }
-
-    return null;
-  } catch (err: any) {
-    console.error("❌ getNoticeById error:", err.response?.data || err.message);
-    throw err;
-  }
+export interface Notice {
+  id?: string;
+  schoolId?: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  targetAudience: TargetAudience;
+  attachments?: NoticeAttachment[];
+  status?: "active" | "deleted";
+  createdBy?: string;
+  createdByRole?: string;
 }
 
-export async function updateNotice(
+export const createNotice = async (
+  tenantId: string,
+  data: Notice
+) => {
+  const response = await apiClient.post(
+    `/${NOTICE_ENDPOINT(tenantId)}`,
+    { data }
+  );
+  return response.data;
+};
+
+export const getNotices = async (
+  tenantId: string,
+  params: {
+    schoolId?: string;
+    role?: string;
+    classId?: string;
+    sectionId?: string;
+    type?: string;
+    status?: string;
+    fromDate?: string;
+    toDate?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }
+) => {
+  const response = await apiClient.get(
+    `/${NOTICE_ENDPOINT(tenantId)}`,
+    { params }
+  );
+  return response.data;
+};
+
+export const getNoticeById = async (
+  tenantId: string,
+  noticeId: string
+) => {
+  const response = await apiClient.get(
+    `/${NOTICE_ENDPOINT(tenantId)}/${noticeId}`
+  );
+  return response.data;
+};
+
+export const updateNotice = async (
+  tenantId: string,
   noticeId: string,
-  noticeData: any
-): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) throw new Error("Context info not found");
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId;
+  data: Partial<Notice>
+) => {
+  const response = await apiClient.put(
+    `/${NOTICE_ENDPOINT(tenantId)}/${noticeId}`,
+    { data }
+  );
+  return response.data;
+};
 
-    if (!tenantId) throw new Error("Tenant ID not found");
-
-    const response = await apiClient.patch(
-      `/tenants/${tenantId}/masters/notices/${noticeId}`,
-      { data: noticeData },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data.data;
-  } catch (err: any) {
-    console.error("❌ updateNotice error:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
-export async function deleteNotice(noticeId: string): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) throw new Error("Context info not found");
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId;
-
-    if (!tenantId) throw new Error("Tenant ID not found");
-
-    const response = await apiClient.delete(
-      `/tenants/${tenantId}/masters/notices/${noticeId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    return response.data.data;
-  } catch (err: any) {
-    console.error("❌ deleteNotice error:", err.response?.data || err.message);
-    throw err;
-  }
-}
+export const deleteNotice = async (
+  tenantId: string,
+  noticeId: string
+) => {
+  const response = await apiClient.delete(
+    `/${NOTICE_ENDPOINT(tenantId)}/${noticeId}`
+  );
+  return response.data;
+};

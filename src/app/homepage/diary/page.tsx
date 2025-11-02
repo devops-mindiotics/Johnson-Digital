@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PlusCircle, Trash2, Edit, Paperclip, Check, ChevronsUpDown, BookOpen, Plus, Filter } from "lucide-react";
-import diaryData from "@/diary.json";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,24 +18,16 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-
-
-// Mock Data
-const students = [
-    { id: "student_101", name: "Alice Johnson" },
-    { id: "student_102", name: "Bob Williams" },
-    { id: "student_103", name: "Charlie Brown" },
-    { id: "student_104", name: "David Miller" },
-    { id: "student_105", name: "Eve Davis" },
-    { id: "4444444444", name: "Test Student" },
-];
+import { getDiaryEntries, createDiaryEntry, updateDiaryEntry, deleteDiaryEntry } from "@/lib/api/diaryApi";
+import { getAllStudents } from "@/lib/api/studentApi";
 
 const DiaryPage = () => {
   const { user } = useAuth();
   const isStudent = user?.role === 'Student';
 
-  const [diaries, setDiaries] = useState(diaryData);
-  const [filteredDiaries, setFilteredDiaries] = useState(diaries);
+  const [diaries, setDiaries] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [filteredDiaries, setFilteredDiaries] = useState([]);
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedSection, setSelectedSection] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -44,9 +35,32 @@ const DiaryPage = () => {
   const [editingDiary, setEditingDiary] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        const diaryData = await getDiaryEntries(user.tenantId, user.schoolId, {});
+        setDiaries(diaryData.data);
+      } catch (error) {
+        console.error("Failed to fetch diaries:", error);
+      }
+    };
+    
+    const fetchStudents = async () => {
+      try {
+        const studentData = await getAllStudents(user.tenantId, user.schoolId);
+        setStudents(studentData.data);
+      } catch (error) {
+        console.error("Failed to fetch students:", error);
+      }
+    };
+
+    fetchDiaries();
+    fetchStudents();
+  }, [user]);
+
   const classSectionMap = useMemo(() => {
     const map = {};
-    diaryData.forEach(d => {
+    diaries.forEach(d => {
         if (!d.classId || !d.sectionId) return;
         if (!map[d.classId]) {
             map[d.classId] = new Set();
@@ -57,7 +71,7 @@ const DiaryPage = () => {
         map[classId] = Array.from(map[classId]).sort();
     });
     return map;
-  }, []);
+  }, [diaries]);
 
   const classes = Object.keys(classSectionMap).sort();
   const sectionsForSelectedClass = selectedClass !== 'all' ? classSectionMap[selectedClass] || [] : [];
@@ -65,10 +79,10 @@ const DiaryPage = () => {
   useEffect(() => {
     let filtered = diaries;
 
-    if (isStudent && user?.class && user?.section) {
+    if (isStudent && user?.classId && user?.sectionId) {
       filtered = filtered.filter(d => 
-        d.classId === user.class && 
-        d.sectionId === user.section &&
+        d.classId === user.classId && 
+        d.sectionId === user.sectionId &&
         (d.assignedTo === 'all' || (d.assignedTo === 'student' && d.studentIds.includes(user.id)))
       );
     } else if (!isStudent) {
@@ -88,7 +102,7 @@ const DiaryPage = () => {
     setFilteredDiaries(filtered);
   }, [diaries, selectedClass, selectedSection, selectedDate, isStudent, user]);
 
-  const handleAddOrUpdateDiary = (values: FormValues) => {
+  const handleAddOrUpdateDiary = async (values: FormValues) => {
     const { attachments, ...rest } = values;
     
     const dataToSubmit = {
@@ -99,28 +113,30 @@ const DiaryPage = () => {
             : (editingDiary?.attachments || []),
     }
     
-    if (editingDiary) {
-        const updatedDiaries = diaries.map(d => 
-            d.id === editingDiary.id ? { ...d, ...dataToSubmit, id: d.id, createdBy: d.createdBy, userType: d.userType } : d
-        )
-        setDiaries(updatedDiaries);
-    } else {
-      const newDiary = {
-        id: `diary-${Date.now()}`,
-        ...dataToSubmit,
-        createdBy: "teacher_456", // Mock createdBy
-		    userType: "Teacher" // Mock userType
-      };
-      setDiaries(prev => [newDiary, ...prev]);
+    try {
+      if (editingDiary) {
+        const updatedDiary = await updateDiaryEntry(user.tenantId, user.schoolId, editingDiary.id, dataToSubmit);
+        setDiaries(diaries.map(d => d.id === editingDiary.id ? updatedDiary.data : d));
+      } else {
+        const newDiary = await createDiaryEntry(user.tenantId, user.schoolId, dataToSubmit);
+        setDiaries(prev => [newDiary.data, ...prev]);
+      }
+      setIsModalOpen(false);
+      setEditingDiary(null);
+    } catch (error) {
+      console.error("Failed to save diary entry:", error);
     }
-    setIsModalOpen(false);
-    setEditingDiary(null);
   };
 
-  const handleDeleteDiary = (id: string) => {
-    setDiaries(diaries.filter(d => d.id !== id));
-  };
-  
+  const handleDeleteDiary = async (id: string) => {
+    try {
+      await deleteDiaryEntry(user.tenantId, user.schoolId, id);
+      setDiaries(diaries.filter(d => d.id !== id));
+    } catch (error) {
+      console.error("Failed to delete diary entry:", error);
+    }
+  };  
+
   const openEditModal = (diary) => {
     setEditingDiary(diary);
     setIsModalOpen(true);
@@ -170,6 +186,7 @@ const DiaryPage = () => {
                                 initialData={editingDiary}
                                 onClose={() => setIsModalOpen(false)}
                                 classSectionMap={classSectionMap}
+                                students={students}
                             />
                         </DialogContent>
                     </Dialog>
@@ -282,7 +299,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const DiaryForm = ({ onSubmit, initialData, onClose, classSectionMap }) => {
+const DiaryForm = ({ onSubmit, initialData, onClose, classSectionMap, students }) => {
     const defaultValues: FormValues = {
         title: "",
         description: "",
