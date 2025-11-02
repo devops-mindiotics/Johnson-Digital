@@ -48,31 +48,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getAllSchools, updateSchool } from "@/lib/api/schoolApi";
-import { useLoading } from '@/contexts/loading-context';
-
 
 export default function SchoolsPage() {
   const router = useRouter();
   const [schools, setSchools] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schoolToProcess, setSchoolToProcess] = useState<any | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedSchoolName, setProcessedSchoolName] = useState("");
-const { showLoader, hideLoader } = useLoading();
 
   useEffect(() => {
     const fetchSchools = async () => {
-       showLoader();
       try {
         const response = await getAllSchools();
         setSchools(response || []);
       } catch (err: any) {
         setError(err.message || "Failed to load schools");
-      } finally {
-          hideLoader();
-        setLoading(false);
-      }
+      } 
     };
     fetchSchools();
   }, []);
@@ -88,31 +80,21 @@ const { showLoader, hideLoader } = useLoading();
         schoolToProcess.status === "Trial"
           ? "Inactive"
           : "active";
-        const updatedSchool = { ...schoolToProcess, status: newStatus };
+      const updatedSchool = { ...schoolToProcess, status: newStatus };
 
       try {
-        showLoader(); 
+        //  showLoader();
         await updateSchool(schoolToProcess.id, updatedSchool);
         router.push("/homepage/schools");
       } catch (error) {
         console.error("Failed to update school:", error);
-      }finally {
-      hideLoader(); // 👈 hide loader after API
-    }
+      }
       setSchools(updatedSchool);
       setProcessedSchoolName(schoolToProcess.name);
       if (newStatus === "Inactive") setSuccessDialogOpen(true);
       setSchoolToProcess(null);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[60vh] text-lg">
-        Loading schools...
-      </div>
-    );
-  }
 
   if (error) {
     return (

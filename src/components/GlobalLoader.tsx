@@ -2,7 +2,6 @@
 'use client';
 
 import { useLoading } from '@/contexts/loading-context';
-import { Loader2 } from 'lucide-react';
 
 export function GlobalLoader() {
   const { isLoading } = useLoading();

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle, Search, Upload, FileUp, User as UserIcon, Plus } from 'lucide-react';
+import { MoreHorizontal, Search, Upload, FileUp, User as UserIcon, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,7 +23,6 @@ export default function UsersPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
   const userRole = getRoles();
-  const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
@@ -34,10 +33,10 @@ export default function UsersPage() {
   const fileInputRef = useRef(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedUserName, setProcessedUserName] = useState('');
+  
 
   useEffect(() => {
     async function fetchData() {
-      setIsLoading(true);
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
           const schoolData = await getAllSchools();
@@ -58,9 +57,7 @@ export default function UsersPage() {
         setUsers(userData);
       } catch (error) {
         console.error("Failed to fetch users:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      } 
     }
     fetchData();
   }, [authUser, userRole, selectedSchool]);
@@ -88,10 +85,6 @@ export default function UsersPage() {
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : users;
-
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
 
   return (
     <Card>

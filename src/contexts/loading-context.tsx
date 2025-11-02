@@ -1,5 +1,8 @@
 'use client';
-import { createContext, useState, ReactNode, useContext } from 'react';
+import { createContext, useState, ReactNode, useContext, useEffect } from 'react';
+import { setLoadingRef } from '@/components/global-loader-access';
+
+
 
 interface LoadingContextType {
   isLoading: boolean;
@@ -7,13 +10,21 @@ interface LoadingContextType {
   hideLoader: () => void;
 }
 
-const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
+const LoadingContext = createContext<LoadingContextType>({
+  showLoader: () => {},
+  hideLoader: () => {},
+  isLoading: false,
+});
 
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
-
+  
   const showLoader = () => setIsLoading(true);
   const hideLoader = () => setIsLoading(false);
+   // register global access when context mounts
+  useEffect(() => {
+    setLoadingRef({ showLoader, hideLoader });
+  }, []);
 
   return (
     <LoadingContext.Provider value={{ isLoading, showLoader, hideLoader }}>

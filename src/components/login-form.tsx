@@ -1,15 +1,14 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Eye, EyeOff } from 'lucide-react';
-import { handleApiError } from '@/lib/utils/error-handler';
-import { loginUser } from '@/lib/api/auth';
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Eye, EyeOff } from "lucide-react";
+import { handleApiError } from "@/lib/utils/error-handler";
+import { loginUser } from "@/lib/api/auth";
 
-
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -17,65 +16,63 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/use-auth';
-//import type { User } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
-import { useLoading } from '@/contexts/loading-context';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 const FormSchema = z.object({
-  mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
+  mobile: z.string().regex(/^[0-9]{10}$/, "Mobile number must be 10 digits."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const { showLoader, hideLoader, isLoading } = useLoading();
   const { login } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    mode: 'onBlur',
+    mode: "onBlur",
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      mobile: '',
-      password: '',
+      mobile: "",
+      password: "",
     },
   });
 
-
-
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
-    showLoader();
     try {
       const response = await loginUser(values.mobile, values.password);
       console.log("🚀 Unable to login. response", { response });
       if (response.success) {
-
         const user = {
-          userId: response?.data?.user?.userId ?? '',
-          phone: response?.data?.user?.phone ?? '',
-          displayName: response?.data?.user?.displayName ?? 'User',
-          avatarUrl: response?.data?.user?.avatarUrl ?? 'https://picsum.photos/100',
+          userId: response?.data?.user?.userId ?? "",
+          phone: response?.data?.user?.phone ?? "",
+          displayName: response?.data?.user?.displayName ?? "User",
+          avatarUrl:
+            response?.data?.user?.avatarUrl ?? "https://picsum.photos/100",
           email: response?.data?.user?.email ?? null,
-          status: response?.data?.user?.status ?? 'active',
-          createdAt: response?.data?.user?.createdAt ?? '',
-          updatedAt: response?.data?.user?.updatedAt ?? '',
+          status: response?.data?.user?.status ?? "active",
+          createdAt: response?.data?.user?.createdAt ?? "",
+          updatedAt: response?.data?.user?.updatedAt ?? "",
           globalRoles: response?.data?.user?.roles ?? null,
         };
 
         login(user);
         // toast({ title: 'Login Successful', description: 'Please wait Redirecting to dashboard...' });
       } else {
-        toast({ variant: 'destructive', title: 'Login Failed', description: response.message });
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: response.message,
+        });
       }
     } catch (error) {
-      console.log("🚀 Unable to login. Please check your credentials.", { error });
+      console.log("🚀 Unable to login. Please check your credentials.", {
+        error,
+      });
 
-      handleApiError(error, 'Unable to login. Please check your credentials.');
-    } finally {
-       setTimeout(() => hideLoader(), 800);
+      handleApiError(error, "Unable to login. Please check your credentials.");
     }
   };
 
@@ -116,7 +113,7 @@ export function LoginForm() {
                 <div className="relative">
                   <FormControl>
                     <Input
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       {...field}
                     />
@@ -149,27 +146,38 @@ export function LoginForm() {
               </Link>
             </Button>
           </div>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {'Sign In'}
+          <Button type="submit" className="w-full">
+            {"Sign In"}
           </Button>
         </form>
       </Form>
       <div className="pt-4 text-center text-xs text-muted-foreground">
         <p>
-          By signing in, you agree to our{' '}
-          <Link href="/eula" className="text-primary" target="_blank" rel="noopener noreferrer">
+          By signing in, you agree to our{" "}
+          <Link
+            href="/eula"
+            className="text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             EULA
           </Link>
-          {', '}
-          <Link href="/privacy-policy" className="text-primary" target="_blank" rel="noopener noreferrer">
+          {", "}
+          <Link
+            href="/privacy-policy"
+            className="text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Privacy Policy
           </Link>
-          {' and '}
-          <Link href="/terms-and-conditions" className="text-primary" target="_blank" rel="noopener noreferrer">
+          {" and "}
+          <Link
+            href="/terms-and-conditions"
+            className="text-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Terms &amp; Conditions
           </Link>
           .
