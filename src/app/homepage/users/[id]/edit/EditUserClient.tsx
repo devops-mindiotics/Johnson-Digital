@@ -14,8 +14,11 @@ import {
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
+import { updateStudent, updateTeacher } from '@/lib/api/userApi';
+import { useAuth } from '@/hooks/use-auth';
 
 const formSchema = z.object({
+  userId: z.string(),
   type: z.enum(['Teacher', 'Student', 'School Admin']),
   firstName: z.string().min(1, 'First Name is required'),
   lastName: z.string().min(1, 'Last Name is required'),
@@ -36,9 +39,10 @@ const formSchema = z.object({
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
   admissionNumber: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  permanentEducationNumber: z.string().optional(),
+  dob: z.string().optional(),
+  pen: z.string().optional(),
   expiryDate: z.string().optional(),
+  classId: z.string().optional(),
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -50,13 +54,35 @@ export default function EditUserClient({
   schools: { schoolId: string; schoolName: string }[];
 }) {
   const router = useRouter();
+  const { user } = useAuth();
   const form = useForm<FormValues>({ resolver: zodResolver(formSchema), defaultValues: initialUser });
   const type = form.watch('type');
   const schoolOptions = useMemo(() => schools.map(s => `${s.schoolId}-${s.schoolName}`), [schools]);
 
-  function onSubmit(values: FormValues) {
-    console.log(values); // call external API if needed
-    router.push('/homepage/users');
+  async function onSubmit(values: FormValues) {
+    const [schoolId] = values.school?.split('-') || [];
+    if (values.type === 'Student') {
+      try {
+        await updateStudent(user.tenantId, schoolId, values.classId, values.userId, values);
+        // Add success notification here
+        router.push('/homepage/users');
+      } catch (error) {
+        console.error('Failed to update student:', error);
+        // Add error notification here
+      }
+    } else if (values.type === 'Teacher') {
+      try {
+        await updateTeacher(user.tenantId, schoolId, values.userId, values);
+        // Add success notification here
+        router.push('/homepage/users');
+      } catch (error) {
+        console.error('Failed to update teacher:', error);
+        // Add error notification here
+      }
+    } else {
+      console.log(values);
+      router.push('/homepage/users');
+    }
   }
 
   return (
@@ -167,7 +193,7 @@ export default function EditUserClient({
                   <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Bangalore" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="district" render={({ field }) => (
-                  <FormItem><FormLabel>District</FormLabel><FormControl><Input placeholder="e.g., Bangalore Urban" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>District</FormLabel><FormControl><Input placeholder="e.g., Bangalore Urban" {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="state" render={({ field }) => (
                   <FormItem><FormLabel>State</FormLabel><FormControl><Input placeholder="e.g., Karnataka" {...field} /></FormControl><FormMessage /></FormItem>
@@ -213,10 +239,10 @@ export default function EditUserClient({
                   <FormField control={form.control} name="admissionNumber" render={({ field }) => (
                     <FormItem><FormLabel>Admission Number *</FormLabel><FormControl><Input placeholder="e.g., S-54321" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
-                  <FormField control={form.control} name="dateOfBirth" render={({ field }) => (
+                  <FormField control={form.control} name="dob" render={({ field }) => (
                     <FormItem><FormLabel>Date of Birth *</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
-                  <FormField control={form.control} name="permanentEducationNumber" render={({ field }) => (
+                  <FormField control={form.control} name="pen" render={({ field }) => (
                     <FormItem><FormLabel>Permanent Education Number (PEN) *</FormLabel><FormControl><Input placeholder="e.g., 1234567890" {...field} /></FormControl><FormMessage /></FormItem>
                   )}/>
                 </div>

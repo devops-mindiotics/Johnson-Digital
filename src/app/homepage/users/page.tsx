@@ -66,13 +66,13 @@ export default function UsersPage() {
     if (userToUpdate) {
       const newStatus = userToUpdate.status === 'Active' ? 'Inactive' : 'Active';
       const updatedUsers = users.map((u) =>
-        u.id === userToUpdate.id
+        u.userId === userToUpdate.userId
           ? { ...u, status: newStatus }
           : u
       );
       setUsers(updatedUsers);
       if (newStatus === 'Inactive') {
-        setProcessedUserName(userToUpdate.name);
+        setProcessedUserName(userToUpdate.name || 'the user');
         setSuccessDialogOpen(true);
       }
       setUserToUpdate(null);
@@ -81,8 +81,8 @@ export default function UsersPage() {
 
   const filteredUsers = searchTerm
     ? users.filter(u =>
-        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     : users;
 
@@ -155,7 +155,6 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableHead>School</TableHead>}
                 <TableHead>Role</TableHead>
-                <TableHead>Expires on</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -164,22 +163,20 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((u) => (
-                <TableRow key={u.id}>
+                <TableRow key={u.userId}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={u.avatar} alt={u.name} data-ai-hint="person avatar" />
-                        <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">
-                        <div>{u.name}</div>
+                        <div>{u.name || 'Unnamed User'}</div>
                         <div className="text-sm text-muted-foreground">{u.mobile}</div>
                       </div>
                     </div>
                   </TableCell>
-                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolId}</TableCell>}
-                  <TableCell>{u.roles.join(', ')}</TableCell>
-                  <TableCell>{u.expiresOn || 'N/A'}</TableCell>
+                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolName}</TableCell>}
+                  <TableCell>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -201,7 +198,7 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -213,15 +210,14 @@ export default function UsersPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:hidden">
           {filteredUsers.map((u) => (
-            <Card key={u.id} className="p-4">
+            <Card key={u.userId} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={u.avatar} alt={u.name} />
-                    <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="font-medium">
-                    <div>{u.name}</div>
+                    <div>{u.name || 'Unnamed User'}</div>
                     <div className="text-sm text-muted-foreground">{u.mobile}</div>
                   </div>
                 </div>
@@ -234,7 +230,7 @@ export default function UsersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -243,16 +239,12 @@ export default function UsersPage() {
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
                   <div>
                     <div className="font-semibold">School</div>
-                    <div>{u.schoolId}</div>
+                    <div>{u.schoolName}</div>
                   </div>
                 }
                 <div>
                   <div className="font-semibold">Role</div>
-                  <div>{u.roles.join(', ')}</div>
-                </div>
-                <div>
-                  <div className="font-semibold">Expires on</div>
-                  <div>{u.expiresOn || 'N/A'}</div>
+                  <div>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</div>
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between">
@@ -270,7 +262,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will change the status of {userToUpdate?.name} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
+              This action will change the status of {userToUpdate?.name || 'the selected user'} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { createStudent, createTeacher } from '@/lib/api/userApi';
 
 const formSchema = z.object({
   school: z.string().optional(),
@@ -47,9 +48,9 @@ const formSchema = z.object({
   fatherName: z.string().optional(),
   motherName: z.string().optional(),
   admissionNumber: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  permanentEducationNumber: z.string().optional(),
-  class: z.string().optional(),
+  dob: z.string().optional(),
+  pen: z.string().optional(),
+  classId: z.string().optional(),
   section: z.string().optional(),
   // School Admin fields
   expiryDate: z.string().optional(),
@@ -85,8 +86,35 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const [schoolId] = values.school?.split('-') || [];
+    if (values.type === 'Student') {
+      try {
+        const studentData = {
+            userType: 'Student',
+            ...values
+        };
+        await createStudent(user.tenantId, schoolId, values.classId, studentData);
+        // Add success notification here
+      } catch (error) {
+        console.error('Failed to create student:', error);
+        // Add error notification here
+      }
+    } else if (values.type === 'Teacher') {
+      try {
+        const teacherData = {
+            userType: 'Teacher',
+            ...values
+        };
+        await createTeacher(user.tenantId, schoolId, teacherData);
+        // Add success notification here
+      } catch (error) {
+        console.error('Failed to create teacher:', error);
+        // Add error notification here
+      }
+    } else {
+      console.log(values);
+    }
   }
 
   const type = form.watch('type');
@@ -431,7 +459,7 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                       />
                       <FormField
                         control={form.control}
-                        name="dateOfBirth"
+                        name="dob"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Date of Birth *</FormLabel>
@@ -444,7 +472,7 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                       />
                       <FormField
                         control={form.control}
-                        name="class"
+                        name="classId"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Class *</FormLabel>
@@ -490,7 +518,7 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                       />
                       <FormField
                         control={form.control}
-                        name="permanentEducationNumber"
+                        name="pen"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Permanent Education Number (PEN) *</FormLabel>
