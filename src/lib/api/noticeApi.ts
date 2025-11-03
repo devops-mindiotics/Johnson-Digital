@@ -1,5 +1,5 @@
 
-import { apiClient } from "./client";
+import apiClient from "./client";
 import { NOTICE_ENDPOINT } from "./endpoint";
 
 export interface NoticeAttachment {
