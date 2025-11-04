@@ -58,7 +58,11 @@ export async function getSchoolById(schoolId: string): Promise<any> {
       `/tenants/${tenantId}/schools/${schoolId}`
     );
 
-    return response.data;
+    if (response.data && response.data.data) {
+        return response.data.data;
+    }
+
+    return null;
   } catch (err: any) {
     console.error("❌ getSchoolById error:", err.response?.data || err.message);
     throw err;

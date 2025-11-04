@@ -7,38 +7,41 @@ import { useEffect, useState } from "react";
 export default function Page({ params }: { params: { id: string } }) {
   const [school, setSchool] = useState(null);
   const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSchools = async () => {
+    const fetchInitialData = async () => {
       try {
-        const allSchools = await getAllSchools();
-        setSchools(allSchools);
-      } catch (error) {
-        console.error("Failed to fetch schools:", error);
-      }
-    };
-    fetchSchools();
-  }, []);
+        if (params.id) {
+          const [schoolData, allSchools] = await Promise.all([
+            getSchoolById(params.id),
+            getAllSchools(),
+          ]);
 
-  useEffect(() => {
-    const fetchSchool = async () => {
-      if (params.id) {
-        try {
-          const schoolData = await getSchoolById(params.id);
-          if (!schoolData || !schoolData.data) {
+          if (!schoolData) {
             notFound();
+            return;
           }
-          setSchool(schoolData.data);
-        } catch (error) {
-          console.error("Failed to fetch school data:", error);
+          
+          setSchool(schoolData);
+          setSchools(allSchools);
         }
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchSchool();
+
+    fetchInitialData();
   }, [params.id]);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   if (!school) {
-    return <div>Loading...</div>
+    return notFound();
   }
 
   return <EditSchoolClient initialSchool={school} schoolList={schools} />;

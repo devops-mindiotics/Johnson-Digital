@@ -75,7 +75,7 @@ export default function SchoolDetailsPage({ params }: { params: { id: string } }
                 if (!schoolData) {
                     notFound();
                 } else {
-                    setSchool(schoolData.data);
+                    setSchool(schoolData);
                 }
             } catch (error) {
                 console.error("Failed to fetch school data:", error);

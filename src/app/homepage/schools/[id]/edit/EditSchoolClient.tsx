@@ -48,6 +48,8 @@ const formSchema = z.object({
       linkedin: z.string().url().optional(),
   }).optional(),
   schoolCode: z.string(),
+  totalTeachers: z.preprocess((val) => Number(val), z.number().min(0)),
+  totalStudents: z.preprocess((val) => Number(val), z.number().min(0))
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -250,6 +252,39 @@ export default function EditSchoolClient({
               <FormField control={form.control} name="address.pincode" render={({ field }) => (
                 <FormItem><FormLabel>Pincode *</FormLabel><FormControl><Input placeholder="e.g., 560001" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>License Details</CardTitle>
+            <CardDescription>Details about the school's license.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <FormField
+                control={form.control}
+                name="totalTeachers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Teachers</FormLabel>
+                    <FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="totalStudents"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Students</FormLabel>
+                    <FormControl><Input type="number" placeholder="e.g., 500" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </CardContent>
         </Card>
