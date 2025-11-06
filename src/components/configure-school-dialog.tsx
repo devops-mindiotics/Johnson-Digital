@@ -11,23 +11,26 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { getAllSchools, getClasses, createClass, updateClass as updateSchoolClass, deleteClass as deleteSchoolClass } from '@/lib/api/schoolApi';
-import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllPackages } from '@/lib/api/masterApi';
+import { getClasses, createClass, updateClass as updateSchoolClass, deleteClass as deleteSchoolClass } from '@/lib/api/schoolApi';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { EditSchoolClassDialog } from './edit-school-class-dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function ConfigureSchoolDialog({ isOpen, onClose }) {
+export function ConfigureSchoolDialog({ 
+    isOpen, 
+    onClose, 
+    schools, 
+    masterClasses, 
+    masterSeries, 
+    masterPackages,
+    onClassConfigured
+}) {
   const { toast } = useToast();
-  const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
-  const [masterClasses, setMasterClasses] = useState<any[]>([]);
-  const [masterSeries, setMasterSeries] = useState<any[]>([]);
-  const [masterPackages, setMasterPackages] = useState<any[]>([]);
+  const [availableMasterClasses, setAvailableMasterClasses] = useState<any[]>([]);
 
   const [newClassId, setNewClassId] = useState('');
   const [newClassSeries, setNewClassSeries] = useState('');
@@ -37,35 +40,32 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
   const [isEditClassDialogOpen, setIsEditClassDialogOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<any | null>(null);
 
+  const resetState = () => {
+    setSelectedSchool(null);
+    setClasses([]);
+    setAvailableMasterClasses([]);
+    setNewClassId('');
+    setNewClassSeries('');
+    setNewClassPackage('');
+    setNewClassLicenses('');
+    setEditingClass(null);
+    setIsEditClassDialogOpen(false);
+  };
+
   useEffect(() => {
-    async function fetchInitialData() {
-      try {
-        const [schoolData, masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
-          getAllSchools(),
-          getMasterClasses(),
-          getMasterSeries(),
-          getAllPackages(),
-        ]);
-        if (schoolData && Array.isArray(schoolData)) setSchools(schoolData);
-        if (masterClassData) setMasterClasses(masterClassData);
-        if (masterSeriesData) setMasterSeries(masterSeriesData);
-        if (masterPackagesData) setMasterPackages(masterPackagesData);
-      } catch (error) {
-        console.error("Failed to fetch initial data:", error);
-      }
-    }
-    if (isOpen) {
-      fetchInitialData();
+    if (!isOpen) {
+        resetState();
     }
   }, [isOpen]);
 
-  async function fetchClasses(schoolId) {
+  async function fetchClasses(schoolId: string) {
     if (schoolId) {
       try {
         const classData = await getClasses(schoolId);
         setClasses(classData || []);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
+        setClasses([]);
       }
     } else {
       setClasses([]);
@@ -75,33 +75,49 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
   useEffect(() => {
     if (selectedSchool) {
         fetchClasses(selectedSchool);
+    } else {
+        setClasses([]);
     }
   }, [selectedSchool]);
 
+  useEffect(() => {
+    if (Array.isArray(masterClasses) && Array.isArray(classes)) {
+      const configuredClassIds = new Set(classes.map(c => c.id));
+      const available = masterClasses.filter(mc => mc.id && !configuredClassIds.has(mc.id));
+      setAvailableMasterClasses(available);
+    } else {
+      setAvailableMasterClasses(masterClasses || []);
+    }
+  }, [classes, masterClasses]);
+
+  const handleOperationComplete = () => {
+    if (selectedSchool) fetchClasses(selectedSchool);
+    if (onClassConfigured) onClassConfigured();
+  }
+
   const handleAddClass = async () => {
     if (!selectedSchool || !newClassId || !newClassLicenses) {
-      toast({ title: "Error", description: "Please select a school, class, and enter license count." });
+      toast({ variant: "destructive", title: "Error", description: "Please select a school, class, and enter license count." });
       return;
     }
 
     const selectedClass = masterClasses.find(c => c.id === newClassId);
+    if (!selectedClass) {
+        toast({ variant: "destructive", title: "Error", description: "Selected class not found." });
+        return;
+    }
     
     const selectedSeries = masterSeries.find(s => s.id === newClassSeries);
-    const seriesId = newClassSeries ? selectedSeries.id : 'NA';
-    const seriesName = newClassSeries ? selectedSeries.name : 'NA';
-
     const selectedPackage = masterPackages.find(p => p.id === newClassPackage);
-    const packageId = newClassPackage ? selectedPackage.id : 'NA';
-    const packageName = newClassPackage ? selectedPackage.name : 'NA';
 
     const classPayload = {
       data: {
         classId: newClassId,
         name: selectedClass.name,
-        seriesId: seriesId,
-        seriesName: seriesName,
-        packageId: packageId,
-        packageName: packageName,
+        seriesId: selectedSeries?.id || 'NA',
+        seriesName: selectedSeries?.name || 'NA',
+        packageId: selectedPackage?.id || 'NA',
+        packageName: selectedPackage?.name || 'NA',
         licensesCount: parseInt(newClassLicenses, 10),
       }
     };
@@ -109,41 +125,42 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
     try {
       await createClass(selectedSchool, classPayload);
       toast({ title: "Success", description: "Class added successfully." });
-      resetForm();
-      fetchClasses(selectedSchool);
+      setNewClassId('');
+      setNewClassSeries('');
+      setNewClassPackage('');
+      setNewClassLicenses('');
+      handleOperationComplete();
     } catch (error) {
       console.error("Failed to add class:", error);
-      toast({ title: "Error", description: "Failed to add class." });
+      toast({ variant: "destructive", title: "Error", description: "Failed to add class." });
     }
   };
 
   const handleUpdateClass = async (classId: string, updatedData: any) => {
     if (!selectedSchool) return;
 
-    const classPayload = {
-        data: { ...updatedData }
-    };
+    const classPayload = { data: { ...updatedData } };
 
     try {
         await updateSchoolClass(selectedSchool, classId, classPayload);
         toast({ title: "Success", description: "Class updated successfully." });
-        fetchClasses(selectedSchool);
+        handleOperationComplete();
         setIsEditClassDialogOpen(false);
     } catch (error) {
         console.error("Failed to update class:", error);
-        toast({ title: "Error", description: "Failed to update class." });
+        toast({ variant: "destructive", title: "Error", description: "Failed to update class." });
     }
   };
 
   const handleDelete = async (classId: string) => {
-      if(!selectedSchool) return;
+    if(!selectedSchool) return;
     try {
         await deleteSchoolClass(selectedSchool, classId);
         toast({ title: "Success", description: "Class deleted successfully." });
-        fetchClasses(selectedSchool);
+        handleOperationComplete();
     } catch (error) {
         console.error("Failed to delete class:", error);
-        toast({ title: "Error", description: "Failed to delete class." });
+        toast({ variant: "destructive", title: "Error", description: "Failed to delete class." });
     }
   }
 
@@ -151,13 +168,6 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
       setEditingClass(classData);
       setIsEditClassDialogOpen(true);
   }
-
-  const resetForm = () => {
-    setNewClassId('');
-    setNewClassSeries('');
-    setNewClassPackage('');
-    setNewClassLicenses('');
-  };
 
   return (
     <>
@@ -170,12 +180,12 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
             </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-            <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
+            <Select onValueChange={setSelectedSchool} value={selectedSchool || ''}>
                 <SelectTrigger>
                 <SelectValue placeholder="Select a school" />
                 </SelectTrigger>
                 <SelectContent>
-                {schools.map(school => (
+                {(schools || []).map(school => (
                     <SelectItem key={school.id} value={school.id}>
                     {school.schoolName}
                     </SelectItem>
@@ -187,107 +197,92 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
                 <div>
                 <h3 className="text-lg font-semibold mb-2">Existing Classes</h3>
                 <div className="rounded-md border">
-                    <Table className="hidden md:table">
+                    <Table className="min-w-full divide-y divide-gray-200">
                         <TableHeader>
                         <TableRow>
-                            <TableHead>Class Name</TableHead>
-                            <TableHead>Series</TableHead>
-                            <TableHead>Package</TableHead>
-                            <TableHead>Licenses</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="hidden md:table-cell">Class Name</TableHead>
+                            <TableHead className="hidden md:table-cell">Series</TableHead>
+                            <TableHead className="hidden md:table-cell">Package</TableHead>
+                            <TableHead className="hidden md:table-cell">Licenses</TableHead>
+                            <TableHead className="text-right hidden md:table-cell">Actions</TableHead>
+                            <TableHead className="md:hidden">Class Details</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
                         {classes.map(c => (
                             <TableRow key={c.id}>
-                            <TableCell>{c.name}</TableCell>
-                            <TableCell>{c.seriesName}</TableCell>
-                            <TableCell>{c.packageName}</TableCell>
-                            <TableCell>{c.licensesCount}</TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => openEditDialog(c)}>
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleDelete(c.id)}>
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                            </TableRow>
-                        ))}
-                        </TableBody>
-                    </Table>
-                    <div className="grid gap-4 md:hidden">
-                        {classes.map(c => (
-                            <Card key={c.id}>
-                                <CardHeader>
-                                    <CardTitle className="flex justify-between items-center">
-                                        {c.name}
+                                <TableCell className="hidden md:table-cell">{c.name}</TableCell>
+                                <TableCell className="hidden md:table-cell">{(masterSeries.find(ms => ms.id === c.seriesId)?.name) || c.seriesName}</TableCell>
+                                <TableCell className="hidden md:table-cell">{c.packageName}</TableCell>
+                                <TableCell className="hidden md:table-cell">{c.licensesCount}</TableCell>
+                                <TableCell className="text-right hidden md:table-cell">
+                                    <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => openEditDialog(c)}>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleDelete(c.id)}>Delete</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                                <TableCell className="md:hidden">
+                                    <div className="font-medium">{c.name}</div>
+                                    <div className="text-sm text-muted-foreground">Series: {(masterSeries.find(ms => ms.id === c.seriesId)?.name) || c.seriesName}</div>
+                                    <div className="text-sm text-muted-foreground">Package: {c.packageName}</div>
+                                    <div className="text-sm text-muted-foreground">Licenses: {c.licensesCount}</div>
+                                    <div className="flex justify-end">
                                         <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
+                                            <Button variant="ghost" size="icon" className="-mr-2">
                                             <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => openEditDialog(c)}>
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDelete(c.id)}>
-                                                Delete
-                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => openEditDialog(c)}>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleDelete(c.id)}>Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                         </DropdownMenu>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p><strong>Series:</strong> {c.seriesName}</p>
-                                    <p><strong>Package:</strong> {c.packageName}</p>
-                                    <p><strong>Licenses:</strong> {c.licensesCount}</p>
-                                </CardContent>
-                            </Card>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </div>
+                        </TableBody>
+                    </Table>
                 </div>
 
                 <h3 className="text-lg font-semibold mt-6 mb-2">Add New Class</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <Select onValueChange={setNewClassId} value={newClassId || undefined}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                        <Select onValueChange={setNewClassId} value={newClassId || ''}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                             <SelectContent>
-                                {masterClasses.map(mc => (
+                                {availableMasterClasses.map(mc => (
                                     <SelectItem key={mc.id} value={mc.id}>{mc.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                         
-                        <Select onValueChange={setNewClassSeries} value={newClassSeries || undefined}>
+                        <Select onValueChange={setNewClassSeries} value={newClassSeries || ''}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Series" />
+                                <SelectValue placeholder="Select Series (Optional)" />
                             </SelectTrigger>
                             <SelectContent>
-                                {masterSeries.map(ms => (
+                                {(masterSeries || []).map(ms => (
                                     <SelectItem key={ms.id} value={ms.id}>{ms.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
 
-                        <Select onValueChange={setNewClassPackage} value={newClassPackage || undefined}>
+                        <Select onValueChange={setNewClassPackage} value={newClassPackage || ''}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Package" />
+                                <SelectValue placeholder="Select Package (Optional)" />
                             </SelectTrigger>
                             <SelectContent>
-                                {masterPackages.map(mp => (
+                                {(masterPackages || []).map(mp => (
                                     <SelectItem key={mp.id} value={mp.id}>{mp.name}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -300,12 +295,14 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
                             onChange={(e) => setNewClassLicenses(e.target.value)}
                         />
                 </div>
+                <div className="flex justify-end mt-4">
+                    <Button onClick={handleAddClass}>Add Class</Button>
+                </div>
                 </div>
             )}
             </div>
-            <DialogFooter>
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleAddClass} disabled={!selectedSchool}>Submit</Button>
+            <DialogFooter className="mt-4">
+                <Button variant="outline" onClick={onClose}>Close</Button>
             </DialogFooter>
         </DialogContent>
         </Dialog>
@@ -315,6 +312,8 @@ export function ConfigureSchoolDialog({ isOpen, onClose }) {
                 isOpen={isEditClassDialogOpen}
                 onClose={() => setIsEditClassDialogOpen(false)}
                 classData={editingClass}
+                masterSeries={masterSeries}
+                masterPackages={masterPackages}
                 onUpdate={handleUpdateClass}
             />
         )}

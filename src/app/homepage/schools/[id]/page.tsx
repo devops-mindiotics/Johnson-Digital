@@ -65,13 +65,14 @@ function PersonnelCard({ title, name, mobile }: { title: string, name: string, m
 }
 
 export default function SchoolDetailsPage({ params }: { params: { id: string } }) {
+    const { id } = params;
     const [school, setSchool] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchSchool = async () => {
             try {
-                const schoolData = await getSchoolById(params.id);
+                const schoolData = await getSchoolById(id);
                 if (!schoolData) {
                     notFound();
                 } else {
@@ -86,7 +87,7 @@ export default function SchoolDetailsPage({ params }: { params: { id: string } }
         };
 
         fetchSchool();
-    }, [params.id]);
+    }, [id]);
 
   if (loading) {
       return <div>Loading...</div>

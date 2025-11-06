@@ -38,19 +38,7 @@ export function LoginForm() {
       const response = await loginUser(values.mobile, values.password);
       console.log('🚀 Unable to login. response', { response });
       if (response.success) {
-        const user = {
-          userId: response?.data?.user?.userId ?? '',
-          phone: response?.data?.user?.phone ?? '',
-          displayName: response?.data?.user?.displayName ?? 'User',
-          avatarUrl: response?.data?.user?.avatarUrl ?? 'https://picsum.photos/100',
-          email: response?.data?.user?.email ?? null,
-          status: response?.data?.user?.status ?? 'active',
-          createdAt: response?.data?.user?.createdAt ?? '',
-          updatedAt: response?.data?.user?.updatedAt ?? '',
-          globalRoles: response?.data?.user?.roles ?? null,
-        };
-
-        login(user);
+        login(response.data);
       } else {
         toast({
           variant: 'destructive',

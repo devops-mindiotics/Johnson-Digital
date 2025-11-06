@@ -75,9 +75,9 @@ const SeriesPage = () => {
     }
   };
 
-  const handleUpdate = async (updatedSeries: Series) => {
+  const handleUpdate = async (id: string, updatedData: Omit<Series, 'id'>) => {
     try {
-      await updateSeries(updatedSeries.id, updatedSeries);
+      await updateSeries(id, updatedData);
       fetchSeries();
       setIsEditDialogOpen(false);
       setSelectedSeries(null);
@@ -162,6 +162,7 @@ const SeriesPage = () => {
         setIsOpen={setIsAddDialogOpen} 
         onSave={handleAdd} 
         title="Add New Series"
+        key={`add-series-dialog`}
       />
 
       {/* Edit Series Dialog */}
@@ -170,8 +171,9 @@ const SeriesPage = () => {
           isOpen={isEditDialogOpen} 
           setIsOpen={setIsEditDialogOpen} 
           series={selectedSeries} 
-          onSave={handleUpdate}
+          onSave={(updatedData) => handleUpdate(selectedSeries.id, updatedData)}
           title="Edit Series"
+          key={`edit-series-dialog-${selectedSeries.id}`}
         />
       )}
     </Card>
@@ -182,7 +184,7 @@ const SeriesPage = () => {
 interface SeriesDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  series?: Series;
+  series?: Omit<Series, 'id'>;
   onSave: (series: any) => void;
   title: string;
 }
@@ -192,19 +194,17 @@ const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, 
     const [description, setDescription] = useState(series?.description || '');
 
     React.useEffect(() => {
-        if (isOpen) {
-            if (series) {
-                setName(series.name);
-                setDescription(series.description);
-            } else {
-                setName('');
-                setDescription('');
-            }
+        if (series) {
+            setName(series.name);
+            setDescription(series.description);
+        } else {
+            setName('');
+            setDescription('');
         }
-    }, [series, isOpen]);
+    }, [series]);
 
     const handleSave = () => {
-        onSave({ ...series, name, description });
+        onSave({ name, description });
     };
 
     return (
