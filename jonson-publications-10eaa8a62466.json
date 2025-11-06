@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "jonson-publications",
+  "private_key_id": "10eaa8a6246647a7f7b671cd550224d202801b35",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDLwe+LjwwtM7Ne\nyrzYDTgmu6qR38Ekn3Tn9hFkgO634jMnzUPsv9wKOhMn80MAFXJdXH1724avDdqu\nnIbcvfn9NY+MFOWknSHGqktELGadhkjudyb7MVdVAAosqFNthVGoTI+rMLoHKkRq\nwy1Mqt6Zt09LXe0XuQHYZOTDYv2m4r93M2Fd6OMt2AKZ1sTF6fu8rPmQ3zBvkQ1o\nGWsuetbEbsIO+CCWtImuTbHOjTbvFMQivI3aV5iLvhZ/O0EY18vllmVop4f02InL\n1upWyD8d/VBjsN+aGdmzK69x+BBjOPJvxkyS8FBcl+QJFYoIhksLdMBmqkNSNFvp\nPcGbfRbZAgMBAAECggEAVhO5xLVLqZTbw8HWAVekTwicyD9EctpCIvQa6OBm+JvA\njKH0fgGXTWK3UPs9ZL2qsLIv+LEGttEdfwJ1Hq/K+iM0XzM8yEvxRuIOJeC0APwH\nt2Xyu89eW3RG2BLMG8pkcrrVPra4/+nlOUz2yBqvKzT7dJVbYdgwZWBKHBinm2YR\nuYqdCyOIXWysYTwYmtPLjBZXdy680p5YpgjmtbKLCnH1Bqsu8DVSvabx6+rsknDv\nGBxec/0m3OQdwqsZei+lf0oZyC/IsMpUY7GAdQQW0bGV0RHp32QKX+wd5goiYtSR\n9TcIbYaoSrPy7xEx+ori1Xgo8mviytKpSSWpul0nuQKBgQDyXAKGn9txytyMBK/M\nfK+W2++Es+BErjOPA8Z8vQLOui5PuDj86UjL0FW/M3IijwSxdi4RveFbcT4lBbem\nw+ir+QRG9zS/FkgwwRinWLZ0v8r50nDOp1ZRTACwXx3Y3zURSavYQlh4CwnOVsdA\n1kK9xBwRYES1RLRUcKHziodHFwKBgQDXOb0CHdKtKn6ns364mxMqrmJmjdMvR5PL\n1mTAe3sFPQsGY4q7ye9PsdQTM4SiOSOuD9nbg4cPPX+Hx4KQ3rKB2tussH7Qx3Tf\n6XTl7i3KY3HnSdBb8bqfDrFCCSSqiKqkmrrsG6MqGdoAliO9+5JgD02aO73ZJYvT\np70fFZNHjwKBgDrvlwmn3BRq8YD3Lsz6UTTNXQyXNWVeO1l+4Ii66fDdo59tPCZ8\nkGBH1GI/n3S59Lk29PMJisDS4/razhM2tuEDGEAto10IjRuWCWnAj/YKIdDolNgc\nJ0hzxAMfzkFL3jrLAIgBckQW4xaTUbb5o5dEFlM/ZtXx1Cxoi2mO+WCXAoGAEeNb\noTxnUTsx8bBKfP9ulWKPDSUGg2x4jT2RfCoHLIVJUEufsUH0YPRPwxTKFk2XeJUa\nr1L8O7kJy3g6kt3fikltbqnwsFuTjDS0IZQtPCANzIJnDe1GbIflFa763C2luS6f\nEJavdgVWCCxyZgztuowrEAGdItorB/luD5JUfmMCgYEA8iz2hdQpiPaWTeQiIy4u\n4/zD0+gugMKhStEutwOcnJtukDJ1j2r1K9Ml3U02IujtqRyTPTj8L5L76D2Dp1yH\nQUp/RB4J6gmt71ffzJ19ybscDCIwl0FwR06SoyB64XaChaG58Q/fB3hpimbLZb4R\nh9OENtN8Xnc05qd6iyk+c34=\n-----END PRIVATE KEY-----\n",
+  "client_email": "github-action-1050974891@jonson-publications.iam.gserviceaccount.com",
+  "client_id": "101691337625083657777",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/github-action-1050974891%40jonson-publications.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
