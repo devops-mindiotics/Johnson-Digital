@@ -1,54 +1,21 @@
-name: Deploy to Firebase Hosting (Next.js + FIREBASE_TOKEN)
+name: Deploy to Firebase Hosting
 
 on:
   push:
-    branches: [ "dev_ramesh" ]     # live deploys from dev_ramesh
-  pull_request:                    # preview URLs on PRs
+    branches:
+      - release
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: npm run build
+      - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Install Firebase CLI
-        run: npm i -g firebase-tools
-
-      # 🔑 Enable frameworks experiment for this job
-      - name: Enable Firebase webframeworks experiment
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase experiments:enable webframeworks
-
-      # Optional: run build yourself (Firebase can build during deploy too)
-      - name: Build
-        run: npm run build
-
-      # --- PR preview deploy ---
-      - name: Deploy Preview (PR)
-        if: github.event_name == 'pull_request'
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: |
-          firebase hosting:channel:deploy pr-${{ github.event.number }} \
-            --project rameshjohnson-603a9
-
-      # --- Live deploy when pushing to dev_ramesh ---
-      - name: Deploy Live (dev_ramesh)
-        if: github.ref == 'refs/heads/dev_ramesh'
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: |
-          firebase deploy --only hosting \
-            --project rameshjohnson-603a9
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: your-firebase-project-id
+          target: dev.johnson.publications.in
