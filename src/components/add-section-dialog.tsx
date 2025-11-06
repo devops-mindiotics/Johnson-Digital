@@ -49,10 +49,10 @@ interface AddSectionDialogProps {
     onSave: (values: any) => void;
     availableLicenses: number;
     initialData?: any;
-    sectionsPool: { id: string; name: string }[];
+    sectionsPool?: { id: string; name: string }[];
 }
 
-export function AddSectionDialog({ isOpen, onClose, onSave, availableLicenses, initialData, sectionsPool }: AddSectionDialogProps) {
+export function AddSectionDialog({ isOpen, onClose, onSave, availableLicenses, initialData, sectionsPool = [] }: AddSectionDialogProps) {
     const { toast } = useToast();
     const [isNewSection, setIsNewSection] = useState(false);
     const hasInitialData = !!initialData;
@@ -87,7 +87,7 @@ export function AddSectionDialog({ isOpen, onClose, onSave, availableLicenses, i
         if (licensesBeingAdded > availableForEdit) {
             toast({
                 title: 'Error',
-                description: `You cannot assign more than the available licenses (${availableForEdit}).`,
+                description: "Aggregated Section Licenses shouldn't be more than Class Available License",
                 variant: 'destructive',
             });
             return;

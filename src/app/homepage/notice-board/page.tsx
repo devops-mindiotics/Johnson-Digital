@@ -59,11 +59,7 @@ export default function NoticeBoardPage() {
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
           const schoolData = await getAllSchools();
-          if (schoolData && Array.isArray(schoolData)) {
-            setSchools(schoolData);
-          } else {
-            setSchools([]);
-          }
+          setSchools(Array.isArray(schoolData) ? schoolData : []);
         } catch (error) {
           console.error("Failed to fetch schools:", error);
           setSchools([]);
@@ -83,9 +79,10 @@ export default function NoticeBoardPage() {
                 sectionId: user.sectionId
             };
             const noticeData = await getNotices(user.tenantId, params);
-            setNotices(noticeData.data);
+            setNotices(Array.isArray(noticeData?.data) ? noticeData.data : []);
         } catch (error) {
             console.error("Failed to fetch notices:", error);
+            setNotices([]);
         }
     };
 
@@ -93,6 +90,9 @@ export default function NoticeBoardPage() {
   }, [user, selectedSchool]);
 
   useEffect(() => {
+    if (!Array.isArray(notices)) {
+        return;
+    }
     if (userRole === STUDENT) {
       setFilteredNotices(notices.filter(notice => 
         notice.targetAudience.roles.includes('STUDENT') || 

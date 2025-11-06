@@ -32,7 +32,7 @@ export async function getAllSeries(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllSeries error:", err.response?.data || err.message);
-      throw err;
+      return [];
     }
   }
 
@@ -85,7 +85,7 @@ export async function updateSeries(seriesId: string, series: { name: string, des
         const seriesPayload = {
             data: {
                 name: series.name,
-                code: series.name,
+                code: series.name, // Ensure code is included
                 description: series.description,
                 status: "active",
             },
@@ -161,7 +161,42 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllClasses error:", err.response?.data || err.message);
-      throw err;
+      return [];
+    }
+  }
+
+  export async function getAllSubjects(): Promise<any[]> {
+    try {
+      const tenantData = localStorage.getItem("contextInfo");
+      if (!tenantData) return [];
+      const parsed = JSON.parse(tenantData);
+      const token = localStorage.getItem("contextJWT");
+  
+      const tenantId = parsed?.tenantId || null;
+  
+      if (!tenantId) return [];
+  
+      const response = await apiClient.get(
+        `/tenants/${tenantId}/masters/subjects?status=active`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.data && response.data.data && Array.isArray(response.data.data.subjects)) {
+        return response.data.data.subjects.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      }
+
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      }
+  
+      return [];
+    } catch (err: any) {
+      console.error("❌ getAllSubjects error:", err.response?.data || err.message);
+      return [];
     }
   }
 
@@ -192,7 +227,7 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllPackages error:", err.response?.data || err.message);
-      throw err;
+      return [];
     }
   }
 

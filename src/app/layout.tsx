@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/contexts/auth-context';
-import { LoadingProvider } from '@/contexts/loading-context';
-import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { GlobalLoader } from '@/components/GlobalLoader';
+import { AppProviders } from '@/components/app-providers';
 
 export const metadata: Metadata = {
   title: 'EduCentral',
@@ -31,13 +28,9 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('font-body antialiased')}>
-        <AuthProvider>
-          <LoadingProvider>
-            {children}
-            <GlobalLoader/>
-            <Toaster />
-          </LoadingProvider>
-        </AuthProvider>
+        <AppProviders>
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

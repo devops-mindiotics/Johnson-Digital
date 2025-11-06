@@ -16,6 +16,7 @@ import {
 import { Pencil, PlusCircle, Trash2, Settings } from 'lucide-react';
 import { ConfigureSchoolDialog } from '@/components/configure-school-dialog';
 import { AddSectionDialog } from '@/components/add-section-dialog';
+import { AddSubjectDialog } from '@/components/add-subject-dialog';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN } from '@/lib/utils/constants';
-import { getAllSchools, getClasses, updateClass, createSection, getSectionsByClass, updateSection, deleteSection } from '@/lib/api/schoolApi';
+import { getAllSchools, getClasses, createClass, updateClass, deleteSection, getSectionsBySchool } from '@/lib/api/schoolApi';
+import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllSubjects as getMasterSubjects, getAllPackages } from '@/lib/api/masterApi';
+import { getTeachersBySchool } from '@/lib/api/teacherApi';
 import { getRoles } from '@/lib/utils/getRole';
 
 export default function ClassesPage() {
@@ -34,59 +37,80 @@ export default function ClassesPage() {
     const [schools, setSchools] = useState<any[]>([]);
     const [allClasses, setAllClasses] = useState<any[]>([]);
     const [teachers, setTeachers] = useState<any[]>([]);
-    const [subjects, setSubjects] = useState<any[]>([]);
+    const [sectionsPool, setSectionsPool] = useState<any[]>([]);
+    
+    const [masterClasses, setMasterClasses] = useState<any[]>([]);
+    const [masterSeries, setMasterSeries] = useState<any[]>([]);
+    const [masterSubjects, setMasterSubjects] = useState<any[]>([]);
+    const [masterPackages, setMasterPackages] = useState<any[]>([]);
 
     const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
     
     const [isConfigureSchoolDialogOpen, setIsConfigureSchoolDialogOpen] = useState(false);
     const [isSectionDialogOpen, setIsSectionDialogOpen] = useState(false);
+    const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
     const [editingAssignment, setEditingAssignment] = useState<any | null>(null);
     const [currentClass, setCurrentClass] = useState<any | null>(null);
+    const [currentSection, setCurrentSection] = useState<any | null>(null);
 
     async function fetchClassesAndSections(schoolId: string) {
         try {
-            const classData = await getClasses(schoolId);
+            const [classData, teacherData, masterSubjectsData, sectionsPoolData] = await Promise.all([
+                getClasses(schoolId),
+                getTeachersBySchool(schoolId),
+                getMasterSubjects(),
+                getSectionsBySchool(schoolId),
+            ]);
+    
             if (classData && Array.isArray(classData)) {
-            const classesWithSections = await Promise.all(classData.map(async (c) => {
-                const sections = await getSectionsByClass(schoolId, c.id);
-                return { ...c, classId: c.id, sections: sections || [] };
-            }));
-            setAllClasses(classesWithSections);
-
-            const extractedTeachers = classesWithSections.flatMap(c => c.sections?.flatMap((s: any) => s.subjects?.map((sub: any) => ({ id: sub.subjectTeacherId, name: sub.subjectTeacherName, schoolId: schoolId }))) || []);
-            const uniqueTeachers = Array.from(new Set(extractedTeachers.map(t => t.id))).map(id => extractedTeachers.find(t => t.id === id));
-            setTeachers(uniqueTeachers);
-
-            const extractedSubjects = classesWithSections.flatMap(c => c.sections?.flatMap((s: any) => s.subjects?.map((sub: any) => ({ id: sub.subjectId, name: sub.subjectName }))) || []);
-            const uniqueSubjects = Array.from(new Set(extractedSubjects.map(s => s.id))).map(id => extractedSubjects.find(s => s.id === id));
-            setSubjects(uniqueSubjects);
-            } else {
-            setAllClasses([]);
+                const classesWithSections = classData.map(c => ({
+                    ...c,
+                    classId: c.id, // Ensure classId is present
+                    sections: Array.isArray(c.sections)
+                        ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) // Add sectionId
+                        : (c.sections ? [{ ...c.sections, sectionId: c.sections.id }] : []),
+                }));
+                setAllClasses(classesWithSections);
             }
+            setTeachers(teacherData || []);
+            setMasterSubjects(masterSubjectsData || []);
+            setSectionsPool(sectionsPoolData || []);
         } catch (error) {
-            console.error("Failed to fetch classes:", error);
+            console.error("Failed to fetch classes, teachers, or subjects:", error);
             setAllClasses([]);
+            setTeachers([]);
+            setMasterSubjects([]);
+            setSectionsPool([]);
         }
     }
 
     useEffect(() => {
-        async function fetchSchools() {
+        async function fetchInitialData() {
           if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
             try {
-              const schoolData = await getAllSchools();
-              if (schoolData && Array.isArray(schoolData)) {
-                setSchools(schoolData);
-              } else {
-                setSchools([]);
-              }
+              const [schoolsData, masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
+                getAllSchools(),
+                getMasterClasses(),
+                getMasterSeries(),
+                getAllPackages(),
+              ]);
+
+              setSchools(schoolsData || []);
+              setMasterClasses(masterClassData || []);
+              setMasterSeries(masterSeriesData || []);
+              setMasterPackages(masterPackagesData || []);
+
             } catch (error) {
-              console.error("Failed to fetch schools:", error);
+              console.error("Failed to fetch initial data:", error);
               setSchools([]);
+              setMasterClasses([]);
+              setMasterSeries([]);
+              setMasterPackages([]);
             }
           }
         }
-        fetchSchools();
-      }, [user, userRole]);
+        fetchInitialData();
+      }, [userRole]);
 
       useEffect(() => {
         if (selectedSchool) {
@@ -97,26 +121,39 @@ export default function ClassesPage() {
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
     const availableLicenses = selectedSchoolDetails?.licenceForStudent - allClasses.reduce((acc, c) => acc + c.licensesCount, 0);
 
-    const handleUpdateSectionData = async (classId: string, sectionId: string, updatedData: any) => {
-        if (!selectedSchool) return;
-        
-        const section = allClasses.find(c => c.classId === classId)?.sections.find((s: any) => s.sectionId === sectionId);
-        if (!section) return;
+    const handleAssignClassTeacher = async (classId: string, sectionId: string, teacherId: string) => {
+        if (!selectedSchool || !classId || !sectionId) {
+            const errorDetails = `School: ${selectedSchool}, Class: ${classId}, Section: ${sectionId}`;
+            console.error("Assignment failed. Missing IDs:", errorDetails);
+            toast({ title: "Error", description: "Cannot assign a Teacher. School, class or section ID is missing." });
+            return;
+        }
 
-        const sectionPayload = {
-            name: section.name,
-            classTeacherId: section.classTeacherId,
-            subjects: section.subjects,
-            ...updatedData
+        const classToUpdate = allClasses.find(c => c.classId === classId);
+        if (!classToUpdate) {
+            toast({ title: "Error", description: "Could not find the class to update." });
+            return;
+        }
+
+        const updatedSections = classToUpdate.sections.map((section: any) => 
+            section.sectionId === sectionId ? { ...section, classTeacherId: teacherId } : section
+        );
+
+        const classPayload = {
+            ...classToUpdate,
+            sections: updatedSections,
         };
 
         try {
-            await updateSection(selectedSchool, classId, sectionId, sectionPayload);
-            toast({ title: "Success", description: "Section updated successfully." });
+            await updateClass(selectedSchool, classId, classPayload);
+            toast({ title: "Success", description: "Class Teacher assigned successfully." });
             fetchClassesAndSections(selectedSchool);
-        } catch (error) {
-            console.error("Failed to update section:", error);
-            toast({ title: "Error", description: "Failed to update section." });
+        } catch (error: any) {
+            console.error("Failed to assign Class Teacher:", { 
+                payload: classPayload, 
+                error: error.response?.data || error.message 
+            });
+            toast({ title: "Error", description: "Failed to assign Class Teacher." });
         }
     };
 
@@ -132,29 +169,112 @@ export default function ClassesPage() {
         setIsSectionDialogOpen(true);
     };
 
-    const handleSaveSection = async (values: any) => {
-        if (!currentClass || !selectedSchool) return;
+    const handleOpenAddSubjectDialog = (classInfo: any, sectionInfo: any) => {
+        setCurrentClass(classInfo);
+        setCurrentSection(sectionInfo);
+        setIsSubjectDialogOpen(true);
+    };
 
-        const sectionPayload = {
+    const handleSaveClass = async (values: any) => {
+        if (!selectedSchool) return;
+
+        const classPayload = {
             name: values.sectionName,
-            classTeacherId: values.classTeacherId,
-            subjects: values.subjects || []
+            licensesCount: values.licenses,
         };
 
         try {
-            if (editingAssignment) {
-                await updateSection(selectedSchool, currentClass.classId, editingAssignment.sectionId, sectionPayload);
-                toast({ title: "Success", description: "Section updated successfully." });
-            } else {
-                await createSection(selectedSchool, currentClass.classId, sectionPayload);
-                toast({ title: "Success", description: "Section created successfully." });
-            }
+            await createClass(selectedSchool, classPayload);
+            toast({ title: "Success", description: "Class created successfully." });
+            
             fetchClassesAndSections(selectedSchool);
             setIsSectionDialogOpen(false);
 
         } catch (error) {
-            console.error("Failed to save section:", error);
-            toast({ title: "Error", description: "Failed to save section." });
+            console.error("Failed to save class:", error);
+            toast({ title: "Error", description: "Failed to save class." });
+        }
+    };
+
+    const handleSaveSubject = async (values: any) => {
+        if (!currentClass || !currentSection || !selectedSchool) {
+            toast({ title: "Error", description: "Cannot save subject. Class or section context is missing." });
+            return;
+        }
+    
+        const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
+        if (!classToUpdate) {
+            toast({ title: "Error", description: "Could not find the class to update." });
+            return;
+        }
+    
+        const newSubject = {
+            subjectId: values.subjectId,
+            subjectTeacherId: values.teacherId,
+        };
+    
+        const updatedSections = classToUpdate.sections.map((section: any) => {
+            if (section.sectionId === currentSection.sectionId) {
+                return {
+                    ...section,
+                    subjects: [...(section.subjects || []), newSubject],
+                };
+            }
+            return section;
+        });
+    
+        const classPayload = {
+            ...classToUpdate,
+            sections: updatedSections,
+        };
+    
+        try {
+            await updateClass(selectedSchool, currentClass.classId, classPayload);
+            toast({ title: "Success", description: "Subject added successfully." });
+            fetchClassesAndSections(selectedSchool);
+            setIsSubjectDialogOpen(false);
+        } catch (error: any) {
+            console.error("Failed to add subject:", {
+                payload: classPayload,
+                error: error.response?.data || error.message
+            });
+            toast({ title: "Error", description: "Failed to add subject." });
+        }
+    };
+    
+    const handleUpdateSubjectTeacher = async (classId: string, sectionId: string, subjectId: string, teacherId: string) => {
+        if (!selectedSchool || !classId || !sectionId) {
+            const errorDetails = `School: ${selectedSchool}, Class: ${classId}, Section: ${sectionId}`;
+            console.error("Update failed. Missing IDs:", errorDetails);
+            toast({ title: "Error", description: "Cannot assign Subject Teacher. School, class, or section ID is missing." });
+            return;
+        }
+
+        const classToUpdate = allClasses.find(c => c.classId === classId);
+        if (!classToUpdate) return;
+
+        const updatedSections = classToUpdate.sections.map((section: any) => {
+            if (section.sectionId === sectionId) {
+                const updatedSubjects = section.subjects.map((sub: any) =>
+                    sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId } : sub
+                );
+                return { ...section, subjects: updatedSubjects };
+            }
+            return section;
+        });
+
+        const classPayload = { ...classToUpdate, sections: updatedSections };
+
+        try {
+            await updateClass(selectedSchool, classId, classPayload);
+            toast({ title: "Success", description: "Subject teacher updated successfully." });
+            fetchClassesAndSections(selectedSchool);
+        } catch (error: any) {
+            console.error("Failed to update subject teacher:", {
+                payload: classPayload,
+                error: error.response?.data || error.message
+            });
+            toast({ title: "Error", description: "Failed to update subject teacher." });
         }
     };
 
@@ -188,7 +308,7 @@ export default function ClassesPage() {
             <div className="flex items-center gap-2">
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) && (
                     <div className="w-full sm:w-auto">
-                        <Select onValueChange={setSelectedSchool} value={selectedSchool || undefined}>
+                        <Select onValueChange={setSelectedSchool} value={selectedSchool || ''}>
                             <SelectTrigger className="w-full sm:w-[350px]">
                                 <SelectValue placeholder="Select a school" />
                             </SelectTrigger>
@@ -220,25 +340,25 @@ export default function ClassesPage() {
                 <Accordion type="single" collapsible className="w-full">
                 {allClasses.map((c) => (
                     <AccordionItem value={c.classId} key={c.classId}>
-                    <AccordionTrigger>
-                        <div className="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center pr-4 gap-2">
-                            <div>
-                                <span className="font-semibold">Class - {c.name}</span>
-                                <p className="text-sm text-muted-foreground">
-                                    (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {c.licensesCount})
-                                </p>
-                            </div>
+                        <div className="flex items-center justify-between w-full pr-4">
+                            <AccordionTrigger className="flex-1 text-left">
+                                <div>
+                                    <span className="font-semibold">Class - {c.name}</span>
+                                    <p className="text-sm text-muted-foreground">
+                                        (Total School Licenses: {selectedSchoolDetails?.licenceForStudent} | Available: {c.licensesCount})
+                                    </p>
+                                </div>
+                            </AccordionTrigger>
                             <Button
                                 variant="outline"
                                 size={isMobile ? "icon" : "sm"}
-                                onClick={(e) => { e.stopPropagation(); handleOpenAddSectionDialog(c); }}
-                                className="mt-2 sm:mt-0"
+                                onClick={() => handleOpenAddSectionDialog(c)}
+                                className="ml-4"
                             >
                                 <PlusCircle className={isMobile ? "h-4 w-4" : "mr-2 h-4 w-4"} />
                                 {isMobile ? null : "Add Section"}
                             </Button>
                         </div>
-                    </AccordionTrigger>
                     <AccordionContent>
                         <div className="space-y-4 pt-2">
                             {c.sections?.map((section: any, sectionIndex: number) => (
@@ -250,7 +370,7 @@ export default function ClassesPage() {
                                                     <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
                                                     <Select
                                                         value={section.classTeacherId || undefined}
-                                                        onValueChange={(teacherId) => handleUpdateSectionData(c.classId, section.sectionId, { classTeacherId: teacherId })}
+                                                        onValueChange={(teacherId) => handleAssignClassTeacher(c.classId, section.sectionId, teacherId)}
                                                     >
                                                         <SelectTrigger className="w-full sm:w-[250px]">
                                                             <SelectValue placeholder="Assign Class Teacher" />
@@ -273,6 +393,33 @@ export default function ClassesPage() {
                                                 </Button>
                                             </div>
                                         </div>
+                                        <div className="mt-4 space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-semibold text-sm">Subjects</h4>
+                                                <Button variant="outline" size="sm" onClick={() => handleOpenAddSubjectDialog(c, section)}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                                    Add Subject
+                                                </Button>
+                                            </div>
+                                            {section.subjects?.map((subject: any, subjectIndex: number) => (
+                                                <div key={subject.subjectId || `subject-${subjectIndex}`} className="flex items-center justify-between">
+                                                    <span>{masterSubjects.find(ms => ms.id === subject.subjectId)?.name || subject.name}</span>
+                                                    <Select
+                                                        value={subject.subjectTeacherId || undefined}
+                                                        onValueChange={(teacherId) => handleUpdateSubjectTeacher(c.classId, section.sectionId, subject.subjectId, teacherId)}
+                                                    >
+                                                        <SelectTrigger className="w-[200px]">
+                                                            <SelectValue placeholder="Assign Teacher" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {teachers.map(teacher => (
+                                                                <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 ))}
                         </div>
@@ -293,17 +440,32 @@ export default function ClassesPage() {
 
         <ConfigureSchoolDialog 
             isOpen={isConfigureSchoolDialogOpen} 
-            onClose={() => setIsConfigureSchoolDialogOpen(false)} 
+            onClose={() => setIsConfigureSchoolDialogOpen(false)}
+            schools={schools}
+            masterClasses={masterClasses}
+            masterSeries={masterSeries}
+            masterPackages={masterPackages}
+            onClassConfigured={() => selectedSchool && fetchClassesAndSections(selectedSchool)}
         />
 
         <AddSectionDialog 
             isOpen={isSectionDialogOpen} 
             onClose={() => setIsSectionDialogOpen(false)} 
-            onSave={handleSaveSection} 
+            onSave={handleSaveClass} 
             availableLicenses={availableLicenses}
             initialData={editingAssignment}
+            sectionsPool={sectionsPool}
             key={`add-section-${editingAssignment?.sectionId || currentClass?.classId}`}
         />
+        
+        <AddSubjectDialog
+            isOpen={isSubjectDialogOpen}
+            onClose={() => setIsSubjectDialogOpen(false)}
+            onSave={handleSaveSubject}
+            subjects={masterSubjects}
+            teachers={teachers}
+        />
+
       </CardContent>
     </Card>
   );
