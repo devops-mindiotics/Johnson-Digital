@@ -193,7 +193,11 @@ export default function EditUserClient({
                   <FormItem><FormLabel>City</FormLabel><FormControl><Input placeholder="e.g., Bangalore" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="district" render={({ field }) => (
-                  <FormItem><FormLabel>District</FormLabel><FormControl><Input placeholder="e.g., Bangalore Urban" {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>District</FormLabel>
+                    <FormControl><Input placeholder="e.g., Bangalore Urban" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}/>
                 <FormField control={form.control} name="state" render={({ field }) => (
                   <FormItem><FormLabel>State</FormLabel><FormControl><Input placeholder="e.g., Karnataka" {...field} /></FormControl><FormMessage /></FormItem>

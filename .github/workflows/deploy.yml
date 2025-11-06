@@ -2,7 +2,7 @@ name: Deploy to Firebase Hosting (Next.js + FIREBASE_TOKEN)
 
 on:
   push:
-    branches: [ "dev_ramesh" ]     # live deploys from dev_ramesh
+    branches: [ "release" ]     # live deploys from release
   pull_request:                    # preview URLs on PRs
 
 jobs:
@@ -42,13 +42,13 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           firebase hosting:channel:deploy pr-${{ github.event.number }} \
-            --project rameshjohnson-603a9
+            --project jonson-publications
 
-      # --- Live deploy when pushing to dev_ramesh ---
-      - name: Deploy Live (dev_ramesh)
-        if: github.ref == 'refs/heads/dev_ramesh'
+      # --- Live deploy when pushing to release ---
+      - name: Deploy Live (release)
+        if: github.ref == 'refs/heads/release'
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           firebase deploy --only hosting \
-            --project rameshjohnson-603a9
+            --project jonson-publications
