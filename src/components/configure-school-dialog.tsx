@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { getClasses, createClass, updateClass as updateSchoolClass, deleteClass as deleteSchoolClass } from '@/lib/api/schoolApi';
+import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllPackages as getMasterPackages } from '@/lib/api/masterApi';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -22,14 +23,14 @@ export function ConfigureSchoolDialog({
     isOpen, 
     onClose, 
     schools, 
-    masterClasses, 
-    masterSeries, 
-    masterPackages,
     onClassConfigured
 }) {
   const { toast } = useToast();
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
+  const [masterClasses, setMasterClasses] = useState<any[]>([]);
+  const [masterSeries, setMasterSeries] = useState<any[]>([]);
+  const [masterPackages, setMasterPackages] = useState<any[]>([]);
   const [availableMasterClasses, setAvailableMasterClasses] = useState<any[]>([]);
 
   const [newClassId, setNewClassId] = useState('');
@@ -43,6 +44,9 @@ export function ConfigureSchoolDialog({
   const resetState = () => {
     setSelectedSchool(null);
     setClasses([]);
+    setMasterClasses([]);
+    setMasterSeries([]);
+    setMasterPackages([]);
     setAvailableMasterClasses([]);
     setNewClassId('');
     setNewClassSeries('');
@@ -53,8 +57,27 @@ export function ConfigureSchoolDialog({
   };
 
   useEffect(() => {
-    if (!isOpen) {
-        resetState();
+    if (isOpen) {
+      async function fetchMasterData() {
+        try {
+          const [masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
+            getMasterClasses(),
+            getMasterSeries(),
+            getMasterPackages(),
+          ]);
+          setMasterClasses(masterClassData || []);
+          setMasterSeries(masterSeriesData || []);
+          setMasterPackages(masterPackagesData || []);
+        } catch (error) {
+          console.error("Failed to fetch master data:", error);
+          setMasterClasses([]);
+          setMasterSeries([]);
+          setMasterPackages([]);
+        }
+      }
+      fetchMasterData();
+    } else {
+      resetState();
     }
   }, [isOpen]);
 
@@ -81,6 +104,11 @@ export function ConfigureSchoolDialog({
   }, [selectedSchool]);
 
   useEffect(() => {
+    if (!selectedSchool) {
+        setAvailableMasterClasses([]);
+        return;
+    }
+
     if (Array.isArray(masterClasses) && Array.isArray(classes)) {
       const configuredClassIds = new Set(classes.map(c => c.id));
       const available = masterClasses.filter(mc => mc.id && !configuredClassIds.has(mc.id));
@@ -88,7 +116,7 @@ export function ConfigureSchoolDialog({
     } else {
       setAvailableMasterClasses(masterClasses || []);
     }
-  }, [classes, masterClasses]);
+  }, [classes, masterClasses, selectedSchool]);
 
   const handleOperationComplete = () => {
     if (selectedSchool) fetchClasses(selectedSchool);
@@ -194,7 +222,7 @@ export function ConfigureSchoolDialog({
             </Select>
 
             {selectedSchool && (
-                <div>
+                <>
                 <h3 className="text-lg font-semibold mb-2">Existing Classes</h3>
                 <div className="rounded-md border">
                     <Table className="min-w-full divide-y divide-gray-200">
@@ -298,7 +326,7 @@ export function ConfigureSchoolDialog({
                 <div className="flex justify-end mt-4">
                     <Button onClick={handleAddClass}>Add Class</Button>
                 </div>
-                </div>
+                </>
             )}
             </div>
             <DialogFooter className="mt-4">

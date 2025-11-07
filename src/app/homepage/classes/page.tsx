@@ -25,7 +25,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN } from '@/lib/utils/constants';
 import { getAllSchools, getClasses, createClass, updateClass, deleteSection, getSectionsBySchool } from '@/lib/api/schoolApi';
-import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllSubjects as getMasterSubjects, getAllPackages } from '@/lib/api/masterApi';
+import { getAllSubjects as getMasterSubjects } from '@/lib/api/masterApi';
 import { getTeachersBySchool } from '@/lib/api/teacherApi';
 import { getRoles } from '@/lib/utils/getRole';
 
@@ -39,10 +39,7 @@ export default function ClassesPage() {
     const [teachers, setTeachers] = useState<any[]>([]);
     const [sectionsPool, setSectionsPool] = useState<any[]>([]);
     
-    const [masterClasses, setMasterClasses] = useState<any[]>([]);
-    const [masterSeries, setMasterSeries] = useState<any[]>([]);
     const [masterSubjects, setMasterSubjects] = useState<any[]>([]);
-    const [masterPackages, setMasterPackages] = useState<any[]>([]);
 
     const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
     
@@ -88,24 +85,11 @@ export default function ClassesPage() {
         async function fetchInitialData() {
           if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
             try {
-              const [schoolsData, masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
-                getAllSchools(),
-                getMasterClasses(),
-                getMasterSeries(),
-                getAllPackages(),
-              ]);
-
+              const schoolsData = await getAllSchools();
               setSchools(schoolsData || []);
-              setMasterClasses(masterClassData || []);
-              setMasterSeries(masterSeriesData || []);
-              setMasterPackages(masterPackagesData || []);
-
             } catch (error) {
               console.error("Failed to fetch initial data:", error);
               setSchools([]);
-              setMasterClasses([]);
-              setMasterSeries([]);
-              setMasterPackages([]);
             }
           }
         }
@@ -442,9 +426,6 @@ export default function ClassesPage() {
             isOpen={isConfigureSchoolDialogOpen} 
             onClose={() => setIsConfigureSchoolDialogOpen(false)}
             schools={schools}
-            masterClasses={masterClasses}
-            masterSeries={masterSeries}
-            masterPackages={masterPackages}
             onClassConfigured={() => selectedSchool && fetchClassesAndSections(selectedSchool)}
         />
 
