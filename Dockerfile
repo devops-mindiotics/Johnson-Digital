@@ -3,38 +3,29 @@
 # ------------------------------------------------------------
 FROM node:18-alpine AS builder
 
-# Set working directory
 WORKDIR /app
-
-# Install dependencies
 COPY package*.json ./
 RUN npm ci
-
-# Copy all project files
 COPY . .
-
-# Build the app (generates the .next folder)
 RUN npm run build
 
 # ------------------------------------------------------------
 # Stage 2: Production image
 # ------------------------------------------------------------
 FROM node:18-alpine AS runner
-
 WORKDIR /app
+
 ENV NODE_ENV=production
 ENV PORT=9002
 
-# Copy only the built output and necessary files
-COPY --from=builder /app/public ./public
+# Copy build output and package files
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/package*.json ./
 
-# Install only production dependencies
+# (Optional) Copy public folder only if it exists
+# COPY --from=builder /app/public ./public  <-- remove or comment if you don’t have it
+
 RUN npm ci --omit=dev
 
-# Expose the port Cloud Run expects
 EXPOSE 9002
-
-# Start Next.js
 CMD ["npm", "start"]
