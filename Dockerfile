@@ -1,30 +1,31 @@
-# Use official Node.js image (lightweight and secure)
+# ------------------------------------------------------------
+# Stage 1: Build the Next.js app
+# ------------------------------------------------------------
 FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Install dependencies
 COPY package*.json ./
 RUN npm ci
 
-# Copy all source files
+# Copy all project files
 COPY . .
 
-# Build the Next.js app
+# Build the app (generates the .next folder)
 RUN npm run build
 
 # ------------------------------------------------------------
-# Production stage
+# Stage 2: Production image
 # ------------------------------------------------------------
 FROM node:18-alpine AS runner
-WORKDIR /app
 
+WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
-EXPOSE 8080
 
-# Copy only necessary files from builder stage
+# Copy only the built output and necessary files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/package*.json ./
@@ -32,5 +33,8 @@ COPY --from=builder /app/package*.json ./
 # Install only production dependencies
 RUN npm ci --omit=dev
 
-# Start the Next.js server
+# Expose the port Cloud Run expects
+EXPOSE 8080
+
+# Start Next.js
 CMD ["npm", "start"]
