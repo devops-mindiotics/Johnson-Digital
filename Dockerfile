@@ -23,7 +23,7 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/package*.json ./
 
 # (Optional) Copy public folder only if it exists
-# COPY --from=builder /app/public ./public  <-- remove or comment if you don’t have it
+COPY --from=builder /app/public ./public 
 
 RUN npm ci --omit=dev
 
