@@ -1,13 +1,10 @@
 steps:
-  # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/nextjs-app', '.']
 
-  # Step 2: Push the Docker image to Google Container Registry (or Artifact Registry)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/nextjs-app']
 
-  # Optional Step 3: Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -18,5 +15,9 @@ steps:
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]
+
 images:
   - 'gcr.io/$PROJECT_ID/nextjs-app'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
