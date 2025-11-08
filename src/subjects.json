@@ -1,0 +1,43 @@
+[
+  {
+    "id": "subj-1",
+    "name": "Mathematics",
+    "classId": "C10A",
+    "chapters": [
+      {
+        "id": "ch-1",
+        "title": "Algebra",
+        "resources": [
+          {
+            "id": "res-1",
+            "title": "Introduction to Algebra",
+            "type": "video/mp4",
+            "url": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "subj-2",
+    "name": "Science",
+    "classId": "C10A",
+    "chapters": [
+      {
+        "id": "ch-1",
+        "title": "Photosynthesis",
+        "resources": [
+          {
+            "id": "res-1",
+            "title": "Interactive Book",
+            "type": "pubhtml5",
+            "data": {
+              "pubId": "f0a8e5d0-7c6b-4e6a-8b2c-6a1d7c4a3b1e",
+              "title": "G1 Maths Lesson 2"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

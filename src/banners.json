@@ -1,0 +1,47 @@
+[
+  {
+    "id": "1",
+    "name": "Summer Camp Enrollment Open",
+    "school": "Greenwood High",
+    "targetAudience": "Students",
+    "startDate": "2024-06-01",
+    "endDate": "2024-06-30",
+    "media": "https://picsum.photos/1280/720?q=1"
+  },
+  {
+    "id": "2",
+    "name": "Back to School Night",
+    "school": "Northwood Elementary",
+    "targetAudience": "All",
+    "startDate": "2024-08-15",
+    "endDate": "2024-08-15",
+    "media": "https://picsum.photos/1280/720?q=2"
+  },
+  {
+    "id": "3",
+    "name": "Annual Science Fair",
+    "school": "Westwood Middle School",
+    "targetAudience": "All",
+    "startDate": "2024-10-20",
+    "endDate": "2024-10-22",
+    "media": "https://picsum.photos/1280/720?q=3"
+  },
+  {
+    "id": "4",
+    "name": "Parent-Teacher Conferences",
+    "school": "Greenwood High",
+    "targetAudience": "Teachers",
+    "startDate": "2024-09-10",
+    "endDate": "2024-09-12",
+    "media": "https://picsum.photos/1280/720?q=4"
+  },
+  {
+    "id": "5",
+    "name": "School Holiday Concert",
+    "school": "Northwood Elementary",
+    "targetAudience": "All",
+    "startDate": "2024-12-15",
+    "endDate": "2024-12-15",
+    "media": "https://picsum.photos/1280/720?q=5"
+  }
+]

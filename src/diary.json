@@ -1,0 +1,134 @@
+
+[
+  {
+    "id": "diary-1",
+    "title": "Math Homework - Algebra",
+    "description": "Complete exercise 5.2 from NCERT Algebra.",
+    "date": "2024-07-28",
+    "actionCompletionDate": "2024-07-30",
+    "classId": "10",
+    "sectionId": "A",
+    "assignedTo": "student",
+    "studentIds": ["Rohan Sharma"],
+    "attachments": [
+      {
+        "fileName": "algebra_homework.pdf",
+        "fileUrl": "https://cdn.school.com/uploads/homework/algebra.pdf"
+      }
+    ],
+    "createdBy": "teacher_456",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-2",
+    "title": "Essay Writing Practice",
+    "description": "The entire class needs to work on their essay writing skills. I will be giving a special class on this tomorrow.",
+    "date": "2024-07-28",
+    "actionCompletionDate": "2024-07-29",
+    "classId": "10",
+    "sectionId": "A",
+    "assignedTo": "all",
+    "studentIds": [],
+    "attachments": [],
+    "createdBy": "teacher_456",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-3",
+    "title": "Science Test Performance",
+    "description": "Priya has shown great improvement in the recent class test. Her understanding of cellular biology is commendable.",
+    "date": "2024-07-27",
+    "actionCompletionDate": "2024-07-27",
+    "classId": "9",
+    "sectionId": "B",
+    "assignedTo": "student",
+    "studentIds": ["Priya Singh"],
+    "attachments": [],
+    "createdBy": "teacher_123",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-4",
+    "title": "History Project Reminder",
+    "description": "Reminder: History project submission is on August 5th. All students must submit their projects on time.",
+    "date": "2024-07-29",
+    "actionCompletionDate": "2024-08-05",
+    "classId": "9",
+    "sectionId": "B",
+    "assignedTo": "all",
+    "studentIds": [],
+    "attachments": [],
+    "createdBy": "teacher_123",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-5",
+    "title": "Submit English essay",
+    "description": "Submit the essay on 'The Great Gatsby' by tomorrow.",
+    "date": "2024-08-01",
+    "actionCompletionDate": "2024-08-02",
+    "classId": "10",
+    "sectionId": "A",
+    "assignedTo": "student",
+    "studentIds": ["student_123"],
+    "attachments": [],
+    "createdBy": "teacher_789",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-6",
+    "title": "Art Competition",
+    "description": "Inter-house art competition on the topic 'Our Environment'. Bring your own art supplies.",
+    "date": "2024-08-10",
+    "actionCompletionDate": "2024-08-10",
+    "classId": "1",
+    "sectionId": "A",
+    "assignedTo": "all",
+    "studentIds": [],
+    "attachments": [],
+    "createdBy": "teacher_101",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-7",
+    "title": "Poem Recitation Practice",
+    "description": "Alice, please prepare a poem for the upcoming school assembly.",
+    "date": "2024-08-11",
+    "actionCompletionDate": "2024-08-15",
+    "classId": "1",
+    "sectionId": "A",
+    "assignedTo": "student",
+    "studentIds": ["student_101"],
+    "attachments": [],
+    "createdBy": "teacher_101",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-8",
+    "title": "Special Class for Physics",
+    "description": "There will be a special class for Physics on Friday to cover important topics for the upcoming exam.",
+    "date": "2024-08-16",
+    "actionCompletionDate": "2024-08-16",
+    "classId": "10",
+    "sectionId": "B",
+    "assignedTo": "all",
+    "studentIds": [],
+    "attachments": [],
+    "createdBy": "teacher_555",
+    "userType": "Teacher"
+  },
+  {
+    "id": "diary-9",
+    "title": "Chemistry Lab Report Submission",
+    "description": "Please submit your chemistry lab reports by the end of this week.",
+    "date": "2024-08-19",
+    "actionCompletionDate": "2024-08-23",
+    "classId": "10",
+    "sectionId": "B",
+    "assignedTo": "student",
+    "studentIds": ["4444444444"],
+    "attachments": [],
+    "createdBy": "teacher_555",
+    "userType": "Teacher"
+  }
+]

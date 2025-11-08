@@ -20,7 +20,7 @@ export function SplashScreen() {
       <div className="animate-pulse">
         <Logo />
       </div>
-      <p className="font-semibold text-muted-foreground">from Johnson Digital</p>
+      <p className="font-semibold text-muted-foreground">from Johnson Publications</p>
     </div>
   );
 }

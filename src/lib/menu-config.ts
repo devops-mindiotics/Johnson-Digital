@@ -1,61 +1,206 @@
 import {
-  Users,
-  School,
-  LayoutDashboard,
-  Settings,
-  BookCopy,
-  FileText,
-  Megaphone,
-  Presentation,
-  GraduationCap,
-  FolderKanban,
-  UserCircle,
-} from 'lucide-react';
-import type { UserRole } from '@/contexts/auth-context';
-
-export interface MenuItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<any>;
-  children?: MenuItem[];
-}
-
-export const menuConfig: Record<UserRole, MenuItem[]> = {
-  'Super Admin': [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Schools', href: '/dashboard/schools', icon: School },
-    { label: 'Users', href: '/dashboard/users', icon: Users },
-    { label: 'Roles & Menus', href: '/dashboard/roles', icon: FolderKanban },
-    { label: 'Classes & Sections', href: '/dashboard/classes', icon: GraduationCap },
-    { label: 'Content Management', href: '/dashboard/content', icon: BookCopy },
-    { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-  ],
-  'School Admin': [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'School Profile', href: '/dashboard/school-profile', icon: School },
-    { label: 'Users', href: '/dashboard/users', icon: Users },
-    { label: 'Classes & Sections', href: '/dashboard/classes', icon: GraduationCap },
-    { label: 'Diary', href: '/dashboard/diary', icon: FileText },
-    { label: 'Homework', href: '/dashboard/homework', icon: Presentation },
-    { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-  ],
-  Teacher: [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'My Classes', href: '/dashboard/my-classes', icon: GraduationCap },
-    { label: 'Diary', href: '/dashboard/diary', icon: FileText },
-    { label: 'Homework', href: '/dashboard/homework', icon: Presentation },
-    { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-  ],
-  Student: [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Subjects', href: '/dashboard/subjects', icon: BookCopy },
-    { label: 'Diary', href: '/dashboard/diary', icon: FileText },
-    { label: 'Homework', href: '/dashboard/homework', icon: Presentation },
-    { label: 'Notice Board', href: '/dashboard/notice-board', icon: Megaphone },
-  ],
-};
-
-export const commonMenuItems: MenuItem[] = [
-  { label: 'Profile', href: '/dashboard/profile', icon: UserCircle },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-];
+    LayoutDashboard as Layouthomepage,
+    Settings,
+    Megaphone,
+    GraduationCap,
+    UserCircle,
+    Image,
+    School,
+    FolderGit,
+    BookText,
+    BookOpen,
+    Book,
+    MonitorPlay,
+    UsersRound,
+    Presentation,
+    Bug,
+    PlaySquare,
+    ShieldCheck,
+    LogOut,
+  } from 'lucide-react';
+  import type { UserRole } from '@/contexts/auth-context';
+  
+  export interface MenuItem {
+    label: string;
+    href: string;
+    icon: React.ComponentType<any>;
+    color?: string;
+    children?: MenuItem[];
+  }
+  
+  export const menuConfig: Record<UserRole, MenuItem[]> = {
+    'tenantadmin': [
+      {
+        label: 'homepage',
+        href: '/homepage',
+        icon: Layouthomepage,
+        color: 'text-white',
+      },
+      {
+        label: 'Schools',
+        href: '/homepage/schools',
+        icon: School,
+        color: 'text-white',
+      },
+      {
+        label: 'Users',
+        href: '/homepage/users',
+        icon: UsersRound,
+        color: 'text-white',
+      },
+      {
+        label: 'Classes',
+        href: '/homepage/classes',
+        icon: Presentation,
+        color: 'text-white',
+      },
+      {
+        label: 'Content',
+        href: '/homepage/content',
+        icon: MonitorPlay,
+        color: 'text-white',
+      },
+      {
+        label: 'Notice Board',
+        href: '/homepage/notice-board',
+        icon: Megaphone,
+        color: 'text-white',
+      },
+      {
+        label: 'Banners',
+        href: '/homepage/banners',
+        icon: Image,
+        color: 'text-white',
+      },
+    ],
+    'schooladmin': [
+      {
+        label: 'homepage',
+        href: '/homepage',
+        icon: Layouthomepage,
+        color: 'text-white',
+      },
+      {
+        label: 'School Profile',
+        href: '/homepage/school-profile',
+        icon: School,
+        color: 'text-white',
+      },
+      {
+        label: 'Users',
+        href: '/homepage/users',
+        icon: UsersRound,
+        color: 'text-white',
+      },
+      {
+        label: 'Class Config',
+        href: '/homepage/classes',
+        icon: Presentation,
+        color: 'text-white',
+      },
+      {
+        label: 'Diary',
+        href: '/homepage/diary',
+        icon: BookText,
+        color: 'text-white',
+      },
+      {
+        label: 'Assignments',
+        href: '/homepage/assignments',
+        icon: BookOpen,
+        color: 'text-white',
+      },
+      {
+        label: 'Notice Board',
+        href: '/homepage/notice-board',
+        icon: Megaphone,
+        color: 'text-white',
+      },
+      {
+        label: 'Banners',
+        href: '/homepage/banners',
+        icon: Image,
+        color: 'text-white',
+      },
+    ],
+    teacher: [
+      {
+        label: 'homepage',
+        href: '/homepage',
+        icon: Layouthomepage,
+        color: 'text-white',
+      },
+      {
+        label: 'Start Learning',
+        href: '/homepage/my-classes',
+        icon: Presentation,
+        color: 'text-white',
+      },
+      {
+        label: 'Diary',
+        href: '/homepage/diary',
+        icon: BookText,
+        color: 'text-white',
+      },
+      {
+        label: 'Assignments',
+        href: '/homepage/assignments',
+        icon: BookOpen,
+        color: 'text-white',
+      },
+      {
+        label: 'Notice Board',
+        href: '/homepage/notice-board',
+        icon: Megaphone,
+        color: 'text-white',
+      },
+    ],
+    student: [
+      {
+        label: 'homepage',
+        href: '/homepage',
+        icon: Layouthomepage,
+        color: 'text-white',
+      },
+      {
+        label: 'Start Learning',
+        href: '/homepage/my-classes',
+        icon: Book,
+        color: 'text-white',
+      },
+      {
+        label: 'Diary',
+        href: '/homepage/diary',
+        icon: BookText,
+        color: 'text-white',
+      },
+      {
+        label: 'Assignments',
+        href: '/homepage/assignments',
+        icon: BookOpen,
+        color: 'text-white',
+      },
+      {
+        label: 'Notice Board',
+        href: '/homepage/notice-board',
+        icon: Megaphone,
+        color: 'text-white',
+      },
+    ],
+  };
+  
+  export const commonMenuItems: MenuItem[] = [
+    {
+      label: 'Profile',
+      href: '/homepage/profile',
+      icon: UserCircle,
+      color: 'text-white',
+    },
+    {
+      label: 'Report',
+      href: '/homepage/report',
+      icon: Bug,
+      color: 'text-white',
+    },
+  ];
+  
