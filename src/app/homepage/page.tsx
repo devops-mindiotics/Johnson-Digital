@@ -16,7 +16,7 @@ import StudentDashboard from '@/components/homepage/student';
 export default function Homepage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-
+//jsut for testing
   // Redirect to login if user not logged in
   useEffect(() => {
     if (!isLoading && !user) {
