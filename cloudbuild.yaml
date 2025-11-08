@@ -9,7 +9,7 @@ steps:
       [
         'run', 'deploy', 'nextjs-app',
         '--image', 'gcr.io/$PROJECT_ID/nextjs-app',
-        '--region', 'asia-south1',
+        '--region', 'asia-east1',
         '--platform', 'managed',
         '--allow-unauthenticated'
       ]

@@ -22,7 +22,7 @@ RUN npm run build
 FROM node:18-alpine AS runner
 
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 ENV PORT=8080
 
 # Copy only the built output and necessary files
@@ -34,7 +34,7 @@ COPY --from=builder /app/package*.json ./
 RUN npm ci --omit=dev
 
 # Expose the port Cloud Run expects
-EXPOSE 8080
+EXPOSE 9002
 
 # Start Next.js
 CMD ["npm", "start"]
