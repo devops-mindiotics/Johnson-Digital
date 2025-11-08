@@ -22,8 +22,8 @@ RUN npm run build
 FROM node:18-alpine AS runner
 
 WORKDIR /app
-ENV NODE_ENV=development
-ENV PORT=8080
+ENV NODE_ENV=production
+ENV PORT=9002
 
 # Copy only the built output and necessary files
 COPY --from=builder /app/public ./public

@@ -185,11 +185,21 @@
 'use client';
 import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { USER_STORAGE_KEY } from '@/lib/utils/constants';
-import type { User as LoginUser } from '@/types/loginresponse';
+//import type {  User } from '@/types/loginresponse';
+//import type { User as LoginUser } from '@/types/loginresponse';
 
- //export type UserRole = '' | 'schooladmin' | 'teacher' | 'student';
-export type User = LoginUser;
+ //export type UserRole = 'tenantadmin' | 'schooladmin' | 'teacher' | 'student';
+////export type User = LoginUser;
+export interface User {
+  id: string;
+  name: string;
+  role: 'tenantadmin' | 'schooladmin' | 'teacher' | 'student';
+  profilePic: string;
+  mobile: string;
+  class?: string;
+  section?: string;
+  gender?: 'male' | 'female';
+}
 
 interface AuthContextType {
   user: User | null;
@@ -199,6 +209,8 @@ interface AuthContextType {
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
+const USER_STORAGE_KEY = 'educentral-user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
