@@ -1,6 +1,8 @@
 'use client';
 
 import apiClient from "./client";
+import { User } from '@/contexts/auth-context';
+import { STUDENT } from '../utils/constants';
 
 export async function createBanner(bannerData: any): Promise<any> {
   try {
@@ -33,7 +35,8 @@ export async function getAllBanners(
   page = 1,
   limit = 10,
   status = "active",
-  search = ""
+  search = "",
+  user: User | null = null
 ): Promise<any> {
   try {
     const tenantData = localStorage.getItem("contextInfo");
@@ -44,9 +47,13 @@ export async function getAllBanners(
 
     if (!tenantId) return { records: [], pagination: {} };
 
-    const response = await apiClient.get(
-      `/tenants/${tenantId}/masters/banners?page=${page}&limit=${limit}&status=${status}&search=${search}`,
-      {
+    let url = `/tenants/${tenantId}/masters/banners?page=${page}&limit=${limit}&status=${status}&search=${search}`;
+
+    if (user && user.roles === STUDENT) {
+        url += `&role=${STUDENT}`;
+    }
+
+    const response = await apiClient.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

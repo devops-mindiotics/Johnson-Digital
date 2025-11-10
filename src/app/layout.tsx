@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { AppProviders } from '@/components/app-providers';
 
 export const metadata: Metadata = {
-  title: 'EduCentral',
+  title: 'Johnson Digital',
   description: 'The future of school management.',
 };
 

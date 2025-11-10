@@ -47,7 +47,6 @@ apiClient.interceptors.response.use(
   (response) => {
     const loader = getLoadingRef();
     if (response.config.url?.includes("/login")) {
-
       setTimeout(() => {
         loader?.hideLoader();
         if (typeof window !== "undefined") {

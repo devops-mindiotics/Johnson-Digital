@@ -23,7 +23,7 @@ export interface LoginData {
 }
 
 export interface User {
-  userId: string;
+  id: string;
   phone: string;
   email?: string | null;
   firstName?: string | null;
@@ -34,6 +34,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   roles?: string[] | null;
+  gender?: string | null;
 }
 
 export interface TenantRole {
@@ -44,10 +45,15 @@ export interface TenantRole {
 
 export interface SchoolRole {
   tenantId: string;
-  tenantName: string;
   schoolId: string;
   schoolName: string;
   roles: string[];
+  classDetails?: {
+    classId: string;
+    className: string;
+    sectionId: string;
+    sectionName: string;
+  } | null;
 }
 
 export interface LoginMeta {

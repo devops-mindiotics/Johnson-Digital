@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://johnsondigitaldev--jonson-publications.asia-southeast1.hosted.app",
+      "https://dev.johnsonpublications.in"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Accept-Ranges"],
+    "maxAgeSeconds": 3600
+  }
+]

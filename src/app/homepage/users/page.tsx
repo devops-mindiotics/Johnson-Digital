@@ -71,8 +71,9 @@ export default function UsersPage() {
           : u
       );
       setUsers(updatedUsers);
+      const userName = `${userToUpdate.firstName} ${userToUpdate.lastName}`;
       if (newStatus === 'Inactive') {
-        setProcessedUserName(userToUpdate.name || 'the user');
+        setProcessedUserName(userName || 'the user');
         setSuccessDialogOpen(true);
       }
       setUserToUpdate(null);
@@ -80,11 +81,23 @@ export default function UsersPage() {
   };
 
   const filteredUsers = searchTerm
-    ? users.filter(u =>
-        (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+    ? users.filter(u => {
+        const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+        const email = u.email ? u.email.toLowerCase() : '';
+        return fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+      })
     : users;
+    
+  const getUserName = (user) => {
+    return user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.displayName || 'Unnamed User');
+  }
+
+  const getSchoolName = (user) => {
+      if(user.schools && user.schools.length > 0 && user.schools[0].schoolName) {
+          return user.schools[0].schoolName;
+      }
+      return 'N/A';
+  }
 
   return (
     <Card>
@@ -163,19 +176,19 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((u) => (
-                <TableRow key={u.userId}>
+                <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
+                        <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">
-                        <div>{u.name || 'Unnamed User'}</div>
-                        <div className="text-sm text-muted-foreground">{u.mobile}</div>
+                        <div>{getUserName(u)}</div>
+                        <div className="text-sm text-muted-foreground">{u.phone}</div>
                       </div>
                     </div>
                   </TableCell>
-                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolName}</TableCell>}
+                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{getSchoolName(u)}</TableCell>}
                   <TableCell>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</TableCell>
                   <TableCell>
                     <Badge
@@ -198,7 +211,7 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -210,15 +223,15 @@ export default function UsersPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:hidden">
           {filteredUsers.map((u) => (
-            <Card key={u.userId} className="p-4">
+            <Card key={u.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
+                    <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="font-medium">
-                    <div>{u.name || 'Unnamed User'}</div>
-                    <div className="text-sm text-muted-foreground">{u.mobile}</div>
+                    <div>{getUserName(u)}</div>
+                    <div className="text-sm text-muted-foreground">{u.phone}</div>
                   </div>
                 </div>
                 <DropdownMenu>
@@ -230,7 +243,7 @@ export default function UsersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -239,7 +252,7 @@ export default function UsersPage() {
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
                   <div>
                     <div className="font-semibold">School</div>
-                    <div>{u.schoolName}</div>
+                    <div>{getSchoolName(u)}</div>
                   </div>
                 }
                 <div>
@@ -262,7 +275,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will change the status of {userToUpdate?.name || 'the selected user'} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
+              This action will change the status of {userToUpdate ? getUserName(userToUpdate) : 'the selected user'} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

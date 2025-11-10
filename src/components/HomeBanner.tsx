@@ -4,23 +4,28 @@ import { useEffect, useState } from 'react';
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from 'embla-carousel-react';
 import { getAllBanners } from '@/lib/api/masterApi';
+import { useAuth } from '@/hooks/use-auth';
 
 export function HomeBanner() {
   const [emblaRef] = useEmblaCarousel({ loop: true }, [Autoplay()]);
   const [banners, setBanners] = useState<any[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchBanners() {
       try {
-        const { records } = await getAllBanners(1, 5, 'active');
+        const { records } = await getAllBanners(1, 5, 'active', "", user);
         setBanners(records);
       } catch (error) {
         console.error('Error fetching banners:', error);
       }
     }
 
-    fetchBanners();
-  }, []);
+    if (user) {
+        fetchBanners();
+    }
+
+  }, [user]);
 
   return (
     <div className="embla overflow-hidden rounded-lg" ref={emblaRef}>

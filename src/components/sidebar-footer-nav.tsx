@@ -3,12 +3,12 @@ import { useAuth } from '@/hooks/use-auth';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { LogOut, Shield } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { usePdfViewer } from '@/hooks/use-pdf-viewer';
+import { useLegalPdfViewer } from '@/hooks/use-legal-pdf-viewer';
 
 export function SidebarFooterNav() {
   const { user, logout } = useAuth();
   const { isMobile, setOpenMobile, open } = useSidebar();
-  const { openPdf } = usePdfViewer();
+  const { openLegalPdf } = useLegalPdfViewer();
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -20,7 +20,7 @@ export function SidebarFooterNav() {
     if (isMobile) {
       setOpenMobile(false);
     }
-    openPdf(url, title);
+    openLegalPdf(url, title);
   };
 
   if (!user) {

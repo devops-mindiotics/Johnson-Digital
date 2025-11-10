@@ -31,10 +31,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { MonitorPlay, Pencil, Trash2, ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
+import { MonitorPlay,  ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getAllSeries, getAllClasses } from '@/lib/api/masterApi';
+import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages } from '@/lib/api/masterApi';
 
 const initialContentData = {
   'Nursery-ABC-English-Alphabet': [
@@ -90,6 +90,10 @@ export default function ContentManagementPage() {
     });
     const searchParams = useSearchParams();
     const isMobile = useIsMobile();
+    const [classes, setClasses] = useState([]);
+    const [series, setSeries] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+    const [packages, setPackages] = useState([]);
 
     useEffect(() => {
         if (searchParams.get('add') === 'true') {
@@ -97,29 +101,26 @@ export default function ContentManagementPage() {
         }
     }, [searchParams]);
 
-    const filterOptions = useMemo(() => {
-        const options = {
-            class: new Set(['All']),
-            series: new Set(['All']),
-            subject: new Set(['All']),
-            package: new Set(['All'])
+    useEffect(() => {
+        const fetchFiltersData = async () => {
+            try {
+                const [classesData, seriesData, subjectsData, packagesData] = await Promise.all([
+                    getAllClasses(),
+                    getAllSeries(),
+                    getAllSubjects(),
+                    getAllPackages(),
+                ]);
+                setClasses(classesData);
+                setSeries(seriesData);
+                setSubjects(subjectsData);
+                //alert("fetching packages"+packagesData);
+                setPackages(packagesData);
+            } catch (error) {
+                console.error("Failed to fetch filters data:", error);
+            }
         };
-        Object.keys(contentData).forEach(key => {
-            const [classValue, series, subject] = key.split('-');
-            if (classValue) options.class.add(classValue);
-            if (series) options.series.add(series);
-            if (subject) options.subject.add(subject);
-            contentData[key].forEach(c => {
-                if(c.package) options.package.add(c.package);
-            })
-        });
-        return {
-            class: Array.from(options.class),
-            series: Array.from(options.series),
-            subject: Array.from(options.subject),
-            package: Array.from(options.package)
-        };
-    }, [contentData]);
+        fetchFiltersData();
+    }, []);
 
     useEffect(() => {
         const filtered = Object.entries(contentData).filter(([key, contents]) => {
@@ -196,7 +197,8 @@ export default function ContentManagementPage() {
                                 <SelectValue placeholder="Select a class" />
                             </SelectTrigger>
                             <SelectContent>
-                                {filterOptions.class.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                                <SelectItem value="All">All</SelectItem>
+                                {classes.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -207,7 +209,8 @@ export default function ContentManagementPage() {
                                 <SelectValue placeholder="Select a series" />
                             </SelectTrigger>
                             <SelectContent>
-                                {filterOptions.series.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                                <SelectItem value="All">All</SelectItem>
+                                {series.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -218,7 +221,8 @@ export default function ContentManagementPage() {
                                 <SelectValue placeholder="Select a subject" />
                             </SelectTrigger>
                             <SelectContent>
-                                {filterOptions.subject.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                                <SelectItem value="All">All</SelectItem>
+                                {subjects.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -229,7 +233,8 @@ export default function ContentManagementPage() {
                                 <SelectValue placeholder="Select a package" />
                             </SelectTrigger>
                             <SelectContent>
-                                {filterOptions.package.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+                                <SelectItem value="All">All</SelectItem>
+                                {packages.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -376,6 +381,8 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
     const [selectedContentType, setSelectedContentType] = useState('');
     const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
+    const [packageOptions, setPackageOptions] = useState<any[]>([]);
+    const [subjectOptions, setSubjectOptions] = useState<any[]>([]);
     const [classesOptions, setClassesOptions] = useState<any[]>([]);
     const [showPackageDropdown, setShowPackageDropdown] = useState(false);
     const [showContentNameInput, setShowContentNameInput] = useState(false);
@@ -401,9 +408,27 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 console.error("Failed to fetch classes:", error);
             }
         }
+        async function fetchPackages() {
+            try {
+                const packages = await getAllPackages();
+                setPackageOptions(packages);
+            } catch (error) {
+                console.error("Failed to fetch packages:", error);
+            }
+        }
+        async function fetchSubjects() {
+            try {
+                const subjects = await getAllSubjects();
+                setSubjectOptions(subjects);
+            } catch (error) {
+                console.error("Failed to fetch packages:", error);
+            }
+        }
         if (isOpen) {
             fetchSeries();
             fetchClasses();
+            fetchPackages();
+            fetchSubjects();
         }
     }, [isOpen]);
 
@@ -516,11 +541,10 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                                 <SelectValue placeholder="Select a package" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="Individual">Individual</SelectItem>
-                                <SelectItem value="Term">Term</SelectItem>
-                                <SelectItem value="Semester">Semester</SelectItem>
-                                <SelectItem value="new">Add new package...</SelectItem>
-                            </SelectContent>
+                            {packageOptions.map((pkgOption) => (
+                                <SelectItem key={pkgOption.id} value={pkgOption.id}>{pkgOption.name}</SelectItem>
+                            ))}
+                        </SelectContent>
                         </Select>
                     ) : (
                         <div onClick={() => setShowPackageDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
@@ -536,11 +560,9 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectValue placeholder="Select a subject" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="English">English</SelectItem>
-                            <SelectItem value="Mathematics">Mathematics</SelectItem>
-                            <SelectItem value="Science">Science</SelectItem>
-                            <SelectItem value="Physics">Physics</SelectItem>
-                            <SelectItem value="new">Add new subject...</SelectItem>
+                            {subjectOptions.map((subOption) => (
+                                <SelectItem key={subOption.id} value={subOption.id}>{subOption.name}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                      {showNewSubjectInput && <Input placeholder="Enter new subject" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}

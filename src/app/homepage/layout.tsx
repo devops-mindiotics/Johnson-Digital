@@ -43,14 +43,18 @@ export default function HomePageLayout({ children }: { children: ReactNode }) {
             <SidebarFooterNav />
           </SidebarFooter>
         </Sidebar>
-        <div className="flex flex-1 flex-col overflow-hidden">
-            <HomepageHeader />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-1 flex-col overflow-y-auto">
+            <header className="sticky top-0 z-10 border-b bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-lg">
+              <HomepageHeader />
+            </header>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
               <Suspense fallback={<DashboardSkeleton />}>
                 {children}
               </Suspense>
             </main>
-            <HomepageFooter />
+            <footer className="sticky bottom-0 z-10 border-t bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-lg">
+              <HomepageFooter />
+            </footer>
         </div>
       </div>
     </SidebarProvider>

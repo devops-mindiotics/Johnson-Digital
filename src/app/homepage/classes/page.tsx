@@ -24,9 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN } from '@/lib/utils/constants';
-import { getAllSchools, getClasses, createClass, updateClass, deleteSection, getSectionsBySchool } from '@/lib/api/schoolApi';
-import { getAllSubjects as getMasterSubjects } from '@/lib/api/masterApi';
-import { getTeachersBySchool } from '@/lib/api/teacherApi';
+import { getAllSchools, getClasses, createClass, updateClass, deleteSection } from '@/lib/api/schoolApi';
+import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllSubjects as getMasterSubjects, getAllPackages } from '@/lib/api/masterApi';
+import { getTeachersBySchool } from '@/lib/api/userApi';
 import { getRoles } from '@/lib/utils/getRole';
 
 export default function ClassesPage() {
@@ -39,7 +39,10 @@ export default function ClassesPage() {
     const [teachers, setTeachers] = useState<any[]>([]);
     const [sectionsPool, setSectionsPool] = useState<any[]>([]);
     
+    const [masterClasses, setMasterClasses] = useState<any[]>([]);
+    const [masterSeries, setMasterSeries] = useState<any[]>([]);
     const [masterSubjects, setMasterSubjects] = useState<any[]>([]);
+    const [masterPackages, setMasterPackages] = useState<any[]>([]);
 
     const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
     
@@ -52,26 +55,24 @@ export default function ClassesPage() {
 
     async function fetchClassesAndSections(schoolId: string) {
         try {
-            const [classData, teacherData, masterSubjectsData, sectionsPoolData] = await Promise.all([
+            const [classData, teacherData, masterSubjectsData] = await Promise.all([
                 getClasses(schoolId),
                 getTeachersBySchool(schoolId),
                 getMasterSubjects(),
-                getSectionsBySchool(schoolId),
             ]);
     
             if (classData && Array.isArray(classData)) {
-                const classesWithSections = classData.map(c => ({
+                const classesWithHydratedIds = classData.map(c => ({
                     ...c,
-                    classId: c.id, // Ensure classId is present
-                    sections: Array.isArray(c.sections)
-                        ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) // Add sectionId
-                        : (c.sections ? [{ ...c.sections, sectionId: c.sections.id }] : []),
+                    classId: c.id,
+                    sections: Array.isArray(c.sections) ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) : [],
                 }));
-                setAllClasses(classesWithSections);
+                setAllClasses(classesWithHydratedIds);
+            } else {
+                setAllClasses([]);
             }
             setTeachers(teacherData || []);
             setMasterSubjects(masterSubjectsData || []);
-            setSectionsPool(sectionsPoolData || []);
         } catch (error) {
             console.error("Failed to fetch classes, teachers, or subjects:", error);
             setAllClasses([]);
@@ -82,19 +83,47 @@ export default function ClassesPage() {
     }
 
     useEffect(() => {
-        async function fetchInitialData() {
+        async function fetchSchools() {
           if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
             try {
               const schoolsData = await getAllSchools();
               setSchools(schoolsData || []);
             } catch (error) {
-              console.error("Failed to fetch initial data:", error);
+              console.error("Failed to fetch schools:", error);
               setSchools([]);
             }
           }
         }
+        fetchSchools();
+    }, [userRole]);
+
+    useEffect(() => {
+        async function fetchInitialData() {
+          if ((userRole === SUPERADMIN || userRole === TENANTADMIN) && selectedSchool) {
+            try {
+              const [masterClassData, masterSeriesData, masterPackagesData, teacherData] = await Promise.all([
+                getMasterClasses(),
+                getMasterSeries(),
+                getAllPackages(),
+                getTeachersBySchool(selectedSchool),
+              ]);
+
+              setMasterClasses(masterClassData || []);
+              setMasterSeries(masterSeriesData || []);
+              setMasterPackages(masterPackagesData || []);
+              setTeachers(teacherData || []);
+
+            } catch (error) {
+              console.error("Failed to fetch initial data:", error);
+              setMasterClasses([]);
+              setMasterSeries([]);
+              setMasterPackages([]);
+              setTeachers([]);
+            }
+          }
+        }
         fetchInitialData();
-      }, [userRole]);
+      }, [userRole, selectedSchool]);
 
       useEffect(() => {
         if (selectedSchool) {
@@ -105,42 +134,94 @@ export default function ClassesPage() {
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
     const availableLicenses = selectedSchoolDetails?.licenceForStudent - allClasses.reduce((acc, c) => acc + c.licensesCount, 0);
 
-    const handleAssignClassTeacher = async (classId: string, sectionId: string, teacherId: string) => {
-        if (!selectedSchool || !classId || !sectionId) {
-            const errorDetails = `School: ${selectedSchool}, Class: ${classId}, Section: ${sectionId}`;
-            console.error("Assignment failed. Missing IDs:", errorDetails);
-            toast({ title: "Error", description: "Cannot assign a Teacher. School, class or section ID is missing." });
-            return;
+    const createCleanPayload = (classObj: any) => {
+        const payload = JSON.parse(JSON.stringify(classObj));
+        // Remove client-side alias, the top-level ID is passed in the URL
+        delete payload.classId;
+        
+        if (payload.sections) {
+            payload.sections = payload.sections.map((s: any) => {
+                // Remove the client-side alias `sectionId` but preserve the original `id`
+                delete s.sectionId;
+                return s;
+            });
         }
+        return payload;
+    };
+
+    const handleAssignClassTeacher = async (classId: string, sectionId: string | undefined, teacherId: string) => {
+        if (!selectedSchool) return;
 
         const classToUpdate = allClasses.find(c => c.classId === classId);
-        if (!classToUpdate) {
-            toast({ title: "Error", description: "Could not find the class to update." });
-            return;
+        if (!classToUpdate) return;
+
+        const teacher = teachers.find(t => t.id === teacherId);
+        if (!teacher) return;
+        
+        let updatedClass;
+
+        if (sectionId) {
+            const updatedSections = classToUpdate.sections.map((section: any) => 
+                section.sectionId === sectionId ? { ...section, classTeacherId: teacherId, classTeacherName: teacher.name } : section
+            );
+            updatedClass = { ...classToUpdate, sections: updatedSections };
+        } else {
+            updatedClass = { ...classToUpdate, classTeacherId: teacherId, classTeacherName: teacher.name };
         }
-
-        const updatedSections = classToUpdate.sections.map((section: any) => 
-            section.sectionId === sectionId ? { ...section, classTeacherId: teacherId } : section
-        );
-
-        const classPayload = {
-            ...classToUpdate,
-            sections: updatedSections,
-        };
+        
+        const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(selectedSchool, classId, classPayload);
+            await updateClass(selectedSchool, classId, { data: finalPayload });
             toast({ title: "Success", description: "Class Teacher assigned successfully." });
             fetchClassesAndSections(selectedSchool);
         } catch (error: any) {
-            console.error("Failed to assign Class Teacher:", { 
-                payload: classPayload, 
-                error: error.response?.data || error.message 
-            });
+            console.error("Failed to assign Class Teacher:", { payload: finalPayload, error: error.response?.data || error.message });
             toast({ title: "Error", description: "Failed to assign Class Teacher." });
         }
     };
+    
+    const handleUpdateSubjectTeacher = async (classId: string, sectionId: string | undefined, subjectId: string, teacherId: string) => {
+        if (!selectedSchool) return;
 
+        const classToUpdate = allClasses.find(c => c.classId === classId);
+        if (!classToUpdate) return;
+
+        const teacher = teachers.find(t => t.id === teacherId);
+        if (!teacher) return;
+        
+        let updatedClass;
+
+        if (sectionId) {
+            const updatedSections = classToUpdate.sections.map((section: any) => {
+                if (section.sectionId === sectionId) {
+                    const updatedSubjects = (section.subjects || []).map((sub: any) =>
+                        sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name } : sub
+                    );
+                    return { ...section, subjects: updatedSubjects };
+                }
+                return section;
+            });
+            updatedClass = { ...classToUpdate, sections: updatedSections };
+        } else {
+            const updatedSubjects = (classToUpdate.subjects || []).map((sub: any) =>
+                sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name } : sub
+            );
+            updatedClass = { ...classToUpdate, subjects: updatedSubjects };
+        }
+
+        const finalPayload = createCleanPayload(updatedClass);
+
+        try {
+            await updateClass(selectedSchool, classId, { data: finalPayload });
+            toast({ title: "Success", description: "Subject teacher updated successfully." });
+            fetchClassesAndSections(selectedSchool);
+        } catch (error: any) {
+            console.error("Failed to update subject teacher:", { payload: finalPayload, error: error.response?.data || error.message });
+            toast({ title: "Error", description: "Failed to update subject teacher." });
+        }
+    };
+    
     const handleOpenAddSectionDialog = (classInfo: any) => {
         setCurrentClass(classInfo);
         setEditingAssignment(null);
@@ -153,7 +234,7 @@ export default function ClassesPage() {
         setIsSectionDialogOpen(true);
     };
 
-    const handleOpenAddSubjectDialog = (classInfo: any, sectionInfo: any) => {
+    const handleOpenAddSubjectDialog = (classInfo: any, sectionInfo: any | null) => {
         setCurrentClass(classInfo);
         setCurrentSection(sectionInfo);
         setIsSubjectDialogOpen(true);
@@ -162,18 +243,12 @@ export default function ClassesPage() {
     const handleSaveClass = async (values: any) => {
         if (!selectedSchool) return;
 
-        const classPayload = {
-            name: values.sectionName,
-            licensesCount: values.licenses,
-        };
-
+        const classPayload = { name: values.sectionName, licensesCount: values.licenses };
         try {
-            await createClass(selectedSchool, classPayload);
+            await createClass(selectedSchool, { data: classPayload });
             toast({ title: "Success", description: "Class created successfully." });
-            
             fetchClassesAndSections(selectedSchool);
             setIsSectionDialogOpen(false);
-
         } catch (error) {
             console.error("Failed to save class:", error);
             toast({ title: "Error", description: "Failed to save class." });
@@ -181,84 +256,39 @@ export default function ClassesPage() {
     };
 
     const handleSaveSubject = async (values: any) => {
-        if (!currentClass || !currentSection || !selectedSchool) {
-            toast({ title: "Error", description: "Cannot save subject. Class or section context is missing." });
-            return;
-        }
+        if (!currentClass || !selectedSchool) return;
     
         const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
-        if (!classToUpdate) {
-            toast({ title: "Error", description: "Could not find the class to update." });
-            return;
+        if (!classToUpdate) return;
+
+        const teacher = teachers.find(t => t.id === values.teacherId);
+        if (!teacher) return;
+
+        const newSubject = { subjectId: values.subjectId, subjectTeacherId: values.teacherId, subjectTeacherName: teacher.name };
+        let updatedClass;
+    
+        if (currentSection) {
+            const updatedSections = classToUpdate.sections.map((section: any) => {
+                if (section.sectionId === currentSection.sectionId) {
+                    return { ...section, subjects: [...(section.subjects || []), newSubject] };
+                }
+                return section;
+            });
+            updatedClass = { ...classToUpdate, sections: updatedSections };
+        } else {
+            updatedClass = { ...classToUpdate, subjects: [...(classToUpdate.subjects || []), newSubject] };
         }
-    
-        const newSubject = {
-            subjectId: values.subjectId,
-            subjectTeacherId: values.teacherId,
-        };
-    
-        const updatedSections = classToUpdate.sections.map((section: any) => {
-            if (section.sectionId === currentSection.sectionId) {
-                return {
-                    ...section,
-                    subjects: [...(section.subjects || []), newSubject],
-                };
-            }
-            return section;
-        });
-    
-        const classPayload = {
-            ...classToUpdate,
-            sections: updatedSections,
-        };
+
+        const finalPayload = createCleanPayload(updatedClass);
     
         try {
-            await updateClass(selectedSchool, currentClass.classId, classPayload);
+            await updateClass(selectedSchool, currentClass.classId, { data: finalPayload });
             toast({ title: "Success", description: "Subject added successfully." });
             fetchClassesAndSections(selectedSchool);
             setIsSubjectDialogOpen(false);
         } catch (error: any) {
-            console.error("Failed to add subject:", {
-                payload: classPayload,
-                error: error.response?.data || error.message
-            });
+            console.error("Failed to add subject:", { payload: finalPayload, error: error.response?.data || error.message });
             toast({ title: "Error", description: "Failed to add subject." });
-        }
-    };
-    
-    const handleUpdateSubjectTeacher = async (classId: string, sectionId: string, subjectId: string, teacherId: string) => {
-        if (!selectedSchool || !classId || !sectionId) {
-            const errorDetails = `School: ${selectedSchool}, Class: ${classId}, Section: ${sectionId}`;
-            console.error("Update failed. Missing IDs:", errorDetails);
-            toast({ title: "Error", description: "Cannot assign Subject Teacher. School, class, or section ID is missing." });
-            return;
-        }
-
-        const classToUpdate = allClasses.find(c => c.classId === classId);
-        if (!classToUpdate) return;
-
-        const updatedSections = classToUpdate.sections.map((section: any) => {
-            if (section.sectionId === sectionId) {
-                const updatedSubjects = section.subjects.map((sub: any) =>
-                    sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId } : sub
-                );
-                return { ...section, subjects: updatedSubjects };
-            }
-            return section;
-        });
-
-        const classPayload = { ...classToUpdate, sections: updatedSections };
-
-        try {
-            await updateClass(selectedSchool, classId, classPayload);
-            toast({ title: "Success", description: "Subject teacher updated successfully." });
-            fetchClassesAndSections(selectedSchool);
-        } catch (error: any) {
-            console.error("Failed to update subject teacher:", {
-                payload: classPayload,
-                error: error.response?.data || error.message
-            });
-            toast({ title: "Error", description: "Failed to update subject teacher." });
         }
     };
 
@@ -274,6 +304,59 @@ export default function ClassesPage() {
             toast({ title: "Error", description: "Failed to delete section." });
         }
     };
+
+    const NoSectionsContent = ({ classInfo }: { classInfo: any }) => (
+        <div className="py-2 px-4 rounded-md border">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <span className="font-semibold">No Sections</span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
+                        <Select
+                            value={classInfo.classTeacherId || undefined}
+                            onValueChange={(teacherId) => handleAssignClassTeacher(classInfo.classId, undefined, teacherId)}
+                        >
+                            <SelectTrigger className="w-full sm:w-[250px]">
+                                <SelectValue placeholder="Assign Class Teacher" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {teachers.map(teacher => (
+                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+            <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-sm">Subjects</h4>
+                    <Button variant="outline" size="sm" onClick={() => handleOpenAddSubjectDialog(classInfo, null)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Subject
+                    </Button>
+                </div>
+                {(classInfo.subjects || []).map((subject: any, subjectIndex: number) => (
+                    <div key={subject.subjectId || `subject-${subjectIndex}`} className="flex items-center justify-between">
+                        <span>{masterSubjects.find(ms => ms.id === subject.subjectId)?.name || subject.name}</span>
+                        <Select
+                            value={subject.subjectTeacherId || undefined}
+                            onValueChange={(teacherId) => handleUpdateSubjectTeacher(classInfo.classId, undefined, subject.subjectId, teacherId)}
+                        >
+                            <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Assign Teacher" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {teachers.map(teacher => (
+                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 
   if (!user) return <div>Loading...</div>
 
@@ -343,71 +426,75 @@ export default function ClassesPage() {
                                 {isMobile ? null : "Add Section"}
                             </Button>
                         </div>
-                    <AccordionContent>
-                        <div className="space-y-4 pt-2">
-                            {c.sections?.map((section: any, sectionIndex: number) => (
-                                    <div key={section.sectionId || `section-${sectionIndex}`} className="py-2 px-4 rounded-md border">
-                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                                            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                                                <span className="font-semibold">{section.name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
-                                                    <Select
-                                                        value={section.classTeacherId || undefined}
-                                                        onValueChange={(teacherId) => handleAssignClassTeacher(c.classId, section.sectionId, teacherId)}
-                                                    >
-                                                        <SelectTrigger className="w-full sm:w-[250px]">
-                                                            <SelectValue placeholder="Assign Class Teacher" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {teachers.map(teacher => (
-                                                                <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                        <AccordionContent>
+                            <div className="space-y-4 pt-2">
+                                {c.sections && c.sections.length > 0 ? (
+                                    c.sections.map((section: any, sectionIndex: number) => (
+                                        <div key={section.sectionId || `section-${sectionIndex}`} className="py-2 px-4 rounded-md border">
+                                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                                <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                                    <span className="font-semibold">{section.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-semibold text-sm text-muted-foreground">Class Teacher:</span>
+                                                        <Select
+                                                            value={section.classTeacherId || undefined}
+                                                            onValueChange={(teacherId) => handleAssignClassTeacher(c.classId, section.sectionId, teacherId)}
+                                                        >
+                                                            <SelectTrigger className="w-full sm:w-[250px]">
+                                                                <SelectValue placeholder="Assign Class Teacher" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {teachers.map(teacher => (
+                                                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-sm text-muted-foreground">Licenses: {section.licensesCount}</span>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleOpenEditSectionDialog(section, c)}>
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(c.classId, section.sectionId)}>
+                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm text-muted-foreground">Licenses: {section.licensesCount}</span>
-                                                <Button variant="ghost" size="icon" onClick={() => handleOpenEditSectionDialog(section, c)}>
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(c.classId, section.sectionId)}>
-                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="font-semibold text-sm">Subjects</h4>
-                                                <Button variant="outline" size="sm" onClick={() => handleOpenAddSubjectDialog(c, section)}>
-                                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                                    Add Subject
-                                                </Button>
-                                            </div>
-                                            {section.subjects?.map((subject: any, subjectIndex: number) => (
-                                                <div key={subject.subjectId || `subject-${subjectIndex}`} className="flex items-center justify-between">
-                                                    <span>{masterSubjects.find(ms => ms.id === subject.subjectId)?.name || subject.name}</span>
-                                                    <Select
-                                                        value={subject.subjectTeacherId || undefined}
-                                                        onValueChange={(teacherId) => handleUpdateSubjectTeacher(c.classId, section.sectionId, subject.subjectId, teacherId)}
-                                                    >
-                                                        <SelectTrigger className="w-[200px]">
-                                                            <SelectValue placeholder="Assign Teacher" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {teachers.map(teacher => (
-                                                                <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                            <div className="mt-4 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <h4 className="font-semibold text-sm">Subjects</h4>
+                                                    <Button variant="outline" size="sm" onClick={() => handleOpenAddSubjectDialog(c, section)}>
+                                                        <PlusCircle className="mr-2 h-4 w-4" />
+                                                        Add Subject
+                                                    </Button>
                                                 </div>
-                                            ))}
+                                                {(section.subjects || []).map((subject: any, subjectIndex: number) => (
+                                                    <div key={subject.subjectId || `subject-${subjectIndex}`} className="flex items-center justify-between">
+                                                        <span>{masterSubjects.find(ms => ms.id === subject.subjectId)?.name || subject.name}</span>
+                                                        <Select
+                                                            value={subject.subjectTeacherId || undefined}
+                                                            onValueChange={(teacherId) => handleUpdateSubjectTeacher(c.classId, section.sectionId, subject.subjectId, teacherId)}
+                                                        >
+                                                            <SelectTrigger className="w-[200px]">
+                                                                <SelectValue placeholder="Assign Teacher" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {teachers.map(teacher => (
+                                                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                        </div>
-                    </AccordionContent>
+                                    ))
+                                ) : (
+                                    <NoSectionsContent classInfo={c} />
+                                )}
+                            </div>
+                        </AccordionContent>
                     </AccordionItem>
                 ))}
                 </Accordion>
@@ -426,6 +513,9 @@ export default function ClassesPage() {
             isOpen={isConfigureSchoolDialogOpen} 
             onClose={() => setIsConfigureSchoolDialogOpen(false)}
             schools={schools}
+            masterClasses={masterClasses}
+            masterSeries={masterSeries}
+            masterPackages={masterPackages}
             onClassConfigured={() => selectedSchool && fetchClassesAndSections(selectedSchool)}
         />
 

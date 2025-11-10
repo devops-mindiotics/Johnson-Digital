@@ -19,7 +19,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { getDiaryEntries, createDiaryEntry, updateDiaryEntry, deleteDiaryEntry } from "@/lib/api/diaryApi";
-import { getAllStudents } from "@/lib/api/studentApi";
+import { getAllStudents } from "@/lib/api/userApi";
 
 const DiaryPage = () => {
   const { user } = useAuth();

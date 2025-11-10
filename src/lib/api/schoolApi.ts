@@ -77,7 +77,7 @@ export async function updateSchool(
     const tenantId = getTenantId();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}`,
-      { data: schoolPayload }
+      schoolPayload
     );
 
     return response.data;
@@ -121,21 +121,6 @@ export async function getClasses(schoolId: string): Promise<any[]> {
   }
 }
 
-export async function getSectionsBySchool(schoolId: string): Promise<any[]> {
-    try {
-      const tenantId = getTenantId();
-      const response = await apiClient.get(
-        `/tenants/${tenantId}/schools/${schoolId}/sections`
-      );
-      if (response.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
-      return [];
-    } catch (err: any) {
-      console.error("❌ getSectionsBySchool error:", err.response?.data || err.message);
-      return [];
-    }
-  }
 
 export async function getClassById(
   schoolId: string,
@@ -181,7 +166,7 @@ export async function updateClass(
     const tenantId = getTenantId();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}`,
-      { data: classPayload }
+      classPayload
     );
     return response.data;
   } catch (err: any) {
@@ -274,6 +259,22 @@ export async function deleteSection(
   } catch (err: any) {
     console.error("❌ deleteSection error:", err.response?.data || err.message);
     throw err;
+  }
+}
+
+export async function getTeachersBySchool(schoolId: string): Promise<any[]> {
+  try {
+    const tenantId = getTenantId();
+    const response = await apiClient.get(
+      `/tenants/${tenantId}/schools/${schoolId}/teachers`
+    );
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (err: any) {
+    console.error("❌ getTeachersBySchool error:", err.response?.data || err.message);
+    return [];
   }
 }
 
