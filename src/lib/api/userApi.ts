@@ -1,20 +1,78 @@
 'use client';
 import apiClient from "./client";
 
-export async function getUsersByTenant(): Promise<any[]> {
-    try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
+// Generic User Functions
 
+export async function updateUser(tenantId: string, userId: string, data: any) {
+    try {
+        const token = localStorage.getItem("contextJWT");
         if (!token) throw new Error("JWT token not found");
 
-        const tenantId = parsed?.tenantId;
+        // Determine the role-specific path from the 'type' field in the data
+        let path;
+        const { type, schoolId, ...restOfData } = data;
 
-        if (!tenantId) {
-            throw new Error("Tenant ID not found in context");
+        if (!schoolId) {
+            throw new Error("School ID is required to update a user.");
         }
+
+        switch (type) {
+            case 'Teacher':
+                path = `/tenants/${tenantId}/schools/${schoolId}/teachers/${userId}`;
+                break;
+            case 'Student':
+                // Assuming a student endpoint, which might need a classId as well
+                // This is a placeholder and might need adjustment based on the actual API structure
+                path = `/tenants/${tenantId}/schools/${schoolId}/students/${userId}`;
+                break;
+            case 'School Admin':
+                // Assuming a school admin endpoint
+                path = `/tenants/${tenantId}/schools/${schoolId}/admins/${userId}`;
+                break;
+            default:
+                // Fallback to a general user update endpoint if it exists
+                path = `/tenants/${tenantId}/users/${userId}`;
+                break;
+        }
+
+        const { address, city, district, state, pincode, ...payloadData } = restOfData;
+
+        const payload = {
+            data: {
+                ...payloadData,
+                address: {
+                    line1: address,
+                    city,
+                    district,
+                    state,
+                    pincode
+                }
+            }
+        };
+
+        const response = await apiClient.put(path, payload, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        return response.data;
+    } catch (err: any) {
+        console.error(`❌ updateUser (role: ${data.type}) error:`, err.response?.data || err.message);
+        throw err;
+    }
+}
+
+
+// Existing Functions
+
+export async function getUsersByTenant(tenantId: string): Promise<any[]> {
+    try {
+        if (!tenantId) {
+            throw new Error("Tenant ID not provided");
+        }
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
 
         const response = await apiClient.get(
             `/tenants/${tenantId}/users`,
@@ -36,19 +94,16 @@ export async function getUsersByTenant(): Promise<any[]> {
     }
 }
 
-export async function getUsersBySchool(schoolId: string): Promise<any[]> {
+export async function getUsersBySchool(tenantId: string, schoolId: string): Promise<any[]> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
-
         if (!token) throw new Error("JWT token not found");
         
-        const tenantId = parsed?.tenantId;
-
         if (!tenantId) {
-            throw new Error("Tenant ID not found in context");
+            throw new Error("Tenant ID not provided");
+        }
+        if (!schoolId) {
+            throw new Error("School ID not provided");
         }
 
         const response = await apiClient.get(

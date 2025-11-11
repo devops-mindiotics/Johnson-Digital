@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { getUsersByTenant, getUsersBySchool } from '@/lib/api/userApi';
-import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
+import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
 import './users.css';
 
@@ -23,56 +23,69 @@ export default function UsersPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
   const userRole = getRoles();
-  const [users, setUsers] = useState([]);
-  const [schools, setSchools] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
-  const [userToUpdate, setUserToUpdate] = useState(null);
+  const [userToUpdate, setUserToUpdate] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isImporting, setIsImporting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedUserName, setProcessedUserName] = useState('');
   
 
   useEffect(() => {
     async function fetchData() {
-      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
-        try {
+      if (!authUser) return;
+
+      try {
+        if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
           const schoolData = await getAllSchools();
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
           }
-        } catch (error) {
-          console.error("Failed to fetch schools:", error);
         }
-      }
-      try {
+
         let userData = [];
-        if (selectedSchool === 'all') {
-            userData = await getUsersByTenant();
+        const tenantId = authUser.tenantId;
+
+        if (userRole === SCHOOLADMIN) {
+          if (authUser.schools && authUser.schools.length > 0) {
+            const schoolId = authUser.schools[0].id;
+            userData = await getUsersBySchool(tenantId, schoolId);
+          }
         } else {
-            userData = await getUsersBySchool(selectedSchool);
+          if (selectedSchool === 'all') {
+              userData = await getUsersByTenant(tenantId);
+          } else {
+              userData = await getUsersBySchool(tenantId, selectedSchool);
+          }
         }
         setUsers(userData);
       } catch (error) {
-        console.error("Failed to fetch users:", error);
+        console.error("Failed to fetch data:", error);
       } 
     }
     fetchData();
   }, [authUser, userRole, selectedSchool]);
 
+  const handleViewUser = (user: any) => {
+    localStorage.setItem('selectedUser', JSON.stringify(user));
+    router.push(`/homepage/users/${user.id}`);
+  };
+
   const handleStatusChange = () => {
     if (userToUpdate) {
-      const newStatus = userToUpdate.status === 'Active' ? 'Inactive' : 'Active';
+      const newStatus = userToUpdate.status === 'active' ? 'inactive' : 'active';
       const updatedUsers = users.map((u) =>
-        u.userId === userToUpdate.userId
+        u.id === userToUpdate.id
           ? { ...u, status: newStatus }
           : u
       );
       setUsers(updatedUsers);
       const userName = `${userToUpdate.firstName} ${userToUpdate.lastName}`;
-      if (newStatus === 'Inactive') {
+      if (newStatus === 'inactive') {
         setProcessedUserName(userName || 'the user');
         setSuccessDialogOpen(true);
       }
@@ -88,11 +101,11 @@ export default function UsersPage() {
       })
     : users;
     
-  const getUserName = (user) => {
+  const getUserName = (user: any) => {
     return user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.displayName || 'Unnamed User');
   }
 
-  const getSchoolName = (user) => {
+  const getSchoolName = (user: any) => {
     if (user.schools && user.schools.length > 0) {
         const school = user.schools[0];
         if (school.schoolCode && school.schoolName) {
@@ -216,7 +229,7 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -248,7 +261,7 @@ export default function UsersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.id}`)}>View/Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -314,13 +327,13 @@ export default function UsersPage() {
           </AlertDialogHeader>
           <div
             className="file-upload-area"
-            onClick={() => fileInputRef.current.click()}
+            onClick={() => fileInputRef.current?.click()}
           >
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
-              onChange={(e) => setSelectedFile(e.target.files[0])}
+              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               accept=".csv"
             />
             {selectedFile ? (

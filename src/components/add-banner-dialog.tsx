@@ -117,7 +117,7 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
       try {
         const signedUrlData = await getSignedUrl({
           tenantName: 'Beta Education',
-          bucketType: 'content',
+          bucketType: 'banners',
           series: 'Banners',
           subject: 'General',
           lesson: 'Promotions',
@@ -138,7 +138,7 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
 
         const attachmentData = await createAttachment({
             tenantName: 'Beta Education',
-            bucketType: 'content',
+            bucketType: 'banners',
             series: 'Banners',
             subject: 'General',
             lesson: 'Promotions',
