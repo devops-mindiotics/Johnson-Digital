@@ -36,17 +36,27 @@ export default function UsersPage() {
   
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchSchools() {
       if (!authUser) return;
-
-      try {
-        if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+        try {
           const schoolData = await getAllSchools();
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
           }
+        } catch (error) {
+          console.error("Failed to fetch schools:", error);
         }
+      }
+    }
+    fetchSchools();
+  }, [authUser, userRole]);
 
+  useEffect(() => {
+    async function fetchUsers() {
+      if (!authUser) return;
+
+      try {
         let userData = [];
         const tenantId = authUser.tenantId;
 
@@ -57,17 +67,18 @@ export default function UsersPage() {
           }
         } else {
           if (selectedSchool === 'all') {
-              userData = await getUsersByTenant(tenantId);
+            userData = await getUsersByTenant(tenantId);
           } else {
-              userData = await getUsersBySchool(tenantId, selectedSchool);
+            userData = await getUsersBySchool(tenantId, selectedSchool);
           }
         }
         setUsers(userData);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } 
+        console.error("Failed to fetch users:", error);
+        setUsers([]);
+      }
     }
-    fetchData();
+    fetchUsers();
   }, [authUser, userRole, selectedSchool]);
 
   const handleViewUser = (user: any) => {

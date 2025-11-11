@@ -10,6 +10,12 @@ interface School {
   roles: string[];
 }
 
+// Represents a tenant role from the API response
+interface TenantRole {
+    tenantId: string;
+    roles: string[];
+}
+
 interface User {
     id: string;
     name: string;
@@ -28,6 +34,7 @@ interface User {
 interface LoginData {
     user: Partial<User>;
     schools: any[]; // The schools array from the API
+    tenantRoles?: TenantRole[];
     sessionJwt: string;
     contextJwt: string;
 }
@@ -61,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, []);
     
       const login = useCallback((data: LoginData) => {
-        const { user: apiUser, schools: apiSchools = [] } = data;
+        const { user: apiUser, schools: apiSchools = [], tenantRoles = [] } = data;
 
         // The UI component expects school.id, but the API provides school.schoolId.
         // We map it here to ensure compatibility.
@@ -70,14 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           id: school.schoolId,
         }));
 
+        const primaryTenantId = tenantRoles[0]?.tenantId || formattedSchools[0]?.tenantId || '';
+
         const userForContext: User = {
           ...apiUser,
           id: apiUser.id!,
           name: `${apiUser.firstName} ${apiUser.lastName}`,
           email: apiUser.email!,
           role: apiUser.roles?.[0] || '',
-          // The main tenantId for the user can be taken from their first associated school
-          tenantId: formattedSchools[0]?.tenantId || '',
+          tenantId: primaryTenantId,
           schools: formattedSchools,
         };
         
