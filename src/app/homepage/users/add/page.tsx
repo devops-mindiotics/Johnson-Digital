@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { createStudent, createTeacher } from '@/lib/api/userApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
@@ -29,7 +29,7 @@ import { getClassesBySchool, getSectionsByClass } from '@/lib/api/classesApi';
 import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,22 +71,11 @@ const formSchema = z.object({
   expiryDate: z.string().optional(),
 });
 
-interface PageProps {
-  searchParams: {
-    type?: 'Teacher' | 'Student' | 'School Admin';
-  };
-}
-
-const getExpiryDate = () => {
-    const today = new Date();
-    const nextYear = today.getFullYear() + 1;
-    return `${nextYear}-04-30`;
-};
-
-export default function AddUserPage({ searchParams }: PageProps) {
+function AddUserPageForm() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const userRole = getRoles();
   const [schools, setSchools] = useState<{ id: string; schoolName: string }[]>([]);
   const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
@@ -98,13 +87,27 @@ export default function AddUserPage({ searchParams }: PageProps) {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [creationSuccess, setCreationSuccess] = useState(false);
 
+  const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       status: 'Pending',
-      type: searchParams.type,
+      type: (searchParams.get('type') as 'Teacher' | 'Student' | 'School Admin') || undefined,
       expiryDate: getExpiryDate(),
+      firstName: '',
+      lastName: '',
+      mobileNumber: '',
+      email: '',
+      address: '',
+      city: '',
+      district: '',
+      state: '',
+      pincode: '',
     },
   });
 
@@ -144,20 +147,34 @@ export default function AddUserPage({ searchParams }: PageProps) {
   }, [selectedSchool]);
 
   useEffect(() => {
-      async function fetchSections() {
-          if (selectedSchool && selectedClass) {
-              try {
-                  const sectionData = await getSectionsByClass(selectedSchool, selectedClass);
-                  setSections(sectionData || []);
-              } catch (error) {
-                  console.error("Failed to fetch sections:", error);
-                  setSections([]);
-              }
-          } else {
-              setSections([]);
+    async function fetchSections() {
+      if (selectedSchool && selectedClass) {
+        try {
+          form.resetField('section');
+          const sectionData = await getSectionsByClass(selectedSchool, selectedClass);
+
+          if (!sectionData || sectionData.length === 0) {
+            setSections([]);
+            return;
           }
+
+          if (sectionData.length === 1 && sectionData[0].name === 'No Sections') {
+            setSections(sectionData);
+            form.setValue('section', sectionData[0].id, { shouldValidate: true });
+          } else {
+            const filteredSections = sectionData.filter(section => section.name !== 'No Sections');
+            setSections(filteredSections);
+          }
+        } catch (error) {
+          console.error("Failed to fetch sections:", error);
+          setSections([]);
+        }
+      } else {
+        setSections([]);
       }
-      fetchSections();
+    }
+    fetchSections();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSchool, selectedClass]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -261,10 +278,10 @@ export default function AddUserPage({ searchParams }: PageProps) {
                           setSelectedSchool(value)
                           setClasses([]);
                           setSections([]);
-                          form.setValue('classId', '');
-                          form.setValue('section', '');
+                          form.resetField('classId');
+                          form.resetField('section');
                           setSelectedClass(null);
-                        }} defaultValue={field.value}>
+                        }} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a school" />
@@ -289,7 +306,7 @@ export default function AddUserPage({ searchParams }: PageProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Type *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a type" />
@@ -349,7 +366,7 @@ export default function AddUserPage({ searchParams }: PageProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Gender *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a gender" />
@@ -532,7 +549,6 @@ export default function AddUserPage({ searchParams }: PageProps) {
                   </CardContent>
                 </Card>
               )}
-
               {type === 'Student' && (
                 <Card>
                   <CardHeader>
@@ -601,9 +617,7 @@ export default function AddUserPage({ searchParams }: PageProps) {
                             <Select onValueChange={(value) => {
                               field.onChange(value)
                               setSelectedClass(value)
-                              setSections([]);
-                              form.setValue('section', '');
-                            }} defaultValue={field.value}>
+                            }} value={field.value || ''}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select a class" />
@@ -627,7 +641,11 @@ export default function AddUserPage({ searchParams }: PageProps) {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Section *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value || ''} 
+                              disabled={sections.length === 1 && sections[0].name === 'No Sections'}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select a section" />
@@ -650,7 +668,8 @@ export default function AddUserPage({ searchParams }: PageProps) {
                         name="pen"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Permanent Education Number (PEN) *</FormLabel>                            <FormControl>
+                            <FormLabel>Permanent Education Number (PEN) *</FormLabel>
+                            <FormControl>
                               <Input placeholder="e.g., 1234567890" {...field} />
                             </FormControl>
                             <FormMessage />
@@ -668,7 +687,7 @@ export default function AddUserPage({ searchParams }: PageProps) {
                     <h3 className="text-lg font-bold">School Admin Details</h3>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:g_id-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       <FormField
                         control={form.control}
                         name="employeeId"
@@ -746,4 +765,12 @@ export default function AddUserPage({ searchParams }: PageProps) {
       </AlertDialog>
     </div>
   );
+}
+
+export default function AddUserPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <AddUserPageForm />
+        </Suspense>
+    )
 }

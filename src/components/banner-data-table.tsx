@@ -12,13 +12,12 @@ import {
   SortingState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AddBannerDialog } from "@/components/add-banner-dialog";
 import { ViewBannerDialog } from "@/components/view-banner-dialog";
-import schoolsData from "@/schools.json";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 export type Banner = {
@@ -39,9 +38,10 @@ interface BannerDataTableProps {
   data: Banner[];
   updateBanner: (updatedBanner: Banner) => void;
   deleteBanner: (bannerId: string) => void;
+  schools: { id: string; name: string }[];
 }
 
-export function BannerDataTable({ data, updateBanner, deleteBanner }: BannerDataTableProps) {
+export function BannerDataTable({ data, updateBanner, deleteBanner, schools }: BannerDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
 
@@ -65,7 +65,7 @@ export function BannerDataTable({ data, updateBanner, deleteBanner }: BannerData
               <Eye className="h-4 w-4" />
             </Button>
           </ViewBannerDialog>
-          <AddBannerDialog banner={row.original} onSave={(updatedBanner) => updateBanner({ ...row.original, ...updatedBanner })} />
+          <AddBannerDialog banner={row.original} onSave={(updatedBanner) => updateBanner({ ...row.original, ...updatedBanner })} schools={schools} />
           <Button variant="destructive" size="icon" onClick={() => deleteBanner(row.original.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -114,7 +114,7 @@ export function BannerDataTable({ data, updateBanner, deleteBanner }: BannerData
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Schools</SelectItem>
-                        {schoolsData.map((school) => (
+                        {schools.map((school) => (
                             <SelectItem key={school.id} value={school.name}>
                                 {school.name}
                             </SelectItem>

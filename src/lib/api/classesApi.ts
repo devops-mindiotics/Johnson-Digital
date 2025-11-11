@@ -60,8 +60,8 @@ export async function getSectionsByClass(schoolId: string, classId: string): Pro
             }
         );
 
-        if (response.data && Array.isArray(response.data.data)) {
-            return response.data.data;
+        if (response.data && response.data.data && Array.isArray(response.data.data.sections)) {
+            return response.data.data.sections;
         }
 
         return [];

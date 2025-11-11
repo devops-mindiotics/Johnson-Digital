@@ -34,6 +34,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { MonitorPlay,  ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/use-auth';
 import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages } from '@/lib/api/masterApi';
 
 const initialContentData = {
@@ -78,6 +79,8 @@ const StatusBadge = ({ status }) => {
 };
 
 export default function ContentManagementPage() {
+    const { user } = useAuth();
+    const isTenantAdmin = user?.roles.includes('TENANT_ADMIN');
     const [contentData, setContentData] = useState(initialContentData);
     const [filteredData, setFilteredData] = useState(initialContentData);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -96,10 +99,10 @@ export default function ContentManagementPage() {
     const [packages, setPackages] = useState([]);
 
     useEffect(() => {
-        if (searchParams.get('add') === 'true') {
+        if (searchParams.get('add') === 'true' && isTenantAdmin) {
             setIsAddDialogOpen(true);
         }
-    }, [searchParams]);
+    }, [searchParams, isTenantAdmin]);
 
     useEffect(() => {
         const fetchFiltersData = async () => {
@@ -113,7 +116,6 @@ export default function ContentManagementPage() {
                 setClasses(classesData);
                 setSeries(seriesData);
                 setSubjects(subjectsData);
-                //alert("fetching packages"+packagesData);
                 setPackages(packagesData);
             } catch (error) {
                 console.error("Failed to fetch filters data:", error);
@@ -124,10 +126,10 @@ export default function ContentManagementPage() {
 
     useEffect(() => {
         const filtered = Object.entries(contentData).filter(([key, contents]) => {
-            const [classValue, series, subject] = key.split('-');
+            const [classValue, seriesValue, subjectValue] = key.split('-');
             const classFilter = filters.class === 'All' || classValue === filters.class;
-            const seriesFilter = filters.series === 'All' || series === filters.series;
-            const subjectFilter = filters.subject === 'All' || subject === filters.subject;
+            const seriesFilter = filters.series === 'All' || seriesValue === filters.series;
+            const subjectFilter = filters.subject === 'All' || subjectValue === filters.subject;
             const packageFilter = filters.package === 'All' || contents.some(c => c.package === filters.package);
             return classFilter && seriesFilter && subjectFilter && packageFilter;
         });
@@ -167,22 +169,24 @@ export default function ContentManagementPage() {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-                <MonitorPlay className="mr-2" />
-                Add New Content
-            </Button>
-            <Button onClick={() => setShowFilters(!showFilters)} className="hidden md:flex">
+            {isTenantAdmin && (
+              <>
+                <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
+                    <MonitorPlay className="mr-2" />
+                    Add New Content
+                </Button>
+                <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
+                    <MonitorPlay />
+                </Button>
+              </>
+            )}
+            <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="hidden md:flex">
                 <Filter className="mr-2" />
                 Filter
             </Button>
-            <div className="md:hidden flex items-center gap-2">
-                <Button onClick={() => setIsAddDialogOpen(true)} size="icon">
-                    <MonitorPlay />
-                </Button>
-                <Button onClick={() => setShowFilters(!showFilters)} size="icon">
-                    <Filter />
-                </Button>
-            </div>
+             <Button onClick={() => setShowFilters(!showFilters)} size="icon" variant="outline" className="md:hidden">
+                <Filter />
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -243,31 +247,31 @@ export default function ContentManagementPage() {
         )}
         <ContentList contentData={filteredData} onUpdateContent={handleUpdateContent} />
       </CardContent>
-      <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />
+      {isTenantAdmin && <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />}
     </Card>
   );
 }
 
 function ContentList({ contentData, onUpdateContent }) {
-    const [openKey, setOpenKey] = useState(Object.keys(contentData)[0]);
+    const [openKey, setOpenKey] = useState(Object.keys(contentData)[0] || null);
 
     useEffect(() => {
-        if (Object.keys(contentData).length > 0) {
+        if (Object.keys(contentData).length > 0 && !contentData[openKey]) {
             setOpenKey(Object.keys(contentData)[0]);
-        } else {
+        } else if (Object.keys(contentData).length === 0) {
             setOpenKey(null);
         }
-    }, [contentData]);
+    }, [contentData, openKey]);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
             {Object.keys(contentData).length === 0 ? (
                 <div className="col-span-full text-center py-10">
                     <p className="text-muted-foreground">No content found matching your filters.</p>
                 </div>
             ) : (
               Object.entries(contentData).map(([key, contents]) => {
-                  const [classValue, series, subject, lesson] = key.split('-');
+                  const [classValue, seriesValue, subjectValue, lesson] = key.split('-');
                   const isRowOpen = openKey === key;
 
                   return (
@@ -281,13 +285,13 @@ function ContentList({ contentData, onUpdateContent }) {
                                   <CardDescription className="flex items-center gap-2 text-sm pt-1">
                                      <span>{`Class - ${classValue}`}</span>
                                      <span>&bull;</span>
-                                     <span>{series}</span>
+                                     <span>{seriesValue}</span>
                                      <span>&bull;</span>
-                                     <span>{subject}</span>
+                                     <span>{subjectValue}</span>
                                   </CardDescription>
                              </div>
                               <div className="flex items-center gap-2">
-                                  <LessonActions lesson={{ class: classValue, series, subject, lesson }} />
+                                  <LessonActions lesson={{ class: classValue, series: seriesValue, subject: subjectValue, lesson }} />
                                   {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                               </div>
                           </CardHeader>
@@ -392,43 +396,24 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
     const [showNewLessonInput, setShowNewLessonInput] = useState(false);
 
     useEffect(() => {
-        async function fetchSeries() {
+        async function fetchAllData() {
             try {
-                const series = await getAllSeries();
+                const [series, classes, packages, subjects] = await Promise.all([
+                    getAllSeries(),
+                    getAllClasses(),
+                    getAllPackages(),
+                    getAllSubjects()
+                ]);
                 setSeriesOptions(series);
-            } catch (error) {
-                console.error("Failed to fetch series:", error);
-            }
-        }
-        async function fetchClasses() {
-            try {
-                const classes = await getAllClasses();
                 setClassesOptions(classes);
-            } catch (error) {
-                console.error("Failed to fetch classes:", error);
-            }
-        }
-        async function fetchPackages() {
-            try {
-                const packages = await getAllPackages();
                 setPackageOptions(packages);
-            } catch (error) {
-                console.error("Failed to fetch packages:", error);
-            }
-        }
-        async function fetchSubjects() {
-            try {
-                const subjects = await getAllSubjects();
                 setSubjectOptions(subjects);
             } catch (error) {
-                console.error("Failed to fetch packages:", error);
+                console.error("Failed to fetch dropdown data:", error);
             }
         }
         if (isOpen) {
-            fetchSeries();
-            fetchClasses();
-            fetchPackages();
-            fetchSubjects();
+            fetchAllData();
         }
     }, [isOpen]);
 
@@ -446,11 +431,11 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const formData = new FormData(e.target as HTMLFormElement);
         const newContent = {
             class: formData.get('class'),
-            series: showSeriesDropdown ? (showNewSeriesInput ? newValues.series : formData.get('series')) : 'NA',
-            package: showPackageDropdown ? (showNewPackageInput ? newValues.package : formData.get('package')) : 'NA',
+            series: showNewSeriesInput ? newValues.series : formData.get('series'),
+            package: showNewPackageInput ? newValues.package : formData.get('package'),
             subject: showNewSubjectInput ? newValues.subject : formData.get('subject'),
             lesson: showNewLessonInput ? newValues.lesson : formData.get('lesson'),
             contentType: selectedContentType,
@@ -460,36 +445,22 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
         resetForm();
     };
 
-    const handleNewValue = (field, value) => {
-        if (value === 'new') {
-            if (field === 'contentName') {
-                setShowContentNameInput(true);
-            } else if (field === 'series') {
-                setShowNewSeriesInput(true);
-            } else if (field === 'package') {
-                setShowNewPackageInput(true);
-            } else if (field === 'subject') {
-                setShowNewSubjectInput(true);
-            } else if (field === 'lesson') {
-                setShowNewLessonInput(true);
-            }
-        } else {
-            if (field === 'contentName') {
-                setShowContentNameInput(false);
-            } else if (field === 'series') {
-                setShowNewSeriesInput(false);
-            } else if (field === 'package') {
-                setShowNewPackageInput(false);
-            } else if (field === 'subject') {
-                setShowNewSubjectInput(false);
-            } else if (field === 'lesson') {
-                setShowNewLessonInput(false);
-            }
+    const handleSelectChange = (field, value) => {
+        const handlerMap = {
+            'series': setShowNewSeriesInput,
+            'package': setShowNewPackageInput,
+            'subject': setShowNewSubjectInput,
+            'lesson': setShowNewLessonInput,
+            'contentName': setShowContentNameInput,
+        };
+        const handler = handlerMap[field];
+        if (handler) {
+            handler(value === 'new');
         }
     };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) resetForm(); }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetForm(); onOpenChange(open); }}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Content</DialogTitle>
@@ -514,48 +485,37 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="series">Series</Label>
-                    {showSeriesDropdown ? (
-                        <Select name="series" onValueChange={(value) => handleNewValue('series', value)}>
-                            <SelectTrigger id="series">
-                                <SelectValue placeholder="Select a series" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {seriesOptions.map((series) => (
-                                    <SelectItem key={series.id} value={series.id}>{series.name}</SelectItem>
-                                ))}
-                                <SelectItem value="new">Add new series...</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    ) : (
-                        <div onClick={() => setShowSeriesDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
-                            Add Series
-                        </div>
-                    )}
-                   {showNewSeriesInput && <Input placeholder="Enter new series" onChange={(e) => setNewValues(prev => ({...prev, series: e.target.value}))} />}
+                    <Select name="series" onValueChange={(value) => handleSelectChange('series', value)}>
+                        <SelectTrigger id="series">
+                            <SelectValue placeholder="Select a series" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {seriesOptions.map((series) => (
+                                <SelectItem key={series.id} value={series.id}>{series.name}</SelectItem>
+                            ))}
+                            <SelectItem value="new">Add new series...</SelectItem>
+                        </SelectContent>
+                    </Select>
+                   {showNewSeriesInput && <Input placeholder="Enter new series" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, series: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="package">Package</Label>
-                     {showPackageDropdown ? (
-                        <Select name="package" onValueChange={(value) => handleNewValue('package', value)}>
-                            <SelectTrigger id="package">
-                                <SelectValue placeholder="Select a package" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            {packageOptions.map((pkgOption) => (
-                                <SelectItem key={pkgOption.id} value={pkgOption.id}>{pkgOption.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                    ) : (
-                        <div onClick={() => setShowPackageDropdown(true)} className="flex h-10 w-full items-center justify-start rounded-md border border-input bg-transparent px-3 py-2 text-sm text-muted-foreground cursor-pointer">
-                            Add Package
-                        </div>
-                    )}
-                    {showNewPackageInput && <Input placeholder="Enter new package" onChange={(e) => setNewValues(prev => ({...prev, package: e.target.value}))} />}
+                    <Select name="package" onValueChange={(value) => handleSelectChange('package', value)}>
+                        <SelectTrigger id="package">
+                            <SelectValue placeholder="Select a package" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {packageOptions.map((pkgOption) => (
+                            <SelectItem key={pkgOption.id} value={pkgOption.id}>{pkgOption.name}</SelectItem>
+                        ))}
+                        <SelectItem value="new">Add new package...</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    {showNewPackageInput && <Input placeholder="Enter new package" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, package: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="subject">Subject</Label>
-                    <Select name="subject" onValueChange={(value) => handleNewValue('subject', value)}>
+                    <Select name="subject" onValueChange={(value) => handleSelectChange('subject', value)}>
                         <SelectTrigger id="subject">
                             <SelectValue placeholder="Select a subject" />
                         </SelectTrigger>
@@ -563,13 +523,14 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             {subjectOptions.map((subOption) => (
                                 <SelectItem key={subOption.id} value={subOption.id}>{subOption.name}</SelectItem>
                             ))}
+                             <SelectItem value="new">Add new subject...</SelectItem>
                         </SelectContent>
                     </Select>
-                     {showNewSubjectInput && <Input placeholder="Enter new subject" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}
+                     {showNewSubjectInput && <Input placeholder="Enter new subject" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="lesson">Lesson</Label>
-                    <Select name="lesson" onValueChange={(value) => handleNewValue('lesson', value)}>
+                    <Select name="lesson" onValueChange={(value) => handleSelectChange('lesson', value)}>
                         <SelectTrigger id="lesson">
                             <SelectValue placeholder="Select a lesson" />
                         </SelectTrigger>
@@ -581,7 +542,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add new lesson...</SelectItem>
                         </SelectContent>
                     </Select>
-                    {showNewLessonInput && <Input placeholder="Enter new lesson" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
+                    {showNewLessonInput && <Input placeholder="Enter new lesson" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                     <Label>Content Type</Label>
@@ -594,7 +555,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="content-name">Content Name</Label>
-                    <Select name="content-name" onValueChange={(value) => handleNewValue('contentName', value)}>
+                    <Select name="content-name" onValueChange={(value) => handleSelectChange('contentName', value)}>
                         <SelectTrigger id="content-name">
                             <SelectValue placeholder="Select a content name" />
                         </SelectTrigger>
@@ -607,7 +568,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                             <SelectItem value="new">Add New</SelectItem>
                         </SelectContent>
                     </Select>
-                    {showContentNameInput && <Input placeholder="Enter new content name" onChange={(e) => setNewValues(prev => ({...prev, contentName: e.target.value}))} />}
+                    {showContentNameInput && <Input placeholder="Enter new content name" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, contentName: e.target.value}))} />}
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="upload">Upload</Label>
@@ -635,7 +596,7 @@ function EditLessonDialog({ lesson, trigger }) {
                         Fill in the details below to edit the lesson.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                     <div className="space-y-2">
                         <Label htmlFor="class">Class</Label>
                         <Input id="class" defaultValue={`Class - ${lesson.class}`} />
@@ -669,7 +630,7 @@ function DeleteLessonDialog({ trigger }) {
                 <DialogHeader>
                     <DialogTitle>Are you sure you want to delete this lesson?</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently delete the lesson and all its contents from our servers.
+                        This action cannot be undone. This will permanently delete the lesson and all its contents.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -708,8 +669,7 @@ function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lesson
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-4">
               <FormField
                 control={form.control}
                 name="contentName"
@@ -745,7 +705,6 @@ function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lesson
                   </FormItem>
                 )}
               />
-            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit">Save Changes</Button>
@@ -765,7 +724,7 @@ function DeleteContentDialog({ trigger }) {
                 <DialogHeader>
                     <DialogTitle>Are you sure you want to delete this content?</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently delete the content from our servers.
+                        This action cannot be undone. This will permanently delete the content.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>

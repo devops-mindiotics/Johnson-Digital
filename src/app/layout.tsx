@@ -6,6 +6,9 @@ import { AppProviders } from '@/components/app-providers';
 export const metadata: Metadata = {
   title: 'Johnson Digital',
   description: 'The future of school management.',
+  icons: {
+    icon: '/JPSwan-Blue.svg',
+  },
 };
 
 export default function RootLayout({

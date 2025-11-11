@@ -1,114 +1,75 @@
 'use client';
-import Link from 'next/link';
+
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
-import {
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
-import { getSidebarNav } from '@/lib/sidebar';
-import React from 'react';
-import { getRoles } from '@/lib/utils/getRole';
-import { ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
-export function SidebarNav() {
-  const userRole = getRoles() || 'student';
-  const { user } = useAuth();
-  const sidebarNav = getSidebarNav(userRole as string);
-  const { isMobile, setOpenMobile, open } = useSidebar();
+export function SidebarNav({ items, setSidebarOpen }: any) {
   const pathname = usePathname();
-  const [openMenus, setOpenMenus] = React.useState<string[]>([]);
+  const [openItems, setOpenItems] = useState<any>({});
 
-  const toggleMenu = (title: string) => {
-    setOpenMenus(prev => prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]);
-  };
-
-  const handleLinkClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
-  if (!user) {
-    return null;
-  }
-
-  const renderMenuItem = (item: any, index: number) => {
-    const Icon = item.icon;
-
-    if (item.children) {
-      const isMenuOpen = openMenus.includes(item.title);
-      return (
-        <SidebarMenuItem key={index}>
-          <SidebarMenuButton
-            onClick={() => toggleMenu(item.title)}
-            tooltip={{ children: item.title, side: 'right' }}
-            aria-label={item.title}
-            className="justify-between"
-          >
-            <div className="flex items-center gap-2">
-              {Icon && <Icon className="shrink-0" size={16} />}
-              <span className={open ? 'truncate' : 'sr-only'}>{item.title}</span>
-            </div>
-            <ChevronDown
-              className={`shrink-0 transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}
-              size={16}
-            />
-          </SidebarMenuButton>
-          {isMenuOpen && (
-            <SidebarMenuSub>
-              {item.children.map(renderMenuItem)}
-            </SidebarMenuSub>
-          )}
-        </SidebarMenuItem>
-      );
-    }
-
-    return (
-      <SidebarMenuSubItem key={index}>
-        <Link
-          href={item.href!}
-          onClick={handleLinkClick}
-          data-active={pathname === item.href}
-          className="flex items-center gap-2 p-2 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          {Icon && <Icon className="shrink-0" size={16} />}
-          <span className={open ? 'truncate' : 'sr-only'}>{item.title}</span>
-        </Link>
-      </SidebarMenuSubItem>
-    );
+  const toggleItem = (item: any) => {
+    setOpenItems({ ...openItems, [item.title]: !openItems[item.title] });
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <SidebarMenu>
-        {sidebarNav.map((item, index) => {
-          const Icon = item.icon;
-          if (item.children) {
-            return renderMenuItem(item, index);
-          }
+    <nav className="grid items-start gap-1">
+      {Array.isArray(items) && items.map((item: any, index: number) => {
+        const isLinkActive = !item.children && pathname === item.href;
+        const isSectionActive = item.children && item.children.some((child: any) => pathname.startsWith(child.href));
 
-          return (
-            <SidebarMenuItem key={index}>
-              <Link href={item.href!}>
-                <SidebarMenuButton
-                  onClick={handleLinkClick}
-                  tooltip={{ children: item.title, side: 'right' }}
-                  aria-label={item.title}
-                  data-active={pathname === item.href}
-                >
-                  {Icon && <Icon className="shrink-0" size={16} />}
-                  <span className={open ? 'truncate' : 'sr-only'}>{item.title}</span>
-                </SidebarMenuButton>
+        return (
+          <div key={index}>
+            {item.children ? (
+              <div
+                className={`rounded-md ${isSectionActive ? "text-primary" : "text-foreground"}`}>
+                <div 
+                  className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted rounded-md"
+                  onClick={() => toggleItem(item)}>
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-5 w-5" />
+                    <span className="text-sm font-medium">{item.title}</span>
+                  </div>
+                  {openItems[item.title] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </div>
+                {openItems[item.title] && (
+                  <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
+                    {item.children.map((child: any, childIndex: number) => {
+                      const isChildLinkActive = pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={childIndex}
+                          href={child.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-3 rounded-md px-3 py-2 my-1 text-sm font-medium transition-colors ${isChildLinkActive ? 'bg-muted text-primary' : 'hover:bg-muted'}`}>
+                          <child.icon className="h-5 w-5" />
+                          <span>{child.title}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${isLinkActive ? 'bg-muted text-primary' : 'hover:bg-muted'}`}>
+                <div className="flex items-center gap-3">
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.title}</span>
+                </div>
+                {item.tag && (
+                    <span className="ml-auto text-xs font-semibold text-white bg-blue-500 px-2 py-0.5 rounded-full">
+                        {item.tag}
+                    </span>
+                )}
               </Link>
-            </SidebarMenuItem>
-          );
-        })}
-      </SidebarMenu>
-    </div>
+            )}
+          </div>
+        );
+      })}
+    </nav>
   );
 }

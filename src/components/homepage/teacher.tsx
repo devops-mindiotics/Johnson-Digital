@@ -26,9 +26,9 @@ export default function TeacherDashboard({ user }: { user: User }) {
 
   const modules = [
     { name: 'Start Learning', icon: PlaySquare, color: 'text-blue-600', href: '/homepage/my-classes' },
-    { name: 'Diary', icon: BookOpen, color: 'text-green-600', href: '/homepage/diary' },
-    { name: 'Assignments', icon: ClipboardList, color: 'text-yellow-600', href: '/homepage/assignments' },
-    { name: 'Notice', icon: Bell, color: 'text-red-600', href: '/homepage/notice-board' },
+    { name: 'Diary', icon: BookOpen, color: 'text-green-600', href: '/homepage/diary', tag: 'Upcoming' },
+    { name: 'Assignments', icon: ClipboardList, color: 'text-yellow-600', href: '/homepage/assignments', tag: 'Upcoming' },
+    { name: 'Notice', icon: Bell, color: 'text-red-600', href: '/homepage/notice-board', tag: 'Upcoming' },
   ];
 
   return (
@@ -69,7 +69,12 @@ export default function TeacherDashboard({ user }: { user: User }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         {modules.map((module) => (
                 <Link href={module.href} key={module.name} className="no-underline">
-                    <Card className="text-center h-full hover:shadow-lg transition-shadow">
+                    <Card className="text-center h-full hover:shadow-lg transition-shadow relative">
+                        {module.tag && (
+                            <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
+                                {module.tag}
+                            </div>
+                        )}
                         <CardContent className="flex flex-col items-center justify-center p-6">
                             <module.icon className={`h-10 w-10 mb-4 ${module.color}`} />
                             <h3 className="text-lg font-semibold">{module.name}</h3>

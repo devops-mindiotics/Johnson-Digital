@@ -1,3 +1,4 @@
+
 'use client';
 
 import apiClient from "./client";
@@ -19,8 +20,8 @@ export async function createBanner(bannerData: any): Promise<any> {
       { data: bannerData },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
@@ -32,46 +33,50 @@ export async function createBanner(bannerData: any): Promise<any> {
 }
 
 export async function getAllBanners(
-  page = 1,
-  limit = 10,
-  status = "active",
-  search = "",
-  user: User | null = null
+    page = 1,
+    limit = 10,
+    filters: { schoolId?: string; role?: string } = {},
+    user: User | null = null,
 ): Promise<any> {
-  try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) return { records: [], pagination: {} };
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId || null;
+    try {
+        const tenantData = localStorage.getItem('contextInfo');
+        if (!tenantData) return { records: [], pagination: {} };
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem('contextJWT');
+        const tenantId = parsed?.tenantId || null;
 
-    if (!tenantId) return { records: [], pagination: {} };
+        if (!tenantId) return { records: [], pagination: {} };
 
-    let url = `/tenants/${tenantId}/masters/banners?page=${page}&limit=${limit}&status=${status}&search=${search}`;
+        let url = `/tenants/${tenantId}/banners?page=${page}&limit=${limit}`;
 
-    if (user && user.roles === STUDENT) {
-        url += `&role=${STUDENT}`;
+        if (filters.schoolId) {
+            url += `&schoolId=${filters.schoolId}`;
+        }
+
+        if (filters.role) {
+            url += `&role=${filters.role}`;
+        } else if (user && user.roles === STUDENT) {
+            url += `&role=${STUDENT}`;
+        }
+
+        const response = await apiClient.get(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (response.data && response.data.data) {
+            return {
+                records: response.data.data,
+                pagination: response.data.pagination,
+            };
+        }
+
+        return { records: [], pagination: {} };
+    } catch (err: any) {
+        console.error('❌ getAllBanners error:', err.response?.data || err.message);
+        throw err;
     }
-
-    const response = await apiClient.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data && response.data.data) {
-        return {
-            records: response.data.data.banners,
-            pagination: response.data.data.meta.pagination,
-          };
-    }
-
-    return { records: [], pagination: {} };
-  } catch (err: any) {
-    console.error("❌ getAllBanners error:", err.response?.data || err.message);
-    throw err;
-  }
 }
 
 export async function getBannerById(bannerId: string): Promise<any> {
@@ -88,8 +93,8 @@ export async function getBannerById(bannerId: string): Promise<any> {
       `/tenants/${tenantId}/masters/banners/${bannerId}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
@@ -122,8 +127,8 @@ export async function updateBanner(
       { data: bannerData },
       {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
@@ -148,8 +153,8 @@ export async function deleteBanner(bannerId: string): Promise<any> {
       `/tenants/${tenantId}/masters/banners/${bannerId}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       }
     );
 
@@ -159,3 +164,30 @@ export async function deleteBanner(bannerId: string): Promise<any> {
     throw err;
   }
 }
+
+export async function getSignedUrl(uploadData: any): Promise<any> {
+    try {
+      const tenantData = localStorage.getItem('contextInfo');
+      if (!tenantData) throw new Error('Context info not found');
+      const parsed = JSON.parse(tenantData);
+      const token = localStorage.getItem('contextJWT');
+      const tenantId = parsed?.tenantId;
+  
+      if (!tenantId) throw new Error('Tenant ID not found');
+  
+      const response = await apiClient.post(
+        `/tenants/${tenantId}/attachments/signed-upload-url`,
+        { data: uploadData },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      return response.data.data;
+    } catch (err: any) {
+      console.error('❌ getSignedUrl error:', err.response?.data || err.message);
+      throw err;
+    }
+  }

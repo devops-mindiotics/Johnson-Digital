@@ -23,7 +23,8 @@ import { getAllStudents } from "@/lib/api/userApi";
 
 const DiaryPage = () => {
   const { user } = useAuth();
-  const isStudent = user?.role === 'Student';
+  const isStudent = user?.roles.includes('STUDENT');
+  const canAddDiary = user?.roles.includes('TEACHER') || user?.roles.includes('SCHOOL_ADMIN');
 
   const [diaries, setDiaries] = useState([]);
   const [students, setStudents] = useState([]);
@@ -158,7 +159,7 @@ const DiaryPage = () => {
                     <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="icon" className="md:hidden">
                         <Filter className="h-4 w-4" />
                     </Button>
-                    {!isStudent && (
+                    {canAddDiary && (
                     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                         <DialogTrigger asChild>
                            <div>

@@ -1,32 +1,48 @@
+'use client';
 import { notFound } from "next/navigation";
 import { getSchoolById, getAllSchools } from "@/lib/api/schoolApi";
 import EditSchoolClient from "./EditSchoolClient";
+import { useEffect, useState } from "react";
 
-// Generate static params if needed
-export async function generateStaticParams() {
-  const schools = await getAllSchools();
-  return schools.map((school: any) => ({ id: school.id }));
-}
+export default function Page({ params }: { params: { id: string } }) {
+  const [school, setSchool] = useState(null);
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-// Server component page
-export default async function EditSchoolPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<JSX.Element> {
-  // Await params as required by Next.js 15
-  const { id } = await params;
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        if (params.id) {
+          const [schoolData, allSchools] = await Promise.all([
+            getSchoolById(params.id),
+            getAllSchools(),
+          ]);
 
-  // Fetch school data and all schools
-  const [school, schools] = await Promise.all([
-    getSchoolById(id),
-    getAllSchools(),
-  ]);
+          if (!schoolData) {
+            notFound();
+            return;
+          }
+          
+          setSchool(schoolData);
+          setSchools(allSchools);
+        }
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!school) {
-    notFound();
+    fetchInitialData();
+  }, [params.id]);
+
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
-  // Pass data to client component
+  if (!school) {
+    return notFound();
+  }
+
   return <EditSchoolClient initialSchool={school} schoolList={schools} />;
 }

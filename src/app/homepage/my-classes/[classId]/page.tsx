@@ -1,24 +1,18 @@
 import ClassDetailsClientPage from './client';
 import { classSubjects } from '@/lib/data';
 
-// Generate static paths for all classes
 export function generateStaticParams() {
-  const classIds = Object.keys(classSubjects);
-  return classIds.map((classId) => ({ classId }));
+    const classIds = Object.keys(classSubjects);
+    return classIds.map(classId => ({ classId }));
 }
 
-// Server component page
-export default async function ClassDetailsPage({
-  params,
-}: {
-  params: Promise<{ classId: string }>;
-}): Promise<JSX.Element> {
-  // Await the params as required in Next.js 15
-  const { classId } = await params;
-
-  // Get the subjects for this class
+// This is the Page component, a server component.
+export default function ClassDetailsPage({ params }: { params: { classId: string } }) {
+  // We get the classId from the URL parameters.
+  const { classId } = params;
   const subjects = classSubjects[classId] || [];
-
-  // Render the client component with explicit props
-  return <ClassDetailsClientPage classId={classId} subjects={subjects} />;
+  
+  // We will pass the classId and subjects as direct props to the client component.
+  // This is a more explicit and robust way to pass data.
+  return <ClassDetailsClientPage classId={classId} subjects={subjects} />
 }
