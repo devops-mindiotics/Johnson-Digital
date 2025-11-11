@@ -1,9 +1,6 @@
-
 'use client';
 
 import apiClient from "./client";
-import { User } from '@/contexts/auth-context';
-import { STUDENT } from '../utils/constants';
 
 export async function createBanner(bannerData: any): Promise<any> {
   try {
@@ -16,7 +13,7 @@ export async function createBanner(bannerData: any): Promise<any> {
     if (!tenantId) throw new Error("Tenant ID not found");
 
     const response = await apiClient.post(
-      `/tenants/${tenantId}/masters/banners`,
+      `/tenants/${tenantId}/banners`,
       { data: bannerData },
       {
         headers: {
@@ -35,8 +32,7 @@ export async function createBanner(bannerData: any): Promise<any> {
 export async function getAllBanners(
     page = 1,
     limit = 10,
-    filters: { schoolId?: string; role?: string } = {},
-    user: User | null = null,
+    schoolId: string | null,
 ): Promise<any> {
     try {
         const tenantData = localStorage.getItem('contextInfo');
@@ -48,15 +44,8 @@ export async function getAllBanners(
         if (!tenantId) return { records: [], pagination: {} };
 
         let url = `/tenants/${tenantId}/banners?page=${page}&limit=${limit}`;
-
-        if (filters.schoolId) {
-            url += `&schoolId=${filters.schoolId}`;
-        }
-
-        if (filters.role) {
-            url += `&role=${filters.role}`;
-        } else if (user && user.roles === STUDENT) {
-            url += `&role=${STUDENT}`;
+        if (schoolId) {
+            url += `&schoolId=${schoolId}`;
         }
 
         const response = await apiClient.get(url, {
@@ -123,7 +112,7 @@ export async function updateBanner(
     if (!tenantId) throw new Error("Tenant ID not found");
 
     const response = await apiClient.patch(
-      `/tenants/${tenantId}/masters/banners/${bannerId}`,
+      `/tenants/${tenantId}/banners/${bannerId}`,
       { data: bannerData },
       {
         headers: {
@@ -150,7 +139,7 @@ export async function deleteBanner(bannerId: string): Promise<any> {
     if (!tenantId) throw new Error("Tenant ID not found");
 
     const response = await apiClient.delete(
-      `/tenants/${tenantId}/masters/banners/${bannerId}`,
+      `/tenants/${tenantId}/banners/${bannerId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -174,7 +163,9 @@ export async function getSignedUrl(uploadData: any): Promise<any> {
       const tenantId = parsed?.tenantId;
   
       if (!tenantId) throw new Error('Tenant ID not found');
-  
+      
+      console.log('DEBUG: getSignedUrl request body', uploadData);
+
       const response = await apiClient.post(
         `/tenants/${tenantId}/attachments/signed-upload-url`,
         { data: uploadData },
@@ -184,10 +175,30 @@ export async function getSignedUrl(uploadData: any): Promise<any> {
           },
         }
       );
-  
+      
       return response.data.data;
     } catch (err: any) {
       console.error('❌ getSignedUrl error:', err.response?.data || err.message);
       throw err;
+    }
+  }
+
+  export async function uploadFileToSignedUrl(signedUrl: string, file: File) {
+    try {
+      console.log('DEBUG: Uploading to signed URL:', signedUrl);
+      console.log('DEBUG: Request method: PUT');
+      const response = await fetch(signedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`File upload failed with status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error uploading file to signed URL:', error);
+      throw error;
     }
   }

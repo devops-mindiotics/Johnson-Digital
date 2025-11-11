@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from "react";
@@ -40,8 +39,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getSignedUrl } from "@/lib/api/bannerApi";
-import { createAttachment } from "@/lib/api/attachmentApi";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -65,7 +62,7 @@ const formSchema = z.object({
 
 interface AddBannerDialogProps {
   banner?: Banner;
-  onSave: (banner: Omit<Banner, "id">) => void;
+  onSave: (banner: Omit<Banner, "id">, file: File | null) => void;
   schools: { id: string; name: string }[];
 }
 
@@ -74,7 +71,7 @@ const audienceOptions = ["All", "School Admins", "Teachers", "Students"];
 export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
-  const [attachment, setAttachment] = React.useState<any>(null);
+  const [file, setFile] = React.useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -108,67 +105,26 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
         });
         setImagePreview(null);
       }
+      setFile(null);
     }
   }, [banner, form, open]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      try {
-        const signedUrlData = await getSignedUrl({
-          tenantName: 'Beta Education',
-          bucketType: 'banners',
-          series: 'Banners',
-          subject: 'General',
-          lesson: 'Promotions',
-          package: 'Banners',
-          class: 'All',
-          contentType: file.type,
-          filename: file.name,
-          expiresIn: 3600,
-        });
-
-        await fetch(signedUrlData.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
-
-        const attachmentData = await createAttachment({
-            tenantName: 'Beta Education',
-            bucketType: 'banners',
-            series: 'Banners',
-            subject: 'General',
-            lesson: 'Promotions',
-            package: 'Banners',
-            class: 'All',
-            contentType: file.type,
-            filename: file.name,
-            filePath: signedUrlData.filePath,
-            url: signedUrlData.uploadUrl.split('?')[0],
-            uploadedBy: 'user_placeholder', // Replace with actual user ID
-            status: 'active',
-        });
-
-        setAttachment(attachmentData);
-        setImagePreview(URL.createObjectURL(file));
-      } catch (error) {
-        console.error("File upload failed:", error);
-      }
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+        setFile(selectedFile);
+        setImagePreview(URL.createObjectURL(selectedFile));
     }
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    console.log('DEBUG: Form values on submit', values);
     const schoolValue =
       values.targetAudience.includes('School Admins') && Array.isArray(values.school)
         ? values.school.join(', ')
         : '';
 
-    const mediaUrl = attachment ? attachment.url : (banner ? banner.media : null);
-    
-    onSave({ ...values, school: schoolValue, media: mediaUrl, targetAudience: values.targetAudience.join(', ') });
+    onSave({ ...values, school: schoolValue, media: imagePreview || '', targetAudience: values.targetAudience.join(', ') }, file);
     setOpen(false);
   };
 

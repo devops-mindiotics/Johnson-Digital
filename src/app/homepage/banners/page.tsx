@@ -1,22 +1,29 @@
 'use client';
 
 import * as React from 'react';
-import { BannerDataTable, Banner } from '@/components/banner-data-table';
+import { Banner } from '@/types/banner';
 import { AddBannerDialog } from '@/components/add-banner-dialog';
-import { getAllBanners, createBanner, updateBanner, deleteBanner } from '@/lib/api/bannerApi';
+import { getAllBanners, createBanner, updateBanner, deleteBanner, getSignedUrl, uploadFileToSignedUrl } from '@/lib/api/bannerApi';
+import { createAttachment } from '@/lib/api/attachmentApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DebugDialog } from '@/components/debug-dialog';
+import { BannerCard } from '@/components/banner-card';
 
 const BannersPage = () => {
   const [data, setData] = React.useState<Banner[]>([]);
+  const [rawBanners, setRawBanners] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [schools, setSchools] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = React.useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = React.useState<Record<string, any>>({});
+  const [showDebugDialog, setShowDebugDialog] = React.useState(false);
 
   const fetchBanners = async (schoolId: string | null) => {
     try {
       setLoading(true);
       const { records } = await getAllBanners(1, 10, schoolId);
+      setRawBanners(records);
       setData(records.map((banner: any) => ({
         id: banner.id.toString(),
         name: banner.title,
@@ -24,7 +31,7 @@ const BannersPage = () => {
         targetAudience: Object.keys(banner.targetAudience).filter(key => banner.targetAudience[key] === true && !['all', 'schoolIds'].includes(key)).join(', '),
         startDate: new Date(banner.startDate).toISOString().split('T')[0],
         endDate: new Date(banner.endDate).toISOString().split('T')[0],
-        media: banner.attachmentUrl,
+        media: banner.attachmentUrl || '',
       })));
     } catch (error) {
       console.error("Error fetching banners:", error);
@@ -49,22 +56,70 @@ const BannersPage = () => {
     fetchSchools();
   }, [selectedSchool]);
 
-  const addBanner = async (banner: Omit<Banner, "id">) => {
+  const addBanner = async (banner: Omit<Banner, "id">, file: File | null) => {
     try {
+        let attachmentId = '';
+        let attachmentUrl = '';
+        const debugPayload: Record<string, any> = {};
+
+        if (file) {
+            const signedUrlPayload = {
+                tenantName: 'Beta Education',
+                bucketType: 'banners',
+                series: 'Banners',
+                subject: 'General',
+                lesson: 'Promotions',
+                package: 'Banners',
+                class: 'All',
+                contentType: file.type,
+                filename: file.name,
+                expiresIn: 3600,
+              };
+            debugPayload.signedUrlPayload = signedUrlPayload;
+            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            debugPayload.signedUrlData = signedUrlData;
+
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
+
+            const attachmentPayload = {
+                tenantName: 'Beta Education',
+                bucketType: 'banners',
+                series: 'Banners',
+                subject: 'General',
+                lesson: 'Promotions',
+                package: 'Banners',
+                class: 'All',
+                contentType: file.type,
+                filename: file.name,
+                filePath: signedUrlData.filePath,
+                uploadedBy: 'Narayana',
+            };
+            debugPayload.attachmentPayload = attachmentPayload;
+
+            const newAttachment = await createAttachment(attachmentPayload);
+            attachmentId = newAttachment.id;
+            attachmentUrl = newAttachment.url;
+            debugPayload.newAttachment = newAttachment;
+        }
+
       const newBanner = {
         title: banner.name,
-        attachmentUrl: banner.media,
+        attachmentId: attachmentId,
+        attachmentUrl: attachmentUrl,
         targetAudience: {
-            all: banner.targetAudience.includes('all'),
-            schoolAdmins: banner.targetAudience.includes('SCHOOL_ADMIN'),
-            teachers: banner.targetAudience.includes('TEACHER'),
-            students: banner.targetAudience.includes('STUDENT'),
-            schoolIds: banner.school ? [banner.school] : [],
+            all: banner.targetAudience.includes('All'),
+            schoolAdmins: banner.targetAudience.includes('School Admins'),
+            teachers: banner.targetAudience.includes('Teachers'),
+            students: banner.targetAudience.includes('Students'),
+            schoolIds: banner.school ? banner.school.split(', ') : [],
         },
         startDate: banner.startDate,
         endDate: banner.endDate,
-        createdRole: 'TENANT_ADMIN'
       };
+      debugPayload.createBannerPayload = newBanner;
+      setDebugInfo(debugPayload);
+      setShowDebugDialog(true);
+
       await createBanner(newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
@@ -72,22 +127,71 @@ const BannersPage = () => {
     }
   };
 
-  const handleUpdateBanner = async (updatedBanner: Banner) => {
+  const handleUpdateBanner = async (updatedBanner: Banner, file: File | null) => {
     try {
+        const originalBanner = rawBanners.find(b => b.id === updatedBanner.id);
+        let attachmentId = originalBanner?.attachmentId || '';
+        let attachmentUrl = updatedBanner.media;
+        const debugPayload: Record<string, any> = {};
+
+        if (file) {
+            const signedUrlPayload = {
+                tenantName: 'Beta Education',
+                bucketType: 'banners',
+                series: 'Banners',
+                subject: 'General',
+                lesson: 'Promotions',
+                package: 'Banners',
+                class: 'All',
+                contentType: file.type,
+                filename: file.name,
+                expiresIn: 3600,
+              };
+            debugPayload.signedUrlPayload = signedUrlPayload;
+            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            debugPayload.signedUrlData = signedUrlData;
+
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
+
+            const attachmentPayload = {
+                tenantName: 'Beta Education',
+                bucketType: 'banners',
+                series: 'Banners',
+                subject: 'General',
+                lesson: 'Promotions',
+                package: 'Banners',
+                class: 'All',
+                contentType: file.type,
+                filename: file.name,
+                filePath: signedUrlData.filePath,
+                uploadedBy: 'Narayana',
+            };
+            debugPayload.attachmentPayload = attachmentPayload;
+            
+            const newAttachment = await createAttachment(attachmentPayload);
+            attachmentId = newAttachment.id;
+            attachmentUrl = newAttachment.url;
+            debugPayload.newAttachment = newAttachment;
+        }
+
         const newBanner = {
             title: updatedBanner.name,
-            attachmentUrl: updatedBanner.media,
+            attachmentId: attachmentId,
+            attachmentUrl: attachmentUrl,
             targetAudience: {
-                all: updatedBanner.targetAudience.includes('all'),
-                schoolAdmins: updatedBanner.targetAudience.includes('SCHOOL_ADMIN'),
-                teachers: updatedBanner.targetAudience.includes('TEACHER'),
-                students: updatedBanner.targetAudience.includes('STUDENT'),
-                schoolIds: updatedBanner.school ? [updatedBanner.school] : [],
+                all: updatedBanner.targetAudience.includes('All'),
+                schoolAdmins: updatedBanner.targetAudience.includes('School Admins'),
+                teachers: updatedBanner.targetAudience.includes('Teachers'),
+                students: updatedBanner.targetAudience.includes('Students'),
+                schoolIds: updatedBanner.school ? updatedBanner.school.split(', ') : [],
             },
             startDate: updatedBanner.startDate,
             endDate: updatedBanner.endDate,
-            createdRole: 'TENANT_ADMIN'
           };
+      debugPayload.updateBannerPayload = newBanner;
+      setDebugInfo(debugPayload);
+      setShowDebugDialog(true);
+
       await updateBanner(updatedBanner.id, newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
@@ -110,6 +214,7 @@ const BannersPage = () => {
 
   return (
     <div className="space-y-4">
+        <DebugDialog open={showDebugDialog} onOpenChange={setShowDebugDialog} debugInfo={debugInfo} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Banners</h1>
         <div className="flex items-center gap-2">
@@ -131,12 +236,17 @@ const BannersPage = () => {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <BannerDataTable 
-          data={data} 
-          updateBanner={handleUpdateBanner} 
-          deleteBanner={handleDeleteBanner} 
-          schools={schools}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map(banner => (
+            <BannerCard 
+              key={banner.id} 
+              banner={banner} 
+              schools={schools} 
+              updateBanner={handleUpdateBanner} 
+              deleteBanner={handleDeleteBanner} 
+            />
+          ))}
+        </div>
       )}
     </div>
   );
