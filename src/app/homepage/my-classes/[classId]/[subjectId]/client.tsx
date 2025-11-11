@@ -28,9 +28,7 @@ const iconComponents = {
 };
 
 export default function LessonContentClientPage({
-  classId,
-  subjectId,
-  subject,
+  subject
 }: LessonContentClientPageProps) {
   const [selectedResource, setSelectedResource] = useState<any | null>(null);
   const { openPdf } = usePdfViewer(); // Use the hook
