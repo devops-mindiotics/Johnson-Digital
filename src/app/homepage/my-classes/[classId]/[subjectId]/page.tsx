@@ -23,12 +23,12 @@ export function generateStaticParams() {
     return paths;
 }
 
-// This is the Page component, a server component.
-export default function LessonContentPage({ params }: { params: { classId: string, subjectId: string } }) {
-  const { classId, subjectId } = params;
-  // Directly use the imported subjectLessons object
-  const subject = subjectLessons[subjectId as keyof typeof subjectLessons] || { name: 'Unknown Subject', chapters: [] };
+// // This is the Page component, a server component.
+// export default function LessonContentPage({ params }: { params: { classId: string, subjectId: string } }) {
+//   const { classId, subjectId } = params;
+//   // Directly use the imported subjectLessons object
+//   const subject = subjectLessons[subjectId as keyof typeof subjectLessons] || { name: 'Unknown Subject', chapters: [] };
   
-  // We pass classId and subjectId as direct, explicit props to the client component.
-  return <LessonContentClientPage classId={classId} subjectId={subjectId} subject={subject} />
-}
+//   // We pass classId and subjectId as direct, explicit props to the client component.
+//   return <LessonContentClientPage classId={classId} subjectId={subjectId} subject={subject} />
+// }
