@@ -1,6 +1,5 @@
 'use client';
 import apiClient from "./client";
-import { TEACHERS_BY_SCHOOL_ENDPOINT } from "./endpoint";
 
 export async function getUsersByTenant(): Promise<any[]> {
     try {
@@ -61,8 +60,8 @@ export async function getUsersBySchool(schoolId: string): Promise<any[]> {
             }
         );
 
-        if (response.data && response.data.data && Array.isArray(response.data.data.users)) {
-            return response.data.data.users;
+        if (response.data && Array.isArray(response.data.data)) {
+            return response.data.data;
         }
 
         return [];
@@ -72,7 +71,7 @@ export async function getUsersBySchool(schoolId: string): Promise<any[]> {
     }
 }
 
-export const getTeachersBySchool = async (schoolId: string) => {
+export const getTeachersBySchool = async (schoolId: string, params?: any) => {
     try {
         const tenantData = localStorage.getItem("contextInfo");
         if (!tenantData) throw new Error("Context info not found");
@@ -88,11 +87,12 @@ export const getTeachersBySchool = async (schoolId: string) => {
         }
 
         const response = await apiClient.get(
-            TEACHERS_BY_SCHOOL_ENDPOINT(tenantId, schoolId),
+            `/tenants/${tenantId}/schools/${schoolId}/teachers`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
+                params: params
             }
         );
 
@@ -107,6 +107,139 @@ export const getTeachersBySchool = async (schoolId: string) => {
     }
 }
 
+export const createTeacher = async (schoolId: string, data: any) => {
+    try {
+
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+
+        if (!token) throw new Error("JWT token not found");
+
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) {
+            throw new Error("Tenant ID not found in context");
+        }
+
+        const { address, city, district, state, pincode, ...restOfData } = data;
+
+        const payload = {
+            data: {
+                ...restOfData,
+                role: ["Teacher"],
+                address: {
+                    line1: address,
+                    city,
+                    district,
+                    state,
+                    pincode
+                }
+            }
+        };
+
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/schools/${schoolId}/teachers`,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ createTeacher error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const getTeacherById = async (tenantId: string, schoolId: string, teacherId: string) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/schools/${schoolId}/teachers/${teacherId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && response.data.data) {
+            return response.data.data;
+        }
+        return null;
+    } catch (err: any) {
+        console.error("❌ getTeacherById error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const updateTeacher = async (tenantId: string, schoolId: string, teacherId: string, data: any) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const { address, city, district, state, pincode, ...restOfData } = data;
+
+        const payload = {
+            data: {
+                ...restOfData,
+                role: ["Teacher"],
+                address: {
+                    line1: address,
+                    city,
+                    district,
+                    state,
+                    pincode
+                }
+            }
+        };
+
+        const response = await apiClient.put(
+            `/tenants/${tenantId}/schools/${schoolId}/teachers/${teacherId}`,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ updateTeacher error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const deleteTeacher = async (tenantId: string, schoolId: string, teacherId: string) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.delete(
+            `/tenants/${tenantId}/schools/${schoolId}/teachers/${teacherId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ deleteTeacher error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+// student api calls, keeping them as placeholders
 export const getAllStudents = async (tenantId: string, schoolId: string) => {
     console.log("getAllStudents", tenantId, schoolId);
     return {data: []};
@@ -122,32 +255,12 @@ export const updateStudent = async (tenantId: string, schoolId: string, classId:
     return {};
 }
 
-export const updateTeacher = async (tenantId: string, schoolId: string, teacherId: string, data: any) => {
-    console.log("updateTeacher", tenantId, schoolId, teacherId, data);
-    return {};
-}
-
 export const createStudent = async (tenantId: string, schoolId: string, classId: string, data: any) => {
     console.log("createStudent", tenantId, schoolId, classId, data);
     return {};
 }
 
-export const createTeacher = async (tenantId: string, schoolId: string, data: any) => {
-    console.log("createTeacher", tenantId, schoolId, data);
-    return {};
-}
-
 export const deleteStudent = async (tenantId: string, schoolId: string, classId: string, studentId: string) => {
     console.log("deleteStudent", tenantId, schoolId, classId, studentId);
-    return {};
-}
-
-export const deleteTeacher = async (tenantId: string, schoolId: string, teacherId: string) => {
-    console.log("deleteTeacher", tenantId, schoolId, teacherId);
-    return {};
-}
-
-export const getTeacherById = async (tenantId: string, schoolId: string, teacherId: string) => {
-    console.log("getTeacherById", tenantId, schoolId, teacherId);
     return {};
 }

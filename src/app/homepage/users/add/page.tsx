@@ -24,6 +24,21 @@ import {
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { createStudent, createTeacher } from '@/lib/api/userApi';
+import { getAllSchools } from '@/lib/api/schoolApi';
+import { getClassesBySchool, getSectionsByClass } from '@/lib/api/classesApi';
+import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
+import { getRoles } from '@/lib/utils/getRole';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const formSchema = z.object({
   school: z.string().optional(),
@@ -58,24 +73,19 @@ const formSchema = z.object({
 
 export default function AddUserPage({ searchParams }: { searchParams: { type: 'Teacher' | 'Student' | 'School Admin' } }) {
   const { user } = useAuth();
-  const [schools, setSchools] = useState<{ schoolId: string; schoolName: string }[]>([]);
+  const { toast } = useToast();
+  const router = useRouter();
+  const userRole = getRoles();
+  const [schools, setSchools] = useState<{ id: string; schoolName: string }[]>([]);
+  const [classes, setClasses] = useState<{ id: string; name: string }[]>([]);
+  const [sections, setSections] = useState<{ id: string; name: string }[]>([]);
+  const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [feedbackTitle, setFeedbackTitle] = useState('');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [creationSuccess, setCreationSuccess] = useState(false);
 
-  useEffect(() => {
-    // Mock fetching school data
-    const mockSchoolData = [
-        { schoolId: 'GH-123', schoolName: 'Greenwood High' },
-        { schoolId: 'GH-124', schoolName: 'Greenwood High' },
-        { schoolId: 'OI-456', schoolName: 'Oakridge International' },
-        { schoolId: 'DPS-789', schoolName: 'Delhi Public School' },
-    ];
-    setSchools(mockSchoolData);
-  }, []);
-
-  const getExpiryDate = () => {
-    const today = new Date();
-    const nextYear = today.getFullYear() + 1;
-    return `${nextYear}-04-30`;
-  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,8 +96,68 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
     },
   });
 
+  useEffect(() => {
+    async function fetchSchools() {
+      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+        try {
+          const schoolData = await getAllSchools();
+          if (schoolData) {
+            setSchools(schoolData);
+          }
+        } catch (error) {
+          console.error("Failed to fetch schools:", error);
+        }
+      } else if (user?.schoolId) {
+        setSelectedSchool(user.schoolId);
+      }
+    }
+    fetchSchools();
+  }, [userRole, user]);
+
+  useEffect(() => {
+    async function fetchClasses() {
+        if (selectedSchool) {
+            try {
+                const classData = await getClassesBySchool(selectedSchool);
+                setClasses(classData || []);
+            } catch (error) {
+                console.error("Failed to fetch classes:", error);
+                setClasses([]);
+            }
+        } else {
+            setClasses([]);
+        }
+    }
+    fetchClasses();
+  }, [selectedSchool]);
+
+  useEffect(() => {
+      async function fetchSections() {
+          if (selectedSchool && selectedClass) {
+              try {
+                  const sectionData = await getSectionsByClass(selectedSchool, selectedClass);
+                  setSections(sectionData || []);
+              } catch (error) {
+                  console.error("Failed to fetch sections:", error);
+                  setSections([]);
+              }
+          } else {
+              setSections([]);
+          }
+      }
+      fetchSections();
+  }, [selectedSchool, selectedClass]);
+
+  const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const [schoolId] = values.school?.split('-') || [];
+    const schoolId = selectedSchool || user.schoolId;
+    const schoolName = schools.find(s => s.id === schoolId)?.schoolName;
+
     if (values.type === 'Student') {
       try {
         const studentData = {
@@ -95,22 +165,53 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
             ...values
         };
         await createStudent(user.tenantId, schoolId, values.classId, studentData);
-        // Add success notification here
-      } catch (error) {
+        setFeedbackTitle('Success');
+        setFeedbackMessage('Student created successfully.');
+        setCreationSuccess(true);
+        setShowFeedbackDialog(true);
+      } catch (error: any) {
         console.error('Failed to create student:', error);
-        // Add error notification here
+        const message = error.response?.data?.message || error.message || 'Failed to create student.';
+        const statusCode = error.response?.status;
+        setFeedbackTitle('Error');
+        setFeedbackMessage(statusCode ? `${message} (${statusCode})` : message);
+        setCreationSuccess(false);
+        setShowFeedbackDialog(true);
       }
     } else if (values.type === 'Teacher') {
       try {
         const teacherData = {
-            userType: 'Teacher',
-            ...values
+            schoolName: schoolName,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            gender: values.gender,
+            dob: values.dob,
+            phone: values.mobileNumber,
+            email: values.email,
+            employeeId: values.employeeId,
+            joiningDate: values.joiningDate,
+            experience: values.experience,
+            address: values.address,
+            city: values.city,
+            district: values.district,
+            state: values.state,
+            pincode: values.pincode,
+            status: 'active',
+            expiryDate: values.expiryDate,
         };
-        await createTeacher(user.tenantId, schoolId, teacherData);
-        // Add success notification here
-      } catch (error) {
+        await createTeacher(schoolId, teacherData);
+        setFeedbackTitle('Success');
+        setFeedbackMessage('Teacher created successfully.');
+        setCreationSuccess(true);
+        setShowFeedbackDialog(true);
+      } catch (error: any) {
         console.error('Failed to create teacher:', error);
-        // Add error notification here
+        const message = error.response?.data?.message || error.message || 'Failed to create teacher.';
+        const statusCode = error.response?.status;
+        setFeedbackTitle('Error');
+        setFeedbackMessage(statusCode ? `${message} (${statusCode})` : message);
+        setCreationSuccess(false);
+        setShowFeedbackDialog(true);
       }
     } else {
       console.log(values);
@@ -118,6 +219,13 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
   }
 
   const type = form.watch('type');
+
+  const handleDialogClose = () => {
+    setShowFeedbackDialog(false);
+    if (creationSuccess) {
+      router.push('/homepage/users');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -135,23 +243,31 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {user?.role === 'Super Admin' && (
+                {(userRole === SUPERADMIN || userRole === TENANTADMIN) && (
                   <FormField
                     control={form.control}
                     name="school"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>School *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={(value) => {
+                          field.onChange(value)
+                          setSelectedSchool(value)
+                          setClasses([]);
+                          setSections([]);
+                          form.setValue('classId', '');
+                          form.setValue('section', '');
+                          setSelectedClass(null);
+                        }} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a school" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {schools.map((school, index) => (
-                              <SelectItem key={index} value={`${school.schoolId}-${school.schoolName}`}>
-                                {`${school.schoolId}-${school.schoolName}`}
+                            {schools.map((school) => (
+                              <SelectItem key={school.id} value={school.id}>
+                                {school.schoolName}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -476,18 +592,23 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Class *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value)
+                              setSelectedClass(value)
+                              setSections([]);
+                              form.setValue('section', '');
+                            }} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select a class" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="Nursery">Nursery</SelectItem>
-                                <SelectItem value="LKG">LKG</SelectItem>
-                                <SelectItem value="UKG">UKG</SelectItem>
-                                <SelectItem value="1">1</SelectItem>
-                                <SelectItem value="2">2</SelectItem>
+                                {classes.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -507,9 +628,11 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="A">A</SelectItem>
-                                <SelectItem value="B">B</SelectItem>
-                                <SelectItem value="C">C</SelectItem>
+                                {sections.map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -540,7 +663,7 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                     <h3 className="text-lg font-bold">School Admin Details</h3>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:g_id-cols-2 lg:grid-cols-3 gap-8">
                       <FormField
                         control={form.control}
                         name="employeeId"
@@ -602,6 +725,20 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
           )}
         </form>
       </Form>
+
+      <AlertDialog open={showFeedbackDialog} onOpenChange={handleDialogClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{feedbackTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {feedbackMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

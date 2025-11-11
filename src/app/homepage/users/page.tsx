@@ -93,11 +93,16 @@ export default function UsersPage() {
   }
 
   const getSchoolName = (user) => {
-      if(user.schools && user.schools.length > 0 && user.schools[0].schoolName) {
-          return user.schools[0].schoolName;
-      }
-      return 'N/A';
-  }
+    if (user.schools && user.schools.length > 0) {
+        const school = user.schools[0];
+        if (school.schoolCode && school.schoolName) {
+            return `${school.schoolCode} - ${school.schoolName}`;
+        }
+        return school.schoolName || 'N/A';
+    }
+    return 'N/A';
+}
+
 
   return (
     <Card>

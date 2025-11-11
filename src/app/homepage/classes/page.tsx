@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN } from '@/lib/utils/constants';
-import { getAllSchools, getClasses, createClass, updateClass, deleteSection } from '@/lib/api/schoolApi';
+import { getAllSchools, getClasses, createClass, updateClass, deleteMasterSection, getMasterSections, createMasterSection } from '@/lib/api/schoolApi';
 import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllSubjects as getMasterSubjects, getAllPackages } from '@/lib/api/masterApi';
 import { getTeachersBySchool } from '@/lib/api/userApi';
 import { getRoles } from '@/lib/utils/getRole';
@@ -53,12 +53,17 @@ export default function ClassesPage() {
     const [currentClass, setCurrentClass] = useState<any | null>(null);
     const [currentSection, setCurrentSection] = useState<any | null>(null);
 
+    const processTeacherData = (teacherData: any[]) => {
+        return teacherData.map(t => ({ ...t, name: `${t.firstName} ${t.lastName}` }));
+    };
+
     async function fetchClassesAndSections(schoolId: string) {
         try {
-            const [classData, teacherData, masterSubjectsData] = await Promise.all([
+            const [classData, teacherData, masterSubjectsData, masterSectionsData] = await Promise.all([
                 getClasses(schoolId),
                 getTeachersBySchool(schoolId),
                 getMasterSubjects(),
+                getMasterSections(schoolId),
             ]);
     
             if (classData && Array.isArray(classData)) {
@@ -68,11 +73,10 @@ export default function ClassesPage() {
                     sections: Array.isArray(c.sections) ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) : [],
                 }));
                 setAllClasses(classesWithHydratedIds);
-            } else {
-                setAllClasses([]);
             }
-            setTeachers(teacherData || []);
+            setTeachers(processTeacherData(teacherData || []));
             setMasterSubjects(masterSubjectsData || []);
+            setSectionsPool(masterSectionsData || []);
         } catch (error) {
             console.error("Failed to fetch classes, teachers, or subjects:", error);
             setAllClasses([]);
@@ -111,7 +115,7 @@ export default function ClassesPage() {
               setMasterClasses(masterClassData || []);
               setMasterSeries(masterSeriesData || []);
               setMasterPackages(masterPackagesData || []);
-              setTeachers(teacherData || []);
+              setTeachers(processTeacherData(teacherData || []));
 
             } catch (error) {
               console.error("Failed to fetch initial data:", error);
@@ -135,15 +139,11 @@ export default function ClassesPage() {
     const availableLicenses = selectedSchoolDetails?.licenceForStudent - allClasses.reduce((acc, c) => acc + c.licensesCount, 0);
 
     const createCleanPayload = (classObj: any) => {
-        const payload = JSON.parse(JSON.stringify(classObj));
-        // Remove client-side alias, the top-level ID is passed in the URL
-        delete payload.classId;
-        
+        const { classId, ...payload } = classObj;
         if (payload.sections) {
             payload.sections = payload.sections.map((s: any) => {
-                // Remove the client-side alias `sectionId` but preserve the original `id`
-                delete s.sectionId;
-                return s;
+                const { sectionId, ...rest } = s;
+                return rest;
             });
         }
         return payload;
@@ -240,18 +240,56 @@ export default function ClassesPage() {
         setIsSubjectDialogOpen(true);
     };
 
-    const handleSaveClass = async (values: any) => {
-        if (!selectedSchool) return;
+    const handleSaveSection = async (values: any) => {
+        if (!currentClass || !selectedSchool) return;
 
-        const classPayload = { name: values.sectionName, licensesCount: values.licenses };
+        const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
+        if (!classToUpdate) return;
+
+        const sectionName = values.sectionName.trim();
+        const isEditing = !!editingAssignment;
+
+        if (classToUpdate.sections.some((s: any) => s.name === sectionName && s.sectionId !== editingAssignment?.sectionId)) {
+            toast({ title: "Error", description: `A section with the name "${sectionName}" already exists in this class.`, variant: "destructive" });
+            return;
+        }
+
+        const licenses = Math.min(parseInt(values.licensesCount, 10), availableLicenses + (isEditing ? editingAssignment.licensesCount : 0));
+
+        let updatedSections;
+        if (isEditing) {
+            updatedSections = classToUpdate.sections.map((s: any) => 
+                s.sectionId === editingAssignment.sectionId ? { ...s, name: sectionName, licensesCount: licenses } : s
+            );
+        } else {
+            let sectionFromPool = sectionsPool.find(s => s.name === sectionName);
+            if (!sectionFromPool) {
+                try {
+                    const newMasterSection = await createMasterSection(selectedSchool, { name: sectionName });
+                    sectionFromPool = newMasterSection.data;
+                } catch (error) {
+                    console.error("Failed to create master section:", error);
+                    toast({ title: "Error", description: "Failed to create new section." });
+                    return;
+                }
+            }
+
+            const newSection = { id: sectionFromPool.id, name: sectionName, licensesCount: licenses };
+            updatedSections = [...classToUpdate.sections, newSection];
+        }
+        
+        const updatedClass = { ...classToUpdate, sections: updatedSections };
+
+        const finalPayload = createCleanPayload(updatedClass);
+
         try {
-            await createClass(selectedSchool, { data: classPayload });
-            toast({ title: "Success", description: "Class created successfully." });
+            await updateClass(selectedSchool, currentClass.classId, { data: finalPayload });
+            toast({ title: "Success", description: `Section ${isEditing ? 'updated' : 'added'} successfully.` });
             fetchClassesAndSections(selectedSchool);
             setIsSectionDialogOpen(false);
-        } catch (error) {
-            console.error("Failed to save class:", error);
-            toast({ title: "Error", description: "Failed to save class." });
+        } catch (error: any) {
+            console.error(`Failed to ${isEditing ? 'update' : 'add'} section:`, { payload: finalPayload, error: error.response?.data || error.message });
+            toast({ title: "Error", description: `Failed to ${isEditing ? 'update' : 'add'} section.` });
         }
     };
 
@@ -292,11 +330,11 @@ export default function ClassesPage() {
         }
     };
 
-    const handleDeleteSection = async (classId: string, sectionId: string) => {
+    const handleDeleteSection = async (sectionId: string) => {
         if (!selectedSchool) return;
 
         try {
-            await deleteSection(selectedSchool, classId, sectionId);
+            await deleteMasterSection(selectedSchool, sectionId);
             toast({ title: "Success", description: "Section deleted successfully." });
             fetchClassesAndSections(selectedSchool);
         } catch (error) {
@@ -456,7 +494,7 @@ export default function ClassesPage() {
                                                     <Button variant="ghost" size="icon" onClick={() => handleOpenEditSectionDialog(section, c)}>
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(c.classId, section.sectionId)}>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteSection(section.sectionId)}>
                                                         <Trash2 className="h-4 w-4 text-destructive" />
                                                     </Button>
                                                 </div>
@@ -522,13 +560,13 @@ export default function ClassesPage() {
         <AddSectionDialog 
             isOpen={isSectionDialogOpen} 
             onClose={() => setIsSectionDialogOpen(false)} 
-            onSave={handleSaveClass} 
+            onSave={handleSaveSection} 
             availableLicenses={availableLicenses}
             initialData={editingAssignment}
             sectionsPool={sectionsPool}
             key={`add-section-${editingAssignment?.sectionId || currentClass?.classId}`}
         />
-        
+            
         <AddSubjectDialog
             isOpen={isSubjectDialogOpen}
             onClose={() => setIsSubjectDialogOpen(false)}
