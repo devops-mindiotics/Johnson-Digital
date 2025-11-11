@@ -71,7 +71,19 @@ const formSchema = z.object({
   expiryDate: z.string().optional(),
 });
 
-export default function AddUserPage({ searchParams }: { searchParams: { type: 'Teacher' | 'Student' | 'School Admin' } }) {
+interface PageProps {
+  searchParams: {
+    type?: 'Teacher' | 'Student' | 'School Admin';
+  };
+}
+
+const getExpiryDate = () => {
+    const today = new Date();
+    const nextYear = today.getFullYear() + 1;
+    return `${nextYear}-04-30`;
+};
+
+export default function AddUserPage({ searchParams }: PageProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -147,12 +159,6 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
       }
       fetchSections();
   }, [selectedSchool, selectedClass]);
-
-  const getExpiryDate = () => {
-    const today = new Date();
-    const nextYear = today.getFullYear() + 1;
-    return `${nextYear}-04-30`;
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const schoolId = selectedSchool || user.schoolId;
@@ -644,8 +650,7 @@ export default function AddUserPage({ searchParams }: { searchParams: { type: 'T
                         name="pen"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Permanent Education Number (PEN) *</FormLabel>
-                            <FormControl>
+                            <FormLabel>Permanent Education Number (PEN) *</FormLabel>                            <FormControl>
                               <Input placeholder="e.g., 1234567890" {...field} />
                             </FormControl>
                             <FormMessage />

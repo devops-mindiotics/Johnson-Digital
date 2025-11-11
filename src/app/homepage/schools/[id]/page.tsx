@@ -1,19 +1,20 @@
-// app/homepage/schools/[id]/page.tsx
-import { notFound } from 'next/navigation';
-import SchoolDetailsClient from './client';
 import { getSchoolById } from '@/lib/api/schoolApi';
+import SchoolDetailsClient from './client';
+import { notFound } from 'next/navigation';
 
-interface PageProps {
-  params: { id: string };
-}
+type PageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
 export default async function SchoolDetailsPage({ params }: PageProps) {
-  const { id } = params;
-
-  // Fetch school data server-side
+  const { id } = await params;
   const school = await getSchoolById(id);
 
-  if (!school) return notFound();
+  if (!school) {
+    notFound();
+  }
 
   return <SchoolDetailsClient school={school} />;
 }
