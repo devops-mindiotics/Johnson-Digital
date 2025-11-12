@@ -402,3 +402,38 @@ export const deleteStudent = async (tenantId: string, schoolId: string, studentI
         throw err;
     }
 }
+
+export const getStudentsByClass = async (schoolId: string, classId: string) => {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+
+        if (!token) throw new Error("JWT token not found");
+
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) {
+            throw new Error("Tenant ID not found in context");
+        }
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/students`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
+            return response.data.data.records;
+        }
+
+        return [];
+    } catch (err: any) {
+        console.error("❌ getStudentsByClass error:", err.response?.data || err.message);
+        throw err;
+    }
+}
