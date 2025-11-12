@@ -43,6 +43,7 @@ import { Trash2 } from "lucide-react";
 import { createSchool, getAllSchools, createClass } from "@/lib/api/schoolApi";
 import { getAllSeries, getAllClasses, getAllPackages } from "@/lib/api/masterApi";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
 
 const classConfigurationSchema = z.object({
   class: z.string().min(1, "Class is required"),
@@ -86,6 +87,7 @@ const formSchema = z.object({
 
 export default function AddSchoolPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [schools, setSchools] = useState<any[]>([]);
   const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
   const [classOptions, setClassOptions] = useState<any[]>([]);
@@ -115,9 +117,10 @@ export default function AddSchoolPage() {
 
   useEffect(() => {
     async function fetchData() {
+        if (!user?.tenantId) return;
         try {
           const [schoolData, seriesData, classData, packageData] = await Promise.all([
-            getAllSchools(),
+            getAllSchools(user.tenantId),
             getAllSeries(),
             getAllClasses(),
             getAllPackages(),
@@ -155,7 +158,7 @@ export default function AddSchoolPage() {
         }
       }
       fetchData();
-  }, []);
+  }, [user]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {

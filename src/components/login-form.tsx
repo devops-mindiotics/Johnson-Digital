@@ -113,7 +113,7 @@ export function LoginForm() {
                 <a href="/forgot-password" className="text-sm font-medium text-primary hover:underline">Forgot Password?</a>
             </Button>
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {'Sign In'}
           </Button>
         </form>

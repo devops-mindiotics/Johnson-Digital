@@ -2,12 +2,23 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Represents the class details for a student
+interface ClassDetails {
+  sectionName: string;
+  classId: string;
+  academicYear: string;
+  rollNumber: string;
+  className: string;
+  sectionId: string;
+}
+
 // Represents a single school associated with a user from the API response
 interface School {
   tenantId: string;
   schoolId: string;
   id: string; // Adding id for frontend consistency
   roles: string[];
+  classDetails?: ClassDetails; // Optional class details for students
 }
 
 // Represents a tenant role from the API response
@@ -29,6 +40,7 @@ interface User {
     phone?: string;
     avatarUrl?: string;
     schools: School[]; // User can be associated with multiple schools
+    classDetails?: ClassDetails; // Optional class details for students
 }
 
 // Represents the structure of the data object within the API login response
@@ -58,10 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const storedUser = localStorage.getItem('educentral-user');
           if (storedUser) {
-            setUser(JSON.parse(storedUser));
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            console.log("AuthProvider: Loaded user from localStorage", parsedUser);
           }
         } catch (error) {
-          console.error('Failed to parse user from localStorage', error);
+          console.error('AuthProvider: Failed to parse user from localStorage', error);
           localStorage.removeItem('educentral-user');
         } finally {
           setIsLoading(false);
@@ -69,12 +83,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, []);
     
       const login = useCallback((data: LoginData) => {
+        console.log("AuthProvider: Login process started with data:", data);
         const { user: apiUser, schools: apiSchools = [], tenantRoles = [], sessionJwt, contextJwt } = data;
 
-        // --- Simplified and Direct Logic ---
-        // We will derive the school and tenant ID directly from the schools array, which is a reliable source.
-        const primarySchoolId = apiSchools[0]?.schoolId;
-        const primaryTenantId = apiSchools[0]?.tenantId;
+        let primaryTenantId: string | undefined;
+        let primarySchoolId: string | undefined;
+        let classDetails: ClassDetails | undefined;
+
+        // Determine tenantId based on user role
+        if (tenantRoles && tenantRoles.length > 0) {
+            primaryTenantId = tenantRoles[0].tenantId;
+            console.log("AuthProvider: Tenant ID derived from tenantRoles:", primaryTenantId);
+        } else if (apiSchools && apiSchools.length > 0) {
+            primaryTenantId = apiSchools[0].tenantId;
+            primarySchoolId = apiSchools[0].schoolId;
+            classDetails = apiSchools[0].classDetails;
+            console.log("AuthProvider: Tenant ID and School ID derived from schools array:", primaryTenantId, primarySchoolId);
+        } else {
+            console.error("AuthProvider Error: Cannot determine tenantId from login response.", data);
+            // Handle cases where tenantId cannot be determined. Maybe logout or show an error.
+            return; 
+        }
+
+        if (!primaryTenantId) {
+            console.error("AuthProvider FATAL: Tenant ID is undefined. Aborting login.", data);
+            return;
+        }
 
         const formattedSchools = apiSchools.map(school => ({
           ...school,
@@ -88,19 +122,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: apiUser.email!,
           role: apiUser.roles?.[0] || '',
           tenantId: primaryTenantId,
-          schoolId: primarySchoolId, // Assigning the schoolId directly here
+          schoolId: primarySchoolId,
           schools: formattedSchools,
+          classDetails: classDetails,
         };
 
-        // --- Logging for Verification ---
-        console.log("AuthContext: Storing user object with schoolId:", userForContext.schoolId, userForContext);
+        console.log("AuthProvider: Final user object for context:", userForContext);
 
         const contextInfo = {
             tenantId: primaryTenantId,
             schoolId: primarySchoolId,
+            classDetails: classDetails,
         };
         
-        // Set state and all required items in localStorage
+        console.log("AuthProvider: Storing contextInfo in localStorage:", contextInfo);
+        
         setUser(userForContext);
         localStorage.setItem('educentral-user', JSON.stringify(userForContext));
         localStorage.setItem('contextInfo', JSON.stringify(contextInfo));
@@ -112,7 +148,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
       const logout = useCallback(() => {
         setUser(null);
-        // Clear all session-related items from localStorage for a clean logout
         localStorage.removeItem('educentral-user');
         localStorage.removeItem('contextInfo');
         localStorage.removeItem('sessionJWT');

@@ -1,19 +1,8 @@
+
 import apiClient from "./client";
 import type { SchoolCreateResponse } from "@/types/school/schoolCreateResponse";
 import { getAllClasses, getAllSeries } from "./masterApi";
 import type { CreateClassRequest, CreateClassResponse } from "@/types/school/class";
-
-function getTenantId(): string {
-  if (typeof window === "undefined") {
-    throw new Error("This function can only be run on the client");
-  }
-  const tenantData = localStorage.getItem("contextInfo");
-  if (!tenantData) throw new Error("Tenant information not found.");
-  const parsed = JSON.parse(tenantData);
-  const tenantId = parsed?.tenantId;
-  if (!tenantId) throw new Error("Tenant ID not found.");
-  return tenantId;
-}
 
 export async function createSchool(
   tenantId: string,
@@ -31,9 +20,8 @@ export async function createSchool(
   }
 }
 
-export async function getAllSchools(): Promise<any[]> {
+export async function getAllSchools(tenantId: string): Promise<any[]> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(`/tenants/${tenantId}/schools`);
     if (
       response.data &&
@@ -45,13 +33,12 @@ export async function getAllSchools(): Promise<any[]> {
     return [];
   } catch (err: any) {
     console.error("❌ getSchools error:", err.response?.data || err.message);
-    return [];
+    throw err;
   }
 }
 
-export async function getSchoolById(schoolId: string): Promise<any> {
+export async function getSchoolById(tenantId: string, schoolId: string): Promise<any> {
   try {
-    const tenantId = getTenantId();
     if (!schoolId) return null;
 
     const response = await apiClient.get(
@@ -70,11 +57,11 @@ export async function getSchoolById(schoolId: string): Promise<any> {
 }
 
 export async function updateSchool(
+  tenantId: string,
   schoolId: string,
   schoolPayload: any
 ): Promise<SchoolCreateResponse> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}`,
       schoolPayload
@@ -88,12 +75,11 @@ export async function updateSchool(
 }
 
 export async function createClass(
+  tenantId: string,
   schoolId: string,
   classPayload: CreateClassRequest
 ): Promise<CreateClassResponse> {
   try {
-    
-    const tenantId = getTenantId();
     const response = await apiClient.post(
       `/tenants/${tenantId}/schools/${schoolId}/classes`,
       classPayload
@@ -105,9 +91,8 @@ export async function createClass(
   }
 }
 
-export async function getClasses(schoolId: string): Promise<any[]> {
+export async function getClasses(tenantId: string, schoolId: string): Promise<any[]> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/classes`
     );
@@ -123,11 +108,11 @@ export async function getClasses(schoolId: string): Promise<any[]> {
 
 
 export async function getClassById(
+  tenantId: string,
   schoolId: string,
   classId: string
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}`
     );
@@ -139,11 +124,11 @@ export async function getClassById(
 }
 
 export async function getClassesByUserId(
+  tenantId: string,
   schoolId: string,
   userId: string
 ): Promise<any[]> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/users/${userId}/classes`
     );
@@ -158,12 +143,12 @@ export async function getClassesByUserId(
 }
 
 export async function updateClass(
+  tenantId: string,
   schoolId: string,
   classId: string,
   classPayload: any
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}`,
       classPayload
@@ -176,11 +161,11 @@ export async function updateClass(
 }
 
 export async function deleteClass(
+  tenantId: string,
   schoolId: string,
   classId: string
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.delete(
       `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}`
     );
@@ -192,11 +177,11 @@ export async function deleteClass(
 }
 
 export async function createMasterSection(
+  tenantId: string,
   schoolId: string,
   sectionPayload: any
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.post(
       `/tenants/${tenantId}/schools/${schoolId}/sections`,
       { data: sectionPayload }
@@ -208,9 +193,8 @@ export async function createMasterSection(
   }
 }
 
-export async function getMasterSections(schoolId: string): Promise<any[]> {
+export async function getMasterSections(tenantId: string, schoolId: string): Promise<any[]> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/sections`
     );
@@ -225,11 +209,11 @@ export async function getMasterSections(schoolId: string): Promise<any[]> {
 }
 
 export async function getMasterSectionById(
+  tenantId: string,
   schoolId: string,
   sectionId: string
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/sections/${sectionId}`
     );
@@ -244,12 +228,12 @@ export async function getMasterSectionById(
 }
 
 export async function updateMasterSection(
+  tenantId: string,
   schoolId: string,
   sectionId: string,
   sectionPayload: any
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.put(
       `/tenants/${tenantId}/schools/${schoolId}/sections/${sectionId}`,
       { data: sectionPayload }
@@ -265,11 +249,11 @@ export async function updateMasterSection(
 }
 
 export async function deleteMasterSection(
+  tenantId: string,
   schoolId: string,
   sectionId: string
 ): Promise<any> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.delete(
       `/tenants/${tenantId}/schools/${schoolId}/sections/${sectionId}`
     );
@@ -283,9 +267,8 @@ export async function deleteMasterSection(
   }
 }
 
-export async function getTeachersBySchool(schoolId: string): Promise<any[]> {
+export async function getTeachersBySchool(tenantId: string, schoolId: string): Promise<any[]> {
   try {
-    const tenantId = getTenantId();
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/teachers`
     );

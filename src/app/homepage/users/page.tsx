@@ -37,10 +37,10 @@ export default function UsersPage() {
 
   useEffect(() => {
     async function fetchSchools() {
-      if (!authUser) return;
+      if (!authUser?.tenantId) return;
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
-          const schoolData = await getAllSchools();
+          const schoolData = await getAllSchools(authUser.tenantId);
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
           }

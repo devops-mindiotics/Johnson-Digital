@@ -130,9 +130,10 @@ function AddUserPageForm() {
 
   useEffect(() => {
     async function fetchSchools() {
+      if (!user?.tenantId) return;
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
-          const schoolData = await getAllSchools();
+          const schoolData = await getAllSchools(user.tenantId);
           if (schoolData) {
             setSchools(schoolData);
           }

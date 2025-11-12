@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { getClasses, createClass, updateClass as updateSchoolClass, deleteClass as deleteSchoolClass } from '@/lib/api/schoolApi';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
@@ -30,6 +31,7 @@ export function ConfigureSchoolDialog({
     onClassConfigured
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
   const [availableMasterClasses, setAvailableMasterClasses] = useState<any[]>([]);
@@ -61,9 +63,9 @@ export function ConfigureSchoolDialog({
   }, [isOpen]);
 
   async function fetchClasses(schoolId: string) {
-    if (schoolId) {
+    if (schoolId && user?.tenantId) {
       try {
-        const classData = await getClasses(schoolId);
+        const classData = await getClasses(user.tenantId, schoolId);
         setClasses(classData || []);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
@@ -80,7 +82,7 @@ export function ConfigureSchoolDialog({
     } else {
         setClasses([]);
     }
-  }, [selectedSchool]);
+  }, [selectedSchool, user]);
 
   useEffect(() => {
     if (Array.isArray(masterClasses) && Array.isArray(classes)) {
@@ -98,7 +100,7 @@ export function ConfigureSchoolDialog({
   }
 
   const handleAddClass = async () => {
-    if (!selectedSchool || !newClassId || !newClassLicenses) {
+    if (!selectedSchool || !newClassId || !newClassLicenses || !user?.tenantId) {
       toast({ variant: "destructive", title: "Error", description: "Please select a school, class, and enter license count." });
       return;
     }
@@ -128,7 +130,7 @@ export function ConfigureSchoolDialog({
     };
 
     try {
-      await createClass(selectedSchool, classPayload);
+      await createClass(user.tenantId, selectedSchool, classPayload);
       toast({ title: "Success", description: "Class added successfully." });
       setNewClassId('');
       setNewClassSeries('');
@@ -142,12 +144,12 @@ export function ConfigureSchoolDialog({
   };
 
   const handleUpdateClass = async (classId: string, updatedData: any) => {
-    if (!selectedSchool) return;
+    if (!selectedSchool || !user?.tenantId) return;
 
     const classPayload = { data: { ...updatedData } };
 
     try {
-        await updateSchoolClass(selectedSchool, classId, classPayload);
+        await updateSchoolClass(user.tenantId, selectedSchool, classId, classPayload);
         toast({ title: "Success", description: "Class updated successfully." });
         handleOperationComplete();
         setIsEditClassDialogOpen(false);
@@ -158,9 +160,9 @@ export function ConfigureSchoolDialog({
   };
 
   const handleDelete = async (classId: string) => {
-    if(!selectedSchool) return;
+    if(!selectedSchool || !user?.tenantId) return;
     try {
-        await deleteSchoolClass(selectedSchool, classId);
+        await deleteSchoolClass(user.tenantId, selectedSchool, classId);
         toast({ title: "Success", description: "Class deleted successfully." });
         handleOperationComplete();
     } catch (error) {
@@ -285,7 +287,8 @@ export function ConfigureSchoolDialog({
 
                         <Select onValueChange={setNewClassPackage} value={newClassPackage || ''}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Package (Optional)" />
+                                <SelectValue placeholder="Select Package (Optional)
+" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value={NONE_VALUE}>No Package</SelectItem>

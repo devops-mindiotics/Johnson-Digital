@@ -59,13 +59,14 @@ export default function ClassesPage() {
 
     useEffect(() => {
         async function fetchData() {
+            if (!user?.tenantId) return;
             const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
             console.log("ClassesPage - School ID:", schoolId, "Role:", userRole);
 
             try {
                 if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
                     console.log("Fetching schools for admin...");
-                    const schoolsData = await getAllSchools();
+                    const schoolsData = await getAllSchools(user.tenantId);
                     setSchools(schoolsData || []);
                     console.log("Schools fetched:", schoolsData);
                 }
@@ -73,13 +74,13 @@ export default function ClassesPage() {
                 if (schoolId) {
                     console.log("Fetching data for school:", schoolId);
                     const results = await Promise.allSettled([
-                        getClasses(schoolId),
-                        getTeachersBySchool(schoolId),
-                        getMasterSubjects(),
-                        getMasterSections(schoolId),
-                        getMasterClasses(),
-                        getMasterSeries(),
-                        getAllPackages(),
+                        getClasses(user.tenantId, schoolId),
+                        getTeachersBySchool(user.tenantId, schoolId),
+                        getMasterSubjects(user.tenantId),
+                        getMasterSections(user.tenantId, schoolId),
+                        getMasterClasses(user.tenantId),
+                        getMasterSeries(user.tenantId),
+                        getAllPackages(user.tenantId),
                     ]);
 
                     const [classData, teacherData, masterSubjectsData, masterSectionsData, masterClassData, masterSeriesData, masterPackagesData] = results;
@@ -149,12 +150,12 @@ export default function ClassesPage() {
         if (user) {
             fetchData();
         }
-    }, [user, userRole, selectedSchool, user?.schoolId]);
+    }, [user, userRole, selectedSchool]);
 
     const fetchClassesAndSections = async (schoolId: string) => {
         try {
             console.log("Refetching classes for school:", schoolId);
-            const classData = await getClasses(schoolId);
+            const classData = await getClasses(user.tenantId, schoolId);
             if (classData && Array.isArray(classData)) {
                 const classesWithHydratedIds = classData.map(c => ({
                     ...c,
@@ -207,7 +208,7 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(schoolId, classId, { data: finalPayload });
+            await updateClass(user.tenantId, schoolId, classId, { data: finalPayload });
             toast({ title: "Success", description: "Class Teacher assigned successfully." });
             fetchClassesAndSections(schoolId);
         } catch (error: any) {
@@ -249,7 +250,7 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(schoolId, classId, { data: finalPayload });
+            await updateClass(user.tenantId, schoolId, classId, { data: finalPayload });
             toast({ title: "Success", description: "Subject teacher updated successfully." });
             fetchClassesAndSections(schoolId);
         } catch (error: any) {
@@ -302,7 +303,7 @@ export default function ClassesPage() {
             let sectionFromPool = sectionsPool.find(s => s.name === sectionName);
             if (!sectionFromPool) {
                 try {
-                    const newMasterSection = await createMasterSection(schoolId, { name: sectionName });
+                    const newMasterSection = await createMasterSection(user.tenantId, schoolId, { name: sectionName });
                     sectionFromPool = newMasterSection.data;
                 } catch (error) {
                     console.error("Failed to create master section:", error);
@@ -320,7 +321,7 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(schoolId, currentClass.classId, { data: finalPayload });
+            await updateClass(user.tenantId, schoolId, currentClass.classId, { data: finalPayload });
             toast({ title: "Success", description: `Section ${isEditing ? 'updated' : 'added'} successfully.` });
             fetchClassesAndSections(schoolId);
             setIsSectionDialogOpen(false);
@@ -358,7 +359,7 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
     
         try {
-            await updateClass(schoolId, currentClass.classId, { data: finalPayload });
+            await updateClass(user.tenantId, schoolId, currentClass.classId, { data: finalPayload });
             toast({ title: "Success", description: "Subject added successfully." });
             fetchClassesAndSections(schoolId);
             setIsSubjectDialogOpen(false);
@@ -373,7 +374,7 @@ export default function ClassesPage() {
         if (!schoolId) return;
 
         try {
-            await deleteMasterSection(schoolId, sectionId);
+            await deleteMasterSection(user.tenantId, schoolId, sectionId);
             toast({ title: "Success", description: "Section deleted successfully." });
             fetchClassesAndSections(schoolId);
         } catch (error) {

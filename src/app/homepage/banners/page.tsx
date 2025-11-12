@@ -9,8 +9,10 @@ import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DebugDialog } from '@/components/debug-dialog';
 import { BannerCard } from '@/components/banner-card';
+import { useAuth } from '@/hooks/use-auth';
 
 const BannersPage = () => {
+  const { user } = useAuth();
   const [data, setData] = React.useState<Banner[]>([]);
   const [rawBanners, setRawBanners] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -22,7 +24,7 @@ const BannersPage = () => {
   const fetchBanners = async (schoolId: string | null) => {
     try {
       setLoading(true);
-      const { records } = await getAllBanners(1, 10, schoolId);
+      const { records } = await getAllBanners(user.tenantId, 1, 10, schoolId);
       setRawBanners(records);
       setData(records.map((banner: any) => ({
         id: banner.id.toString(),
@@ -41,8 +43,9 @@ const BannersPage = () => {
   };
 
   const fetchSchools = async () => {
+    if (!user?.tenantId) return;
     try {
-      const records = await getAllSchools();
+      const records = await getAllSchools(user.tenantId);
       if (records && Array.isArray(records)) {
         setSchools(records.map((school: any) => ({ id: school.id, name: school.schoolName })));
       }
@@ -52,9 +55,12 @@ const BannersPage = () => {
   };
 
   React.useEffect(() => {
+    if (!user?.tenantId) return;
     fetchBanners(selectedSchool);
-    fetchSchools();
-  }, [selectedSchool]);
+    if (user?.tenantId) {
+        fetchSchools();
+    }
+  }, [selectedSchool, user]);
 
   const addBanner = async (banner: Omit<Banner, "id">, file: File | null) => {
     try {
@@ -120,7 +126,7 @@ const BannersPage = () => {
       setDebugInfo(debugPayload);
       setShowDebugDialog(true);
 
-      await createBanner(newBanner);
+      await createBanner(user.tenantId, newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error creating banner:", error);
@@ -192,7 +198,7 @@ const BannersPage = () => {
       setDebugInfo(debugPayload);
       setShowDebugDialog(true);
 
-      await updateBanner(updatedBanner.id, newBanner);
+      await updateBanner(user.tenantId, updatedBanner.id, newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error updating banner:", error);
@@ -201,7 +207,7 @@ const BannersPage = () => {
 
   const handleDeleteBanner = async (bannerId: string) => {
     try {
-      await deleteBanner(bannerId);
+      await deleteBanner(user.tenantId, bannerId);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error deleting banner:", error);
