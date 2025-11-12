@@ -57,15 +57,16 @@ export default function SchoolsPage() {
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedSchoolName, setProcessedSchoolName] = useState("");
 
+  const fetchSchools = async () => {
+    try {
+      const response = await getAllSchools();
+      setSchools(response || []);
+    } catch (err: any) {
+      setError(err.message || "Failed to load schools");
+    }
+  };
+
   useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const response = await getAllSchools();
-        setSchools(response || []);
-      } catch (err: any) {
-        setError(err.message || "Failed to load schools");
-      } 
-    };
     fetchSchools();
   }, []);
 
@@ -76,23 +77,21 @@ export default function SchoolsPage() {
   const handleStatusChange = async () => {
     if (schoolToProcess) {
       const newStatus =
-        schoolToProcess.status === "active" ||
-        schoolToProcess.status === "Trial"
+        schoolToProcess.status === "active" || schoolToProcess.status === "Trial"
           ? "Inactive"
           : "active";
       const updatedSchool = { ...schoolToProcess, status: newStatus };
 
       try {
-        //  showLoader();
         await updateSchool(schoolToProcess.id, updatedSchool);
-        router.push("/homepage/schools");
+        await fetchSchools(); // Refetch schools after update
+        setProcessedSchoolName(schoolToProcess.schoolName);
+        if (newStatus === "Inactive") setSuccessDialogOpen(true);
       } catch (error) {
         console.error("Failed to update school:", error);
+      } finally {
+        setSchoolToProcess(null);
       }
-      setSchools(updatedSchool);
-      setProcessedSchoolName(schoolToProcess.name);
-      if (newStatus === "Inactive") setSuccessDialogOpen(true);
-      setSchoolToProcess(null);
     }
   };
 
@@ -243,10 +242,10 @@ export default function SchoolsPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="text-lg font-bold">
-                        {school.name}
+                        {school.schoolName}
                       </CardTitle>
                       <CardDescription className="text-sm">
-                        {school.johnsonId} • {school.city}, {school.state}
+                        {school.schoolCode} • {school.address?.city}, {school.address?.state}
                       </CardDescription>
                     </div>
                     <div className="flex items-center">
@@ -286,7 +285,7 @@ export default function SchoolsPage() {
                     <div className="text-muted-foreground">
                       Expires on{" "}
                       <span className="font-medium text-foreground">
-                        {school.expiry}
+                        {school.expiryDate ? new Date(school.expiryDate).toLocaleDateString('en-GB').replace(/\//g, '-') : '—'}
                       </span>
                     </div>
                   </div>
@@ -307,7 +306,7 @@ export default function SchoolsPage() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action will change the status of{" "}
-              <span className="font-semibold">{schoolToProcess?.name}</span> to{" "}
+              <span className="font-semibold">{schoolToProcess?.schoolName}</span> to{" "}
               <span className="font-semibold">
                 {schoolToProcess?.status === "Active" ||
                 schoolToProcess?.status === "Trial"

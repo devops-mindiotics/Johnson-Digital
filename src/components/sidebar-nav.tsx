@@ -1,75 +1,88 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { ChevronDown } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuBadge,
+} from '@/components/ui/sidebar';
 
 export function SidebarNav({ items, setSidebarOpen }: any) {
   const pathname = usePathname();
-  const [openItems, setOpenItems] = useState<any>({});
 
-  const toggleItem = (item: any) => {
-    setOpenItems({ ...openItems, [item.title]: !openItems[item.title] });
-  };
+  if (!items?.length) {
+    return null;
+  }
 
   return (
-    <nav className="grid items-start gap-1">
-      {Array.isArray(items) && items.map((item: any, index: number) => {
-        const isLinkActive = !item.children && pathname === item.href;
-        const isSectionActive = item.children && item.children.some((child: any) => pathname.startsWith(child.href));
-
-        return (
-          <div key={index}>
-            {item.children ? (
-              <div
-                className={`rounded-md ${isSectionActive ? "text-primary" : "text-foreground"}`}>
-                <div 
-                  className="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-muted rounded-md"
-                  onClick={() => toggleItem(item)}>
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-5 w-5" />
-                    <span className="text-sm font-medium">{item.title}</span>
+    <SidebarMenu>
+      {items.map((item: any, index: number) => (
+        <SidebarMenuItem key={index}>
+          {item.children ? (
+            <Collapsible defaultOpen={item.children.some((child: any) => pathname.startsWith(child.href))}>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton
+                  isActive={item.children.some((child: any) => pathname.startsWith(child.href))}
+                  className="flex justify-between w-full"
+                >
+                  <div className="flex items-center gap-2">
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
                   </div>
-                  {openItems[item.title] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                </div>
-                {openItems[item.title] && (
-                  <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-700">
-                    {item.children.map((child: any, childIndex: number) => {
-                      const isChildLinkActive = pathname.startsWith(child.href);
-                      return (
-                        <Link
-                          key={childIndex}
-                          href={child.href}
+                  <ChevronDown className="h-4 w-4" />
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent asChild>
+                <SidebarMenuSub>
+                  {item.children.map((child: any, childIndex: number) => (
+                    <SidebarMenuItem key={childIndex}>
+                      <Link href={child.href}>
+                        <SidebarMenuSubButton
                           onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-3 rounded-md px-3 py-2 my-1 text-sm font-medium transition-colors ${isChildLinkActive ? 'bg-muted text-primary' : 'hover:bg-muted'}`}>
-                          <child.icon className="h-5 w-5" />
+                          isActive={pathname.startsWith(child.href)}
+                        >
+                          <child.icon className="h-4 w-4" />
                           <span>{child.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href={item.href}
+                        </SidebarMenuSubButton>
+                      </Link>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <Link href={item.href}>
+              <SidebarMenuButton
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${isLinkActive ? 'bg-muted text-primary' : 'hover:bg-muted'}`}>
-                <div className="flex items-center gap-3">
-                  <item.icon className="h-5 w-5" />
+                isActive={pathname === item.href}
+                className={cn(item.disabled && 'cursor-not-allowed opacity-80')}
+              >
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-4 w-4" />
                   <span>{item.title}</span>
                 </div>
                 {item.tag && (
-                    <span className="ml-auto text-xs font-semibold text-white bg-blue-500 px-2 py-0.5 rounded-full">
-                        {item.tag}
-                    </span>
+                  <SidebarMenuBadge className={cn(
+                    item.tag === 'Upcoming' && 'bg-gradient-to-r from-pink-500 to-red-500 text-white'
+                  )}>{item.tag}</SidebarMenuBadge>
                 )}
-              </Link>
-            )}
-          </div>
-        );
-      })}
-    </nav>
+              </SidebarMenuButton>
+            </Link>
+          )}
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
   );
 }

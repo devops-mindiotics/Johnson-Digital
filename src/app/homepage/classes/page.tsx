@@ -57,15 +57,104 @@ export default function ClassesPage() {
         return teacherData.map(t => ({ ...t, name: `${t.firstName} ${t.lastName}` }));
     };
 
-    async function fetchClassesAndSections(schoolId: string) {
+    useEffect(() => {
+        async function fetchData() {
+            const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+            console.log("ClassesPage - School ID:", schoolId, "Role:", userRole);
+
+            try {
+                if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+                    console.log("Fetching schools for admin...");
+                    const schoolsData = await getAllSchools();
+                    setSchools(schoolsData || []);
+                    console.log("Schools fetched:", schoolsData);
+                }
+
+                if (schoolId) {
+                    console.log("Fetching data for school:", schoolId);
+                    const results = await Promise.allSettled([
+                        getClasses(schoolId),
+                        getTeachersBySchool(schoolId),
+                        getMasterSubjects(),
+                        getMasterSections(schoolId),
+                        getMasterClasses(),
+                        getMasterSeries(),
+                        getAllPackages(),
+                    ]);
+
+                    const [classData, teacherData, masterSubjectsData, masterSectionsData, masterClassData, masterSeriesData, masterPackagesData] = results;
+
+                    if (classData.status === 'fulfilled' && Array.isArray(classData.value)) {
+                        const classesWithHydratedIds = classData.value.map(c => ({
+                            ...c,
+                            classId: c.id,
+                            sections: Array.isArray(c.sections) ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) : [],
+                        }));
+                        setAllClasses(classesWithHydratedIds);
+                        console.log("Processed classes:", classesWithHydratedIds);
+                    } else {
+                        setAllClasses([]);
+                        console.error("Failed to fetch classes:", classData.status === 'rejected' && classData.reason);
+                    }
+
+                    if (teacherData.status === 'fulfilled') {
+                        setTeachers(processTeacherData(teacherData.value || []));
+                    } else {
+                        setTeachers([]);
+                        console.error("Failed to fetch teachers:", teacherData.reason);
+                    }
+
+                    if (masterSubjectsData.status === 'fulfilled') {
+                        setMasterSubjects(masterSubjectsData.value || []);
+                    } else {
+                        setMasterSubjects([]);
+                        console.error("Failed to fetch master subjects:", masterSubjectsData.reason);
+                    }
+
+                    if (masterSectionsData.status === 'fulfilled') {
+                        setSectionsPool(masterSectionsData.value || []);
+                    } else {
+                        setSectionsPool([]);
+                        console.error("Failed to fetch master sections:", masterSectionsData.reason);
+                    }
+
+                    if (masterClassData.status === 'fulfilled') {
+                        setMasterClasses(masterClassData.value || []);
+                    } else {
+                        setMasterClasses([]);
+                        console.error("Failed to fetch master classes:", masterClassData.reason);
+                    }
+
+                    if (masterSeriesData.status === 'fulfilled') {
+                        setMasterSeries(masterSeriesData.value || []);
+                    } else {
+                        setMasterSeries([]);
+                        console.error("Failed to fetch master series:", masterSeriesData.reason);
+                    }
+
+                    if (masterPackagesData.status === 'fulfilled') {
+                        setMasterPackages(masterPackagesData.value || []);
+                    } else {
+                        setMasterPackages([]);
+                        console.error("Failed to fetch master packages:", masterPackagesData.reason);
+                    }
+
+                    console.log("State updated with fetched data.");
+                }
+            } catch (error) {
+                console.error("An unexpected error occurred during data fetching:", error);
+            }
+        }
+
+        if (user) {
+            fetchData();
+        }
+    }, [user, userRole, selectedSchool]);
+
+    const fetchClassesAndSections = async (schoolId: string) => {
         try {
-            const [classData, teacherData, masterSubjectsData, masterSectionsData] = await Promise.all([
-                getClasses(schoolId),
-                getTeachersBySchool(schoolId),
-                getMasterSubjects(),
-                getMasterSections(schoolId),
-            ]);
-    
+            console.log("Refetching classes for school:", schoolId);
+            const classData = await getClasses(schoolId);
             if (classData && Array.isArray(classData)) {
                 const classesWithHydratedIds = classData.map(c => ({
                     ...c,
@@ -73,67 +162,12 @@ export default function ClassesPage() {
                     sections: Array.isArray(c.sections) ? c.sections.map((s: any) => ({ ...s, sectionId: s.id })) : [],
                 }));
                 setAllClasses(classesWithHydratedIds);
+                console.log("Refetched and processed classes:", classesWithHydratedIds);
             }
-            setTeachers(processTeacherData(teacherData || []));
-            setMasterSubjects(masterSubjectsData || []);
-            setSectionsPool(masterSectionsData || []);
         } catch (error) {
-            console.error("Failed to fetch classes, teachers, or subjects:", error);
-            setAllClasses([]);
-            setTeachers([]);
-            setMasterSubjects([]);
-            setSectionsPool([]);
+            console.error("Failed to refetch classes:", error);
         }
-    }
-
-    useEffect(() => {
-        async function fetchSchools() {
-          if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
-            try {
-              const schoolsData = await getAllSchools();
-              setSchools(schoolsData || []);
-            } catch (error) {
-              console.error("Failed to fetch schools:", error);
-              setSchools([]);
-            }
-          }
-        }
-        fetchSchools();
-    }, [userRole]);
-
-    useEffect(() => {
-        async function fetchInitialData() {
-          if ((userRole === SUPERADMIN || userRole === TENANTADMIN) && selectedSchool) {
-            try {
-              const [masterClassData, masterSeriesData, masterPackagesData, teacherData] = await Promise.all([
-                getMasterClasses(),
-                getMasterSeries(),
-                getAllPackages(),
-                getTeachersBySchool(selectedSchool),
-              ]);
-
-              setMasterClasses(masterClassData || []);
-              setMasterSeries(masterSeriesData || []);
-              setMasterPackages(masterPackagesData || []);
-              setTeachers(processTeacherData(teacherData || []));
-
-            } catch (error) {
-              console.error("Failed to fetch initial data:", error);
-              setMasterClasses([]);
-              setMasterSeries([]);
-              setMasterPackages([]);
-              setTeachers([]);
-            }
-          }
-        }
-        fetchInitialData();
-      }, [userRole, selectedSchool]);
-
-      useEffect(() => {
-        if (selectedSchool) {
-            fetchClassesAndSections(selectedSchool);
-        }
-      }, [selectedSchool]);
+    };
 
     const selectedSchoolDetails = selectedSchool ? schools.find(s => s.id === selectedSchool) : null;
     const availableLicenses = selectedSchoolDetails?.licenceForStudent - allClasses.reduce((acc, c) => acc + c.licensesCount, 0);
@@ -150,7 +184,8 @@ export default function ClassesPage() {
     };
 
     const handleAssignClassTeacher = async (classId: string, sectionId: string | undefined, teacherId: string) => {
-        if (!selectedSchool) return;
+        const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+        if (!schoolId) return;
 
         const classToUpdate = allClasses.find(c => c.classId === classId);
         if (!classToUpdate) return;
@@ -172,9 +207,9 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(selectedSchool, classId, { data: finalPayload });
+            await updateClass(schoolId, classId, { data: finalPayload });
             toast({ title: "Success", description: "Class Teacher assigned successfully." });
-            fetchClassesAndSections(selectedSchool);
+            fetchClassesAndSections(schoolId);
         } catch (error: any) {
             console.error("Failed to assign Class Teacher:", { payload: finalPayload, error: error.response?.data || error.message });
             toast({ title: "Error", description: "Failed to assign Class Teacher." });
@@ -182,7 +217,8 @@ export default function ClassesPage() {
     };
     
     const handleUpdateSubjectTeacher = async (classId: string, sectionId: string | undefined, subjectId: string, teacherId: string) => {
-        if (!selectedSchool) return;
+        const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+        if (!schoolId) return;
 
         const classToUpdate = allClasses.find(c => c.classId === classId);
         if (!classToUpdate) return;
@@ -213,9 +249,9 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(selectedSchool, classId, { data: finalPayload });
+            await updateClass(schoolId, classId, { data: finalPayload });
             toast({ title: "Success", description: "Subject teacher updated successfully." });
-            fetchClassesAndSections(selectedSchool);
+            fetchClassesAndSections(schoolId);
         } catch (error: any) {
             console.error("Failed to update subject teacher:", { payload: finalPayload, error: error.response?.data || error.message });
             toast({ title: "Error", description: "Failed to update subject teacher." });
@@ -241,7 +277,8 @@ export default function ClassesPage() {
     };
 
     const handleSaveSection = async (values: any) => {
-        if (!currentClass || !selectedSchool) return;
+        const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+        if (!currentClass || !schoolId) return;
 
         const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
         if (!classToUpdate) return;
@@ -265,7 +302,7 @@ export default function ClassesPage() {
             let sectionFromPool = sectionsPool.find(s => s.name === sectionName);
             if (!sectionFromPool) {
                 try {
-                    const newMasterSection = await createMasterSection(selectedSchool, { name: sectionName });
+                    const newMasterSection = await createMasterSection(schoolId, { name: sectionName });
                     sectionFromPool = newMasterSection.data;
                 } catch (error) {
                     console.error("Failed to create master section:", error);
@@ -283,9 +320,9 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
 
         try {
-            await updateClass(selectedSchool, currentClass.classId, { data: finalPayload });
+            await updateClass(schoolId, currentClass.classId, { data: finalPayload });
             toast({ title: "Success", description: `Section ${isEditing ? 'updated' : 'added'} successfully.` });
-            fetchClassesAndSections(selectedSchool);
+            fetchClassesAndSections(schoolId);
             setIsSectionDialogOpen(false);
         } catch (error: any) {
             console.error(`Failed to ${isEditing ? 'update' : 'add'} section:`, { payload: finalPayload, error: error.response?.data || error.message });
@@ -294,7 +331,8 @@ export default function ClassesPage() {
     };
 
     const handleSaveSubject = async (values: any) => {
-        if (!currentClass || !selectedSchool) return;
+        const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+        if (!currentClass || !schoolId) return;
     
         const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
         if (!classToUpdate) return;
@@ -320,9 +358,9 @@ export default function ClassesPage() {
         const finalPayload = createCleanPayload(updatedClass);
     
         try {
-            await updateClass(selectedSchool, currentClass.classId, { data: finalPayload });
+            await updateClass(schoolId, currentClass.classId, { data: finalPayload });
             toast({ title: "Success", description: "Subject added successfully." });
-            fetchClassesAndSections(selectedSchool);
+            fetchClassesAndSections(schoolId);
             setIsSubjectDialogOpen(false);
         } catch (error: any) {
             console.error("Failed to add subject:", { payload: finalPayload, error: error.response?.data || error.message });
@@ -331,12 +369,13 @@ export default function ClassesPage() {
     };
 
     const handleDeleteSection = async (sectionId: string) => {
-        if (!selectedSchool) return;
+        const schoolId = userRole === SCHOOLADMIN ? user?.schoolId : selectedSchool;
+        if (!schoolId) return;
 
         try {
-            await deleteMasterSection(selectedSchool, sectionId);
+            await deleteMasterSection(schoolId, sectionId);
             toast({ title: "Success", description: "Section deleted successfully." });
-            fetchClassesAndSections(selectedSchool);
+            fetchClassesAndSections(schoolId);
         } catch (error) {
             console.error("Failed to delete section:", error);
             toast({ title: "Error", description: "Failed to delete section." });
@@ -441,7 +480,7 @@ export default function ClassesPage() {
       <CardContent>
         <Card className="border-none shadow-none pt-4">
             <CardContent className="p-0">
-            {selectedSchool ? (
+            {(selectedSchool || userRole === SCHOOLADMIN) ? (
                 <Accordion type="single" collapsible className="w-full">
                 {allClasses.map((c) => (
                     <AccordionItem value={c.classId} key={c.classId}>

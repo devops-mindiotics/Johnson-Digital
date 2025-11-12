@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay"
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default function TeacherDashboard({ user }: { user: User }) {
   const plugin = useRef(
@@ -71,7 +72,10 @@ export default function TeacherDashboard({ user }: { user: User }) {
                 <Link href={module.href} key={module.name} className="no-underline">
                     <Card className="text-center h-full hover:shadow-lg transition-shadow relative">
                         {module.tag && (
-                            <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
+                            <div className={cn(
+                                "absolute top-0 right-0 text-white text-xs font-bold px-2 py-1 rounded-bl-lg",
+                                module.tag === 'Upcoming' && 'bg-gradient-to-r from-pink-500 to-red-500'
+                            )}>
                                 {module.tag}
                             </div>
                         )}
