@@ -16,7 +16,7 @@ export default function SubjectsPage() {
   useEffect(() => {
     async function fetchSubjects() {
       try {
-        const { records } = await getAllSubjects(1, 100, 'active', ''); // Fetch a large number of subjects
+        const  records  = await getAllSubjects(); // Fetch a large number of subjects
         setSubjects(records);
       } catch (error) {
         console.error('Error fetching subjects:', error);

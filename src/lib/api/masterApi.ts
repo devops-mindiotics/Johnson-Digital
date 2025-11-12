@@ -189,10 +189,6 @@ export async function getAllClasses(): Promise<any[]> {
         return response.data.data.subjects.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       }
 
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          return response.data.data.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      }
-  
       return [];
     } catch (err: any) {
       console.error("❌ getAllSubjects error:", err.response?.data || err.message);
