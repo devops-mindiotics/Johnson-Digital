@@ -1,4 +1,4 @@
-'use client';
+''''use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -45,10 +45,11 @@ const formSchema = z.object({
   type: z.enum(['Teacher', 'Student', 'School Admin']),
   firstName: z.string().min(1, 'First Name is required'),
   lastName: z.string().min(1, 'Last Name is required'),
-  gender: z.enum(['Male', 'Female']),
+  password: z.string().min(8, 'Password must be at least 8 characters long.'),
+  gender: z.enum(['male', 'female']),
   mobileNumber: z.string().max(12, 'Mobile number cannot exceed 12 digits'),
   email: z.string().email(),
-  status: z.enum(['Active', 'Inactive', 'Pending']).default('Pending'),
+  status: z.enum(['active', 'inactive', 'pending', 'deleted']).default('active'),
   schoolUniqueId: z.string().optional(),
   address: z.string(),
   city: z.string(),
@@ -67,6 +68,8 @@ const formSchema = z.object({
   pen: z.string().optional(),
   classId: z.string().optional(),
   section: z.string().optional(),
+  academicYear: z.string().optional(),
+  rollNumber: z.string().optional(),
   // School Admin fields
   expiryDate: z.string().optional(),
 });
@@ -93,12 +96,25 @@ function AddUserPageForm() {
     return `${nextYear}-04-30`;
   };
 
+  const getCurrentAcademicYear = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    if (currentMonth >= 3) { // April or later
+        return `${currentYear}-${currentYear + 1}`;
+    } else { // Before April
+        return `${currentYear - 1}-${currentYear}`;
+    }
+  };
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      status: 'Pending',
+      status: 'active',
       type: (searchParams.get('type') as 'Teacher' | 'Student' | 'School Admin') || undefined,
       expiryDate: getExpiryDate(),
+      academicYear: getCurrentAcademicYear(),
       firstName: '',
       lastName: '',
       mobileNumber: '',
@@ -108,6 +124,7 @@ function AddUserPageForm() {
       district: '',
       state: '',
       pincode: '',
+      password: ''
     },
   });
 
@@ -179,15 +196,57 @@ function AddUserPageForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const schoolId = selectedSchool || user.schoolId;
-    const schoolName = schools.find(s => s.id === schoolId)?.schoolName;
+    if (!schoolId) {
+      toast({
+        title: 'Error',
+        description: 'School ID is not available. Please select a school.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    const schoolName = schools.find(s => s.id === schoolId)?.schoolName || '';
+    const className = classes.find(c => c.id === values.classId)?.name || '';
+    const sectionName = sections.find(s => s.id === values.section)?.name || '';
 
     if (values.type === 'Student') {
       try {
-        const studentData = {
-            userType: 'Student',
-            ...values
+        const studentPayload = {
+            phone: values.mobileNumber,
+            password: values.password,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            schoolName: schoolName,
+            role: ["STUDENT"],
+            student: {
+              gender: values.gender,
+              admissionNo: values.admissionNumber,
+              pen: values.pen,
+              dob: values.dob,
+              guardian: {
+                fatherName: values.fatherName,
+                motherName: values.motherName
+              },
+              status: values.status,
+              classDetails: {
+                classId: values.classId,
+                className: className,
+                sectionId: values.section,
+                sectionName: sectionName,
+                academicYear: values.academicYear,
+                rollNumber: values.rollNumber
+              }
+            },
+            address: {
+              line1: values.address,
+              city: values.city,
+              district: values.district,
+              state: values.state,
+              pincode: values.pincode
+            }
         };
-        await createStudent(user.tenantId, schoolId, values.classId, studentData);
+
+        await createStudent(user.tenantId, schoolId, values.classId, studentPayload);
         setFeedbackTitle('Success');
         setFeedbackMessage('Student created successfully.');
         setCreationSuccess(true);
@@ -360,6 +419,19 @@ function AddUserPageForm() {
                         </FormItem>
                       )}
                     />
+                     <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password *</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="********" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="gender"
@@ -373,8 +445,8 @@ function AddUserPageForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Male">Male</SelectItem>
-                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -595,6 +667,19 @@ function AddUserPageForm() {
                           </FormItem>
                         )}
                       />
+                       <FormField
+                        control={form.control}
+                        name="rollNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Roll Number *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., 23" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <FormField
                         control={form.control}
                         name="dob"
@@ -671,6 +756,19 @@ function AddUserPageForm() {
                             <FormLabel>Permanent Education Number (PEN) *</FormLabel>
                             <FormControl>
                               <Input placeholder="e.g., 1234567890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="academicYear"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Academic Year *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g., 2024-2025" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -774,3 +872,4 @@ export default function AddUserPage() {
         </Suspense>
     )
 }
+'''

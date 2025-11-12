@@ -294,28 +294,111 @@ export const deleteTeacher = async (tenantId: string, schoolId: string, teacherI
     }
 }
 
-// student api calls, keeping them as placeholders
-export const getAllStudents = async (tenantId: string, schoolId: string) => {
-    console.log("getAllStudents", tenantId, schoolId);
-    return {data: []};
-}
-
-export const getStudentsByClass = async (tenantId: string, schoolId: string, classId: string) => {
-    console.log("getStudentsByClass", tenantId, schoolId, classId);
-    return [];
-}
-
-export const updateStudent = async (tenantId: string, schoolId: string, classId: string, studentId: string, data: any) => {
-    console.log("updateStudent", tenantId, schoolId, classId, studentId, data);
-    return {};
-}
-
+// student api calls
 export const createStudent = async (tenantId: string, schoolId: string, classId: string, data: any) => {
-    console.log("createStudent", tenantId, schoolId, classId, data);
-    return {};
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/students`,
+            { data },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ createStudent error:", err.response?.data || err.message);
+        throw err;
+    }
 }
 
-export const deleteStudent = async (tenantId: string, schoolId: string, classId: string, studentId: string) => {
-    console.log("deleteStudent", tenantId, schoolId, classId, studentId);
-    return {};
+export const getStudentById = async (tenantId: string, schoolId: string, studentId: string) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/schools/${schoolId}/students/${studentId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ getStudentById error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const getAllStudents = async (tenantId: string, schoolId: string, params?: any) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/schools/${schoolId}/students`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: params
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ getAllStudents error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const updateStudent = async (tenantId: string, schoolId: string, studentId: string, data: any) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.patch(
+            `/tenants/${tenantId}/schools/${schoolId}/students/${studentId}`,
+            { data },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ updateStudent error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export const deleteStudent = async (tenantId: string, schoolId: string, studentId: string) => {
+    try {
+        const token = localStorage.getItem("contextJWT");
+        if (!token) throw new Error("JWT token not found");
+
+        const response = await apiClient.delete(
+            `/tenants/${tenantId}/schools/${schoolId}/students/${studentId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ deleteStudent error:", err.response?.data || err.message);
+        throw err;
+    }
 }

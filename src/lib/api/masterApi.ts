@@ -408,3 +408,41 @@ export async function deleteClass(classId: string): Promise<any> {
         throw err;
     }
 }
+
+export async function createLesson(lesson: { name: string; description: string; classId: string; subjectId: string; }): Promise<any> {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) throw new Error("Tenant ID not found");
+
+        const lessonPayload = {
+            data: {
+                name: lesson.name,
+                code: `LES-${Math.random().toString(36).substr(2, 7)}`,
+                description: lesson.description,
+                classId: lesson.classId,
+                subjectId: lesson.subjectId,
+                status: "active",
+            },
+        };
+
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/masters/lessons`,
+            lessonPayload,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ createLesson error:", err.response?.data || err.message);
+        throw err;
+    }
+}
