@@ -78,7 +78,7 @@ export function HomepageHeader() {
             </Button>
         )}
         <SidebarTrigger />
-        <div className="flex flex-col">
+        <div className="flex flex-col pt-2">
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
                 <p className="text-sm">{finalDisplayName}</p>
