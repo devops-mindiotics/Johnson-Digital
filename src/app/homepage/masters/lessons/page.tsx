@@ -1,19 +1,30 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { getAllLessons, createLesson, getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from "react";
+import {
+  getAllLessons,
+  createLesson,
+  getAllClasses,
+  getAllSubjects,
+} from "@/lib/api/masterApi";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LessonsPage() {
   const [lessons, setLessons] = useState<any[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [newLessonTitle, setNewLessonTitle] = useState('');
+  const [selectedClass, setSelectedClass] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [newLessonTitle, setNewLessonTitle] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -23,12 +34,12 @@ export default function LessonsPage() {
       try {
         const [classesData, subjectsData] = await Promise.all([
           getAllClasses(),
-          getAllSubjects(1, 100, 'active', '').then(res => res.records)
+          getAllSubjects().then((res) => res),
         ]);
         setClasses(classesData);
         setSubjects(subjectsData);
       } catch (error) {
-        console.error('Error fetching initial data:', error);
+        console.error("Error fetching initial data:", error);
       } finally {
         setLoading(false);
       }
@@ -42,10 +53,18 @@ export default function LessonsPage() {
       if (selectedClass && selectedSubject) {
         setLoading(true);
         try {
-          const { records } = await getAllLessons(selectedClass, selectedSubject, 1, 100, 'active', '');
+          const params = {
+            page: 1,
+            limit: 100,
+            classId: selectedClass,
+            subjectId: selectedSubject,
+            status: "active" as const,
+          };
+
+          const { records } = await getAllLessons(params);
           setLessons(records);
         } catch (error) {
-          console.error('Error fetching lessons:', error);
+          console.error("Error fetching lessons:", error);
         } finally {
           setLoading(false);
         }
@@ -66,14 +85,18 @@ export default function LessonsPage() {
 
     setIsSubmitting(true);
     try {
-      const newLesson = await createLesson({ title: newLessonTitle, classId: selectedClass, subjectId: selectedSubject });
+      const newLesson = await createLesson({
+        title: newLessonTitle,
+        classId: selectedClass,
+        subjectId: selectedSubject,
+      });
       setLessons([newLesson, ...lessons]);
-      setNewLessonTitle('');
+      setNewLessonTitle("");
       toast({
         title: "Lesson created successfully",
       });
     } catch (error) {
-      console.error('Error creating lesson:', error);
+      console.error("Error creating lesson:", error);
       toast({
         title: "Error creating lesson",
         variant: "destructive",
@@ -93,7 +116,11 @@ export default function LessonsPage() {
             <SelectValue placeholder="Select a class" />
           </SelectTrigger>
           <SelectContent>
-            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+            {classes.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -102,7 +129,11 @@ export default function LessonsPage() {
             <SelectValue placeholder="Select a subject" />
           </SelectTrigger>
           <SelectContent>
-            {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+            {subjects.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -113,7 +144,7 @@ export default function LessonsPage() {
           disabled={isSubmitting}
         />
         <Button onClick={handleCreateLesson} disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Lesson'}
+          {isSubmitting ? "Creating..." : "Create Lesson"}
         </Button>
       </div>
 
@@ -121,7 +152,7 @@ export default function LessonsPage() {
         <p>Loading lessons...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lessons.map((l) => (
+          {(lessons ?? []).map((l) => (
             <div key={l.id} className="border p-4 rounded-lg">
               <h2 className="font-semibold">{l.title}</h2>
             </div>

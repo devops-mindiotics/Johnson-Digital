@@ -114,15 +114,18 @@ export const createLesson = async (payload: CreateLessonPayload): Promise<Lesson
     }
 };
 
-export const getAllLessons = async (params: GetAllLessonsParams): Promise<PaginatedLessonsResponse> => {
+export const getAllLessons = async (queryParams: GetAllLessonsParams): Promise<PaginatedLessonsResponse> => {
     try {
         const tenantId = getTenantId();
         const token = getToken();
 
+         const cleanParams = Object.fromEntries(
+      Object.entries(queryParams).filter(([_, v]) => v !== undefined && v !== null)
+    );
         const response = await apiClient.get(
             `/tenants/${tenantId}/masters/lessons`,
             {
-                params,
+                params : cleanParams,
                 headers: { Authorization: `Bearer ${token}` },
             }
         );
