@@ -87,13 +87,13 @@ export function HomepageHeader() {
                     ({displayClass})
                 </p>
                 )}
-                 {userRole === STUDENT && (
-                    <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
-                        <Crown className="w-3 h-3 mr-1" />
-                        Premium
-                    </span>
-                )}
             </div>
+            {userRole === STUDENT && (
+                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full w-fit mt-1">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium
+                </span>
+            )}
         </div>
       </div>
       <div className="flex items-center gap-4">

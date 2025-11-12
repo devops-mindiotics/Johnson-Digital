@@ -8,19 +8,6 @@ export function HomepageFooter({ className }: { className?: string }) {
                     &copy; {new Date().getFullYear()} EduCentral by Johnson Digital. All Rights Reserved.
                 </p>
             </div>
-            <div className="absolute bottom-4 right-4">
-                <p className="hidden md:block text-xs text-muted-foreground italic">
-                    Powered by{' '}
-                    <a
-                        href="https://mindiotics.com"
-                        className="text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        mindIoTics Tech.
-                    </a>
-                </p>
-            </div>
         </footer>
     );
 }

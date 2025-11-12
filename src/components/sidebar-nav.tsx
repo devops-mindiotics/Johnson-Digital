@@ -26,6 +26,14 @@ export function SidebarNav({ items, setSidebarOpen }: any) {
     return null;
   }
 
+  const handleLinkClick = () => {
+    if (setSidebarOpen) {
+      requestAnimationFrame(() => {
+        setSidebarOpen(false);
+      });
+    }
+  };
+
   return (
     <SidebarMenu>
       {items.map((item: any, index: number) => (
@@ -48,9 +56,8 @@ export function SidebarNav({ items, setSidebarOpen }: any) {
                 <SidebarMenuSub>
                   {item.children.map((child: any, childIndex: number) => (
                     <SidebarMenuItem key={childIndex}>
-                      <Link href={child.href}>
+                      <Link href={child.href} onClick={handleLinkClick}>
                         <SidebarMenuSubButton
-                          onClick={() => setSidebarOpen(false)}
                           isActive={pathname.startsWith(child.href)}
                         >
                           <child.icon className="h-4 w-4" />
@@ -63,9 +70,8 @@ export function SidebarNav({ items, setSidebarOpen }: any) {
               </CollapsibleContent>
             </Collapsible>
           ) : (
-            <Link href={item.href}>
+            <Link href={item.href} onClick={handleLinkClick}>
               <SidebarMenuButton
-                onClick={() => setSidebarOpen(false)}
                 isActive={pathname === item.href}
                 className={cn(item.disabled && 'cursor-not-allowed opacity-80')}
               >

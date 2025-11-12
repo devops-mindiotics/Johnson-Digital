@@ -24,22 +24,23 @@ export function SidebarHeader() {
         </Avatar>
         <div className="flex flex-col text-sidebar-foreground overflow-hidden">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm truncate">{displayName}</p>
+            <p className="font-semibold text-base truncate">{displayName}</p>
             {userRole === STUDENT && (
-              <p className="hidden text-sm text-muted-foreground sm:block">
-                ({displayClass})
-              </p>
-            )}
-            {userRole === STUDENT && (
-              <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
+              <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full sm:hidden">
                 <Crown className="w-3 h-3 mr-1" />
                 Premium
               </span>
             )}
           </div>
-          <p className="text-xs text-sidebar-foreground/80 truncate">
-            {userRole}
-          </p>
+          <div className="flex items-center gap-1.5 text-xs text-sidebar-foreground/80">
+            <p className="truncate">{userRole}</p>
+            {userRole === STUDENT && (
+              <>
+                <span>|</span>
+                <p>{displayClass}</p>
+              </>
+            )}
+          </div>
           <p className="text-xs text-sidebar-foreground/80 truncate">
             {user.phone}
           </p>

@@ -16,7 +16,12 @@ export async function loginUser(mobile: string, password: string): Promise<Login
   const data = response.data;
 
   if (data?.data?.user) {
-    localStorage.setItem('educentral-user', JSON.stringify(data.data.user));
+    const user = data.data.user;
+    if (data.data.schools && data.data.schools.length > 0) {
+      user.schoolId = data.data.schools[0].schoolId;
+      user.tenantId = data.data.schools[0].tenantId;
+    }
+    localStorage.setItem('educentral-user', JSON.stringify(user));
     setJWT(data);
     saveRoles(data);
   }

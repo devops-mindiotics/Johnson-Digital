@@ -149,7 +149,7 @@ export default function ClassesPage() {
         if (user) {
             fetchData();
         }
-    }, [user, userRole, selectedSchool]);
+    }, [user, userRole, selectedSchool, user?.schoolId]);
 
     const fetchClassesAndSections = async (schoolId: string) => {
         try {
