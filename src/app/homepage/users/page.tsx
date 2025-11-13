@@ -19,6 +19,22 @@ import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
 import './users.css';
 
+const getAvatarUrl = (user: any) => {
+  if (user.avatarUrl) {
+    return user.avatarUrl;
+  }
+
+  if (user.gender === 'male') {
+    return 'https://avatar.iran.liara.run/public/boy';
+  }
+
+  if (user.gender === 'female') {
+    return 'https://avatar.iran.liara.run/public/girl';
+  }
+
+  return 'https://avatar.iran.liara.run/public';
+};
+
 export default function UsersPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
@@ -209,6 +225,7 @@ export default function UsersPage() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
+                        <AvatarImage src={getAvatarUrl(u)} alt={getUserName(u)} />
                         <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">
@@ -256,6 +273,7 @@ export default function UsersPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
+                    <AvatarImage src={getAvatarUrl(u)} alt={getUserName(u)} />
                     <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="font-medium">

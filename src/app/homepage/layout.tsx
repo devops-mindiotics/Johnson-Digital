@@ -46,8 +46,8 @@ function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
       <Sidebar collapsible="icon">
-        <SidebarHeader />
         <SidebarContent>
+          <SidebarHeader />
           <SidebarNav items={sidebarItems} setSidebarOpen={setOpenMobile} />
         </SidebarContent>
         <SidebarFooter>

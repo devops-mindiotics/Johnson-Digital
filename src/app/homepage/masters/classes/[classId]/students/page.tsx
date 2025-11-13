@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal } from 'lucide-react';
 import { getStudentsByClass } from '@/lib/api/userApi';
 import {
   DropdownMenu,
@@ -53,6 +53,7 @@ interface Student {
 
 export default function ClassStudentsPage() {
   const params = useParams();
+  const router = useRouter();
   const classId = params.classId as string;
   const [students, setStudents] = useState<Student[]>([]);
 
@@ -74,7 +75,12 @@ export default function ClassStudentsPage() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Students</CardTitle>
+        <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => router.back()}>
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle>Students</CardTitle>
+        </div>
         <AddStudentForm classId={classId} onStudentAdded={fetchStudents} />
       </CardHeader>
       <CardContent>

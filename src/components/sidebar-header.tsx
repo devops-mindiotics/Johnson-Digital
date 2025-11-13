@@ -7,6 +7,22 @@ import { Logo } from '@/components/logo';
 import { getRoles } from '@/lib/utils/getRole';
 import { STUDENT } from '@/lib/utils/constants';
 
+const getAvatarUrl = (user: any) => {
+  if (user.avatarUrl) {
+    return user.avatarUrl;
+  }
+
+  if (user.gender === 'male') {
+    return 'https://avatar.iran.liara.run/public/boy';
+  }
+
+  if (user.gender === 'female') {
+    return 'https://avatar.iran.liara.run/public/girl';
+  }
+
+  return 'https://avatar.iran.liara.run/public';
+};
+
 export function SidebarHeader() {
   const { user } = useAuth();
   const userRole = getRoles() || STUDENT;
@@ -18,11 +34,11 @@ export function SidebarHeader() {
   return (
     <div className="flex flex-col pt-3">
       <div className="flex items-center gap-2 p-3 group-data-[collapsible=icon]:hidden">
-        <Logo />
+        <Logo variant="white" />
       </div>
       <div className="flex items-center gap-2 p-3 group-data-[collapsible=icon]:hidden">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={user.avatarUrl ?? ""} alt={displayName} />
+          <AvatarImage src={getAvatarUrl(user)} alt={displayName} />
           <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col text-sidebar-foreground overflow-hidden">

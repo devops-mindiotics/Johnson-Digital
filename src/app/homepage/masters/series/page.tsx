@@ -99,8 +99,9 @@ const SeriesPage = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Manage Series</CardTitle>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Series
+        <Button onClick={() => setIsAddDialogOpen(true)} className="sm:w-auto w-full">
+          <Plus className="sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline"> Add Series</span>
         </Button>
       </CardHeader>
       <CardContent>

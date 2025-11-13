@@ -368,6 +368,22 @@ const SchoolEditForm = ({ school, onCancel, user, schoolList }) => {
   );
 };
 
+const getAvatarUrl = (user: any) => {
+  if (user.avatarUrl) {
+    return user.avatarUrl;
+  }
+
+  if (user.gender === 'male') {
+    return 'https://avatar.iran.liara.run/public/boy';
+  }
+
+  if (user.gender === 'female') {
+    return 'https://avatar.iran.liara.run/public/girl';
+  }
+
+  return 'https://avatar.iran.liara.run/public';
+};
+
 export default function ProfileClient({ user: initialUser, schoolList }: { user: any, schoolList: any[] }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -456,7 +472,7 @@ export default function ProfileClient({ user: initialUser, schoolList }: { user:
                   src={
                     selectedFile
                       ? URL.createObjectURL(selectedFile)
-                      : user.profilePic
+                      : getAvatarUrl(user)
                   }
                   alt={displayName}
                   data-ai-hint="person avatar"

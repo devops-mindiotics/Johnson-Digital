@@ -28,12 +28,12 @@ export default function SubjectsPage() {
     const showBackButton = user?.roles !== STUDENT;
 
     return (
-        <div className="p-4 sm:p-6 md:p-8">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="sm:p-6 md:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 px-4 sm:px-0">
                 {showBackButton && (
-                     <Button variant="outline" onClick={() => router.back()}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Classes
+                     <Button variant="outline" onClick={() => router.back()} className="w-auto">
+                        <ArrowLeft className="sm:mr-2 h-4 w-4" />
+                        <span className="hidden sm:inline">Back to Classes</span>
                     </Button>
                 )}
                 <div className="flex-grow">
@@ -42,7 +42,7 @@ export default function SubjectsPage() {
                 </div>
             </div>
 
-            <Card>
+            <Card className="sm:rounded-lg">
                 <CardContent className="pt-6">
                     {subjects.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">

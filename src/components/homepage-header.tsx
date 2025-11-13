@@ -36,6 +36,21 @@ import { School, ClipboardList } from 'lucide-react';
 import { getRoles } from '@/lib/utils/getRole';
 import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
+const getAvatarUrl = (user: any) => {
+  if (user.avatarUrl) {
+    return user.avatarUrl;
+  }
+
+  if (user.gender === 'male') {
+    return 'https://avatar.iran.liara.run/public/boy';
+  }
+
+  if (user.gender === 'female') {
+    return 'https://avatar.iran.liara.run/public/girl';
+  }
+
+  return 'https://avatar.iran.liara.run/public';
+};
 
 export function HomepageHeader() {
   const { user, logout } = useAuth();
@@ -203,7 +218,7 @@ export function HomepageHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user.avatarUrl ?? "https://picsum.photos/100"} alt={displayName} data-ai-hint="person avatar" />
+                <AvatarImage src={getAvatarUrl(user)} alt={displayName} data-ai-hint="person avatar" />
                 <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
             </Button>
@@ -212,7 +227,7 @@ export function HomepageHeader() {
             <DropdownMenuLabel className="font-normal">
               <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={user.avatarUrl ?? "https://picsum.photos/100"} alt={displayName} />
+                  <AvatarImage src={getAvatarUrl(user)} alt={displayName} />
                   <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
