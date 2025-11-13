@@ -56,14 +56,15 @@ export function SidebarNav({ items, setSidebarOpen }: any) {
                 <SidebarMenuSub>
                   {item.children.map((child: any, childIndex: number) => (
                     <SidebarMenuItem key={childIndex}>
-                      <Link href={child.href} onClick={handleLinkClick}>
                         <SidebarMenuSubButton
+                          asChild
                           isActive={pathname.startsWith(child.href)}
                         >
-                          <child.icon className="h-4 w-4" />
-                          <span>{child.title}</span>
+                          <Link href={child.href} onClick={handleLinkClick}>
+                            <child.icon className="h-4 w-4" />
+                            <span>{child.title}</span>
+                          </Link>
                         </SidebarMenuSubButton>
-                      </Link>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenuSub>

@@ -16,7 +16,7 @@ export function Logo({ className, iconOnly = false }: LogoProps) {
     >
       {/* ✅ Correct public path (no local disk path) */}
       <Image
-        src="/JPDigital-Blue.svg"
+        src="/JPDigital-White.svg"
         alt="Johnson Logo"
         width={200}
         height={200}

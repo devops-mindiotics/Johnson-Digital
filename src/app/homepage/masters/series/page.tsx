@@ -5,15 +5,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import {
@@ -37,6 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getAllSeries, createSeries, updateSeries, deleteSeries } from '@/lib/api/masterApi';
 
 // Define the type for a series item
@@ -44,6 +38,7 @@ interface Series {
   id: string;
   name: string;
   description: string;
+  status: string;
 }
 
 const SeriesPage = () => {
@@ -75,9 +70,9 @@ const SeriesPage = () => {
     }
   };
 
-  const handleUpdate = async (id: string, updatedData: Omit<Series, 'id'>) => {
+  const handleUpdate = async (updatedSeries: Series) => {
     try {
-      await updateSeries(id, updatedData);
+      await updateSeries(updatedSeries.id, updatedSeries);
       fetchSeries();
       setIsEditDialogOpen(false);
       setSelectedSeries(null);
@@ -109,51 +104,47 @@ const SeriesPage = () => {
         </Button>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {seriesData.map((series) => (
-              <TableRow key={series.id}>
-                <TableCell className="font-medium">{series.name}</TableCell>
-                <TableCell>{series.description}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button variant="outline" size="icon" onClick={() => openEditDialog(series)}>
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the series.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(series.id)}>
-                          Yes, delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {seriesData.map((series) => (
+            <Card key={series.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle>{series.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p>{series.description}</p>
+                <p className="text-sm text-gray-500 mt-2">Status: {series.status}</p>
+              </CardContent>
+              <CardFooter className="flex justify-end space-x-2">
+                <Button variant="secondary" size="icon" onClick={() => openEditDialog(series)}>
+                  <Edit className="h-3.5 w-3.5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the series.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(series.id)}>
+                        Yes, delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </CardContent>
 
       {/* Add Series Dialog */}
@@ -162,7 +153,6 @@ const SeriesPage = () => {
         setIsOpen={setIsAddDialogOpen} 
         onSave={handleAdd} 
         title="Add New Series"
-        key={`add-series-dialog`}
       />
 
       {/* Edit Series Dialog */}
@@ -171,9 +161,8 @@ const SeriesPage = () => {
           isOpen={isEditDialogOpen} 
           setIsOpen={setIsEditDialogOpen} 
           series={selectedSeries} 
-          onSave={(updatedData) => handleUpdate(selectedSeries.id, updatedData)}
+          onSave={handleUpdate}
           title="Edit Series"
-          key={`edit-series-dialog-${selectedSeries.id}`}
         />
       )}
     </Card>
@@ -184,7 +173,7 @@ const SeriesPage = () => {
 interface SeriesDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  series?: Omit<Series, 'id'>;
+  series?: Series;
   onSave: (series: any) => void;
   title: string;
 }
@@ -192,19 +181,24 @@ interface SeriesDialogProps {
 const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, onSave, title }) => {
     const [name, setName] = useState(series?.name || '');
     const [description, setDescription] = useState(series?.description || '');
+    const [status, setStatus] = useState(series?.status || 'active');
 
     React.useEffect(() => {
-        if (series) {
-            setName(series.name);
-            setDescription(series.description);
-        } else {
-            setName('');
-            setDescription('');
+        if (isOpen) {
+            if (series) {
+                setName(series.name);
+                setDescription(series.description);
+                setStatus(series.status);
+            } else {
+                setName('');
+                setDescription('');
+                setStatus('active');
+            }
         }
-    }, [series]);
+    }, [series, isOpen]);
 
     const handleSave = () => {
-        onSave({ name, description });
+        onSave({ ...series, name, description, status });
     };
 
     return (
@@ -221,6 +215,18 @@ const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, 
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="description" className="text-right">Description</Label>
                         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">Status</Label>
+                        <Select onValueChange={setStatus} value={status}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
                 <DialogFooter>

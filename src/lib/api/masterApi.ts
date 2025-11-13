@@ -446,3 +446,38 @@ export async function createLesson(lesson: { name: string; description: string; 
         throw err;
     }
 }
+
+export async function updateLesson(lessonId: string, lesson: { name: string, description: string, status: string }): Promise<any> {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) throw new Error("Tenant ID not found");
+
+        const lessonPayload = {
+            data: {
+                name: lesson.name,
+                description: lesson.description,
+                status: lesson.status,
+            },
+        };
+
+        const response = await apiClient.put(
+            `/tenants/${tenantId}/masters/lessons/${lessonId}`,
+            lessonPayload,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ updateLesson error:", err.response?.data || err.message);
+        throw err;
+    }
+}

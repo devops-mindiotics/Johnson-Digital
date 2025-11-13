@@ -2,6 +2,7 @@
 import { useAuth } from '@/hooks/use-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Crown } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 import { getRoles } from '@/lib/utils/getRole';
 import { STUDENT } from '@/lib/utils/constants';
@@ -13,10 +14,12 @@ export function SidebarHeader() {
   if (!user) return null;
 
   const displayName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}`: '';
-  const displayClass = userRole === STUDENT ? "Class-10" : "V";
 
   return (
     <div className="flex flex-col pt-3">
+      <div className="flex items-center gap-2 p-3 group-data-[collapsible=icon]:hidden">
+        <Logo />
+      </div>
       <div className="flex items-center gap-2 p-3 group-data-[collapsible=icon]:hidden">
         <Avatar className="h-10 w-10">
           <AvatarImage src={user.avatarUrl ?? ""} alt={displayName} />
@@ -30,15 +33,6 @@ export function SidebarHeader() {
                 <Crown className="w-3 h-3 mr-1" />
                 Premium
               </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-sidebar-foreground/80">
-            <p className="truncate">{userRole}</p>
-            {userRole === STUDENT && (
-              <>
-                <span>|</span>
-                <p>{displayClass}</p>
-              </>
             )}
           </div>
           <p className="text-xs text-sidebar-foreground/80 truncate">
