@@ -56,9 +56,9 @@ export default function NoticeBoardPage() {
 
   useEffect(() => {
     async function fetchSchools() {
-      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
+      if ((userRole === SUPERADMIN || userRole === TENANTADMIN) && user?.tenantId) {
         try {
-          const schoolData = await getAllSchools();
+          const schoolData = await getAllSchools(user.tenantId);
           setSchools(Array.isArray(schoolData) ? schoolData : []);
         } catch (error) {
           console.error("Failed to fetch schools:", error);
@@ -67,10 +67,11 @@ export default function NoticeBoardPage() {
       }
     }
     fetchSchools();
-  }, [userRole]);
+  }, [userRole, user]);
 
   useEffect(() => {
     const fetchNotices = async () => {
+        if(!user?.tenantId) return;
         try {
             const params = {
                 schoolId: selectedSchool,

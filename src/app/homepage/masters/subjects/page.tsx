@@ -1,88 +1,252 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import { getAllSubjects, createSubject } from '@/lib/api/masterApi';
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Edit, Plus, Trash2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAllSubjects, createSubject, updateSubject, deleteSubject } from '@/lib/api/masterApi';
 
-export default function SubjectsPage() {
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [newSubjectName, setNewSubjectName] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+// Define the type for a subject item
+interface Subject {
+  id: string;
+  name: string;
+  description: string;
+  code: string;
+  status: string;
+}
+
+const SubjectsPage = () => {
+  const [subjectsData, setSubjectsData] = useState<Subject[]>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
 
   useEffect(() => {
-    async function fetchSubjects() {
-      try {
-        const { records } = await getAllSubjects(1, 100, 'active', ''); // Fetch a large number of subjects
-        setSubjects(records);
-      } catch (error) {
-        console.error('Error fetching subjects:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchSubjects();
   }, []);
 
-  const handleCreateSubject = async () => {
-    if (!newSubjectName.trim()) {
-      toast({
-        title: "Subject name is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
+  const fetchSubjects = async () => {
     try {
-      const newSubject = await createSubject({ name: newSubjectName, description: newSubjectName });
-      setSubjects([newSubject, ...subjects]);
-      setNewSubjectName('');
-      toast({
-        title: "Subject created successfully",
-      });
+      const data = await getAllSubjects();
+      setSubjectsData(data);
     } catch (error) {
-      console.error('Error creating subject:', error);
-      toast({
-        title: "Error creating subject",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error fetching subjects:", error);
     }
   };
 
+  const handleAdd = async (newSubject: Omit<Subject, 'id'>) => {
+    try {
+      await createSubject(newSubject);
+      fetchSubjects();
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating subject:", error);
+    }
+  };
+
+  const handleUpdate = async (updatedSubject: Subject) => {
+    try {
+      await updateSubject(updatedSubject.id, updatedSubject);
+      fetchSubjects();
+      setIsEditDialogOpen(false);
+      setSelectedSubject(null);
+    } catch (error) {
+      console.error("Error updating subject:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSubject(id);
+      fetchSubjects();
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+    }
+  };
+  
+  const openEditDialog = (subject: Subject) => {
+    setSelectedSubject(subject);
+    setIsEditDialogOpen(true);
+  };
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Subjects Master</h1>
-
-      <div className="flex gap-2 mb-4">
-        <Input
-          value={newSubjectName}
-          onChange={(e) => setNewSubjectName(e.target.value)}
-          placeholder="Enter new subject name"
-          disabled={isSubmitting}
-        />
-        <Button onClick={handleCreateSubject} disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Subject'}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Manage Subjects</CardTitle>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Add Subject
         </Button>
-      </div>
-
-      {loading ? (
-        <p>Loading subjects...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {subjects.map((s) => (
-            <div key={s.id} className="border p-4 rounded-lg">
-              <h2 className="font-semibold">{s.name}</h2>
-            </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {subjectsData.map((subject) => (
+            <Card key={subject.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle>{subject.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p>{subject.description}</p>
+                <p className="text-sm text-gray-500 mt-2">Code: {subject.code}</p>
+                <p className="text-sm text-gray-500 mt-2">Status: {subject.status}</p>
+              </CardContent>
+              <CardFooter className="flex justify-end space-x-2">
+                <Button variant="secondary" size="icon" onClick={() => openEditDialog(subject)}>
+                  <Edit className="h-3.5 w-3.5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the subject.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(subject.id)}>
+                        Yes, delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
           ))}
         </div>
+      </CardContent>
+
+      {/* Add Subject Dialog */}
+      <SubjectDialog 
+        isOpen={isAddDialogOpen} 
+        setIsOpen={setIsAddDialogOpen} 
+        onSave={handleAdd} 
+        title="Add New Subject"
+      />
+
+      {/* Edit Subject Dialog */}
+      {selectedSubject && (
+        <SubjectDialog 
+          isOpen={isEditDialogOpen} 
+          setIsOpen={setIsEditDialogOpen} 
+          subject={selectedSubject} 
+          onSave={handleUpdate}
+          title="Edit Subject"
+        />
       )}
-    </div>
+    </Card>
   );
+};
+
+// Reusable Dialog for Add/Edit
+interface SubjectDialogProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  subject?: Subject;
+  onSave: (subject: any) => void;
+  title: string;
 }
+
+const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subject, onSave, title }) => {
+    const [name, setName] = useState(subject?.name || '');
+    const [description, setDescription] = useState(subject?.description || '');
+    const [code, setCode] = useState(subject?.code || '');
+    const [status, setStatus] = useState(subject?.status || 'active');
+
+    React.useEffect(() => {
+        if (isOpen) {
+            if (subject) {
+                setName(subject.name);
+                setDescription(subject.description);
+                setCode(subject.code);
+                setStatus(subject.status);
+            } else {
+                setName('');
+                setDescription('');
+                setCode('');
+                setStatus('active');
+            }
+        }
+    }, [subject, isOpen]);
+
+    const handleSave = () => {
+        onSave({ ...subject, name, description, code, status });
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">Name</Label>
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="text-right">Description</Label>
+                        <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="code" className="text-right">Code</Label>
+                        <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">Status</Label>
+                        <Select onValueChange={setStatus} value={status}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={handleSave}>Save</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+export default SubjectsPage;

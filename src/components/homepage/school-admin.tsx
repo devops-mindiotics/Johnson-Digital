@@ -121,7 +121,10 @@ export default function SchoolAdminDashboard({ user }: { user: User }) {
                     </CardContent>
                 </Card>
             </div>
-            <Card>
+            <Card className="relative">
+                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
+                    Upcoming
+                </div>
                 <CardHeader>
                     <CardTitle>Notice Board</CardTitle>
                     <CardDescription>Recent activities in the school.</CardDescription>

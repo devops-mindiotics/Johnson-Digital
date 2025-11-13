@@ -15,7 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { getUsersByTenant, getUsersBySchool } from '@/lib/api/userApi';
-import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
+import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN } from '@/lib/utils/constants';
 import { getRoles } from '@/lib/utils/getRole';
 import './users.css';
 
@@ -23,23 +23,24 @@ export default function UsersPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
   const userRole = getRoles();
-  const [users, setUsers] = useState([]);
-  const [schools, setSchools] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
-  const [userToUpdate, setUserToUpdate] = useState(null);
+  const [userToUpdate, setUserToUpdate] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isImporting, setIsImporting] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedUserName, setProcessedUserName] = useState('');
   
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchSchools() {
+      if (!authUser?.tenantId) return;
       if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
         try {
-          const schoolData = await getAllSchools();
+          const schoolData = await getAllSchools(authUser.tenantId);
           if (schoolData && Array.isArray(schoolData)) {
             setSchools(schoolData);
           }
@@ -47,32 +48,56 @@ export default function UsersPage() {
           console.error("Failed to fetch schools:", error);
         }
       }
+    }
+    fetchSchools();
+  }, [authUser, userRole]);
+
+  useEffect(() => {
+    async function fetchUsers() {
+      if (!authUser) return;
+
       try {
         let userData = [];
-        if (selectedSchool === 'all') {
-            userData = await getUsersByTenant();
+        const tenantId = authUser.tenantId;
+
+        if (userRole === SCHOOLADMIN) {
+          if (authUser.schools && authUser.schools.length > 0) {
+            const schoolId = authUser.schools[0].id;
+            userData = await getUsersBySchool(tenantId, schoolId);
+          }
         } else {
-            userData = await getUsersBySchool(selectedSchool);
+          if (selectedSchool === 'all') {
+            userData = await getUsersByTenant(tenantId);
+          } else {
+            userData = await getUsersBySchool(tenantId, selectedSchool);
+          }
         }
         setUsers(userData);
       } catch (error) {
         console.error("Failed to fetch users:", error);
-      } 
+        setUsers([]);
+      }
     }
-    fetchData();
+    fetchUsers();
   }, [authUser, userRole, selectedSchool]);
+
+  const handleViewUser = (user: any) => {
+    localStorage.setItem('selectedUser', JSON.stringify(user));
+    router.push(`/homepage/users/${user.id}`);
+  };
 
   const handleStatusChange = () => {
     if (userToUpdate) {
-      const newStatus = userToUpdate.status === 'Active' ? 'Inactive' : 'Active';
+      const newStatus = userToUpdate.status === 'active' ? 'inactive' : 'active';
       const updatedUsers = users.map((u) =>
-        u.userId === userToUpdate.userId
+        u.id === userToUpdate.id
           ? { ...u, status: newStatus }
           : u
       );
       setUsers(updatedUsers);
-      if (newStatus === 'Inactive') {
-        setProcessedUserName(userToUpdate.name || 'the user');
+      const userName = `${userToUpdate.firstName} ${userToUpdate.lastName}`;
+      if (newStatus === 'inactive') {
+        setProcessedUserName(userName || 'the user');
         setSuccessDialogOpen(true);
       }
       setUserToUpdate(null);
@@ -80,11 +105,28 @@ export default function UsersPage() {
   };
 
   const filteredUsers = searchTerm
-    ? users.filter(u =>
-        (u.name && u.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+    ? users.filter(u => {
+        const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+        const email = u.email ? u.email.toLowerCase() : '';
+        return fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+      })
     : users;
+    
+  const getUserName = (user: any) => {
+    return user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.displayName || 'Unnamed User');
+  }
+
+  const getSchoolName = (user: any) => {
+    if (user.schools && user.schools.length > 0) {
+        const school = user.schools[0];
+        if (school.schoolCode && school.schoolName) {
+            return `${school.schoolCode} - ${school.schoolName}`;
+        }
+        return school.schoolName || 'N/A';
+    }
+    return 'N/A';
+}
+
 
   return (
     <Card>
@@ -163,19 +205,19 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((u) => (
-                <TableRow key={u.userId}>
+                <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
+                        <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">
-                        <div>{u.name || 'Unnamed User'}</div>
-                        <div className="text-sm text-muted-foreground">{u.mobile}</div>
+                        <div>{getUserName(u)}</div>
+                        <div className="text-sm text-muted-foreground">{u.phone}</div>
                       </div>
                     </div>
                   </TableCell>
-                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{u.schoolName}</TableCell>}
+                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{getSchoolName(u)}</TableCell>}
                   <TableCell>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</TableCell>
                   <TableCell>
                     <Badge
@@ -198,7 +240,7 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -210,15 +252,15 @@ export default function UsersPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:hidden">
           {filteredUsers.map((u) => (
-            <Card key={u.userId} className="p-4">
+            <Card key={u.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    <AvatarFallback>{u.name ? u.name.charAt(0) : 'U'}</AvatarFallback>
+                    <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div className="font-medium">
-                    <div>{u.name || 'Unnamed User'}</div>
-                    <div className="text-sm text-muted-foreground">{u.mobile}</div>
+                    <div>{getUserName(u)}</div>
+                    <div className="text-sm text-muted-foreground">{u.phone}</div>
                   </div>
                 </div>
                 <DropdownMenu>
@@ -230,7 +272,7 @@ export default function UsersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => router.push(`/homepage/users/${u.userId}`)}>View/Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -239,7 +281,7 @@ export default function UsersPage() {
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
                   <div>
                     <div className="font-semibold">School</div>
-                    <div>{u.schoolName}</div>
+                    <div>{getSchoolName(u)}</div>
                   </div>
                 }
                 <div>
@@ -262,7 +304,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will change the status of {userToUpdate?.name || 'the selected user'} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
+              This action will change the status of {userToUpdate ? getUserName(userToUpdate) : 'the selected user'} to {userToUpdate?.status === 'active' ? 'inactive' : 'active'}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -296,13 +338,13 @@ export default function UsersPage() {
           </AlertDialogHeader>
           <div
             className="file-upload-area"
-            onClick={() => fileInputRef.current.click()}
+            onClick={() => fileInputRef.current?.click()}
           >
             <input
               type="file"
               ref={fileInputRef}
               className="hidden"
-              onChange={(e) => setSelectedFile(e.target.files[0])}
+              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
               accept=".csv"
             />
             {selectedFile ? (

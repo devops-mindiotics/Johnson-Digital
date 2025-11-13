@@ -1,133 +1,326 @@
 'use client';
-
-import { useEffect, useState } from 'react';
-import { getAllLessons, createLesson, getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
+import React, { useState, useEffect } from 'react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Edit, PlusCircle, Trash2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
+import { getAllLessons, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 
-export default function LessonsPage() {
-  const [lessons, setLessons] = useState<any[]>([]);
-  const [classes, setClasses] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<any[]>([]);
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [newLessonTitle, setNewLessonTitle] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
+interface Lesson {
+  id: string;
+  name: string;
+  description: string;
+  classId: string;
+  subjectId: string;
+  status: string;
+}
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      try {
-        const [classesData, subjectsData] = await Promise.all([
-          getAllClasses(),
-          getAllSubjects(1, 100, 'active', '').then(res => res.records)
-        ]);
-        setClasses(classesData);
-        setSubjects(subjectsData);
-      } catch (error) {
-        console.error('Error fetching initial data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
+interface Class {
+    id: string;
+    name: string;
+}
 
-    fetchInitialData();
-  }, []);
+interface Subject {
+    id: string;
+    name: string;
+}
+
+export default function MasterLessonsPage() {
+  const isMobile = useIsMobile();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
-    async function fetchLessons() {
-      if (selectedClass && selectedSubject) {
-        setLoading(true);
-        try {
-          const { records } = await getAllLessons(selectedClass, selectedSubject, 1, 100, 'active', '');
-          setLessons(records);
-        } catch (error) {
-          console.error('Error fetching lessons:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
-
     fetchLessons();
+    fetchClasses();
+    fetchSubjects();
   }, [selectedClass, selectedSubject]);
 
-  const handleCreateLesson = async () => {
-    if (!newLessonTitle.trim() || !selectedClass || !selectedSubject) {
-      toast({
-        title: "All fields are required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
+  const fetchLessons = async () => {
     try {
-      const newLesson = await createLesson({ title: newLessonTitle, classId: selectedClass, subjectId: selectedSubject });
-      setLessons([newLesson, ...lessons]);
-      setNewLessonTitle('');
-      toast({
-        title: "Lesson created successfully",
-      });
+      const filters = {
+        classId: selectedClass === 'all' ? undefined : selectedClass,
+        subjectId: selectedSubject === 'all' ? undefined : selectedSubject,
+      };
+      const response = await getAllLessons(filters);
+      setLessons(response);
     } catch (error) {
-      console.error('Error creating lesson:', error);
-      toast({
-        title: "Error creating lesson",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to fetch lessons', error);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      const response = await getAllClasses();
+      setClasses(response);
+    } catch (error) {
+      console.error('Failed to fetch classes', error);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const response = await getAllSubjects();
+      setSubjects(response);
+    } catch (error) {
+      console.error('Failed to fetch subjects', error);
+    }
+  };
+
+  const handleAdd = () => {
+    setSelectedLesson(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleEdit = (c: Lesson) => {
+    setSelectedLesson(c);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteLesson(id);
+      fetchLessons();
+    } catch (error) {
+      console.error('Failed to delete lesson', error);
+    }
+  };
+
+  const handleSave = async (lessonData:  Omit<Lesson, 'id'>) => {
+    try {
+      if (selectedLesson) {
+        await updateLesson(selectedLesson.id, lessonData);
+      } else {
+        await createLesson(lessonData);
+      }
+      fetchLessons();
+      setIsDialogOpen(false);
+      setSelectedLesson(null);
+    } catch (error) {
+      console.error('Failed to save lesson', error);
     }
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Lessons Master</h1>
-
-      <div className="flex gap-2 mb-4">
-        <Select onValueChange={setSelectedClass} value={selectedClass}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a class" />
-          </SelectTrigger>
-          <SelectContent>
-            {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select onValueChange={setSelectedSubject} value={selectedSubject}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select a subject" />
-          </SelectTrigger>
-          <SelectContent>
-            {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Input
-          value={newLessonTitle}
-          onChange={(e) => setNewLessonTitle(e.target.value)}
-          placeholder="Enter new lesson title"
-          disabled={isSubmitting}
-        />
-        <Button onClick={handleCreateLesson} disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Lesson'}
-        </Button>
-      </div>
-
-      {loading ? (
-        <p>Loading lessons...</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Lessons</CardTitle>
+        <div className="flex items-center space-x-2">
+            <Select onValueChange={setSelectedClass} value={selectedClass}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a class" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Classes</SelectItem>
+                    {classes.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All Subjects</SelectItem>
+                    {subjects.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button onClick={handleAdd} size={isMobile ? 'icon' : 'default'}>
+              <PlusCircle className={isMobile ? 'h-4 w-4' : 'mr-2 h-4 w-4'} />
+              {!isMobile && 'Add Lesson'}
+            </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {lessons.map((l) => (
-            <div key={l.id} className="border p-4 rounded-lg">
-              <h2 className="font-semibold">{l.title}</h2>
-            </div>
+            <Card key={l.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle>{l.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p>{l.description}</p>
+                <p className="text-sm text-gray-500 mt-2">Class: {classes.find(c => c.id === l.classId)?.name}</p>
+                <p className="text-sm text-gray-500">Subject: {subjects.find(s => s.id === l.subjectId)?.name}</p>
+                <p className="text-sm text-gray-500">Status: {l.status}</p>
+              </CardContent>
+              <CardFooter className="flex justify-end space-x-2">
+                <Button variant="secondary" size="icon" onClick={() => handleEdit(l)}>
+                  <Edit className="h-3.5 w-3.5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the lesson.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(l.id)}>Yes, delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
           ))}
         </div>
-      )}
-    </div>
+      </CardContent>
+
+      <LessonDialog
+        isOpen={isDialogOpen}
+        setIsOpen={setIsDialogOpen}
+        onSave={handleSave}
+        initialData={selectedLesson}
+        classes={classes}
+        subjects={subjects}
+      />
+    </Card>
   );
 }
+
+interface LessonDialogProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  onSave: (data: Omit<Lesson, 'id'>) => void;
+  initialData: Lesson | null;
+  classes: Class[];
+  subjects: Subject[];
+}
+
+const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, initialData, classes, subjects }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [classId, setClassId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
+  const [status, setStatus] = useState('active');
+
+  useEffect(() => {
+    if (initialData) {
+      setName(initialData.name);
+      setDescription(initialData.description);
+      setClassId(initialData.classId);
+      setSubjectId(initialData.subjectId);
+      setStatus(initialData.status);
+    } else {
+      setName('');
+      setDescription('');
+      setClassId('');
+      setSubjectId('');
+      setStatus('active');
+    }
+  }, [initialData]);
+
+  const handleSave = () => {
+    onSave({ name, description, classId, subjectId, status });
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{initialData ? 'Edit Lesson' : 'Add Lesson'}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="description" className="text-right">Description</Label>
+            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="classId" className="text-right">Class</Label>
+            <Select onValueChange={setClassId} value={classId}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a class" />
+                </SelectTrigger>
+                <SelectContent>
+                    {classes.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="subjectId" className="text-right">Subject</Label>
+            <Select onValueChange={setSubjectId} value={subjectId}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                    {subjects.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">Status</Label>
+            <Select onValueChange={setStatus} value={status}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

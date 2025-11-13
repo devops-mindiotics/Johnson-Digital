@@ -11,35 +11,21 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { getAllSeries as getMasterSeries, getAllPackages } from '@/lib/api/masterApi';
 import { useToast } from '@/hooks/use-toast';
 
-export function EditSchoolClassDialog({ isOpen, onClose, classData, onUpdate }) {
+export function EditSchoolClassDialog({ 
+    isOpen, 
+    onClose, 
+    classData, 
+    onUpdate,
+    masterSeries, 
+    masterPackages 
+}) {
   const { toast } = useToast();
-  const [masterSeries, setMasterSeries] = useState<any[]>([]);
-  const [masterPackages, setMasterPackages] = useState<any[]>([]);
 
   const [series, setSeries] = useState(classData?.seriesId || '');
   const [pkg, setPkg] = useState(classData?.packageId || '');
   const [licenses, setLicenses] = useState(classData?.licensesCount || '');
-
-  useEffect(() => {
-    async function fetchInitialData() {
-      try {
-        const [masterSeriesData, masterPackagesData] = await Promise.all([
-          getMasterSeries(),
-          getAllPackages(),
-        ]);
-        if (masterSeriesData) setMasterSeries(masterSeriesData);
-        if (masterPackagesData) setMasterPackages(masterPackagesData);
-      } catch (error) {
-        console.error("Failed to fetch initial data:", error);
-      }
-    }
-    if (isOpen) {
-      fetchInitialData();
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (classData) {
@@ -50,21 +36,22 @@ export function EditSchoolClassDialog({ isOpen, onClose, classData, onUpdate }) 
   }, [classData]);
 
   const handleUpdate = () => {
-    const selectedSeries = masterSeries.find(s => s.id === series);
-    const seriesId = series ? selectedSeries.id : 'NA';
-    const seriesName = series ? selectedSeries.name : 'NA';
+    if (!licenses) {
+        toast({ variant: "destructive", title: "Error", description: "Please enter the license count." });
+        return;
+    }
 
+    const selectedSeries = masterSeries.find(s => s.id === series);
     const selectedPackage = masterPackages.find(p => p.id === pkg);
-    const packageId = pkg ? selectedPackage.id : 'NA';
-    const packageName = pkg ? selectedPackage.name : 'NA';
 
     const updatedData = {
-      seriesId,
-      seriesName,
-      packageId,
-      packageName,
+      seriesId: selectedSeries?.id || '',
+      seriesName: selectedSeries?.name || null,
+      packageId: selectedPackage?.id || '',
+      packageName: selectedPackage?.name || null,
       licensesCount: parseInt(licenses, 10),
     };
+    
     onUpdate(classData.id, updatedData);
   };
 
@@ -83,6 +70,7 @@ export function EditSchoolClassDialog({ isOpen, onClose, classData, onUpdate }) 
               <SelectValue placeholder="Select Series" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">No Series</SelectItem>
               {masterSeries.map(ms => (
                 <SelectItem key={ms.id} value={ms.id}>{ms.name}</SelectItem>
               ))}
@@ -94,6 +82,7 @@ export function EditSchoolClassDialog({ isOpen, onClose, classData, onUpdate }) 
               <SelectValue placeholder="Select Package" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="none">No Package</SelectItem>
               {masterPackages.map(mp => (
                 <SelectItem key={mp.id} value={mp.id}>{mp.name}</SelectItem>
               ))}

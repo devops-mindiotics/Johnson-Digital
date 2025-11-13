@@ -33,7 +33,9 @@ import { getHomeworks, createHomework, updateHomework, submitHomework } from '@/
 
 export default function AssignmentsPage() {
   const { user } = useAuth();
-  const isTeacher = user?.role === 'Teacher' || user?.role === 'School Admin';
+  const isTeacher = user?.roles.includes('TEACHER');
+  const isSchoolAdmin = user?.roles.includes('SCHOOL_ADMIN');
+  const canManageAssignments = isTeacher || isSchoolAdmin;
   const isMobile = useIsMobile();
 
   const [assignments, setAssignments] = useState([]);
@@ -125,13 +127,13 @@ export default function AssignmentsPage() {
                         <div className="flex items-center pt-2">
                             <CardDescription>{item.subjectId}</CardDescription>
                             <div className="flex flex-grow justify-end items-center gap-2">
-                                {user?.role === 'Student' && item.status === 'assigned' && (
+                                {user?.roles.includes('STUDENT') && item.status === 'assigned' && (
                                     <SubmitAssignmentDialog
                                     onSubmit={(submissionData) => handleSubmitAssignment(item.id, submissionData)}
                                     isIcon
                                     />
                                 )}
-                                {isTeacher && item.status === 'submitted' && (
+                                {canManageAssignments && item.status === 'submitted' && (
                                     <ReviewAssignmentDialog
                                     assignment={item}
                                     onReassign={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'assigned' })}
@@ -171,12 +173,12 @@ export default function AssignmentsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {user?.role === 'Student' && item.status === 'assigned' && (
+                      {user?.roles.includes('STUDENT') && item.status === 'assigned' && (
                         <SubmitAssignmentDialog
                           onSubmit={(submissionData) => handleSubmitAssignment(item.id, submissionData)}
                         />
                       )}
-                       {isTeacher && item.status === 'submitted' && (
+                       {canManageAssignments && item.status === 'submitted' && (
                         <ReviewAssignmentDialog 
                           assignment={item} 
                           onReassign={(reviewData) => handleReviewAssignment(item.id, { ...reviewData, status: 'assigned' })}
@@ -203,13 +205,13 @@ export default function AssignmentsPage() {
                 <div>
                     <CardTitle>Assignments</CardTitle>
                     <CardDescription>
-                        {isTeacher
+                        {canManageAssignments
                         ? 'Manage assignments for your classes.'
                         : 'View and submit your assignments.'}
                     </CardDescription>
                 </div>
                 <div className="flex gap-2">
-                {isTeacher && (
+                {canManageAssignments && (
                     isMobile ? (
                         <Button size="icon" variant="outline" onClick={() => setShowFilters(!showFilters)}>
                             <Filter className="h-4 w-4" />
@@ -221,7 +223,7 @@ export default function AssignmentsPage() {
                         </Button>
                     )
                 )}
-                {isTeacher &&
+                {canManageAssignments &&
                     (isMobile ? (
                         <CreateAssignmentDialog onSubmit={handleCreateAssignment} isIcon />
                     ) : (

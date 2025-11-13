@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Image, Pencil, Plus } from "lucide-react";
-import schoolsData from "@/schools.json";
 import { Banner } from "./banner-data-table";
 import {
   Select,
@@ -43,14 +42,14 @@ import {
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  targetAudience: z.string().min(1, { message: "Target audience is required" }),
+  targetAudience: z.array(z.string()).refine(value => value.length > 0, { message: "Target audience is required" }),
   school: z.union([z.string(), z.array(z.string())]).optional(),
   startDate: z.string().min(1, { message: "Start date is required" }),
   endDate: z.string().min(1, { message: "End date is required" }),
   media: z.any().optional(),
 }).refine(
   (data) => {
-    if (data.targetAudience === 'School Admins') {
+    if (data.targetAudience.includes('School Admins')) {
       return Array.isArray(data.school) && data.school.length > 0;
     }
     return true;
@@ -63,20 +62,24 @@ const formSchema = z.object({
 
 interface AddBannerDialogProps {
   banner?: Banner;
-  onSave: (banner: Omit<Banner, "id">) => void;
+  onSave: (banner: Omit<Banner, "id">, file: File | null) => void;
+  schools: { id: string; name: string }[];
 }
 
-export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
+const audienceOptions = ["All", "School Admins", "Teachers", "Students"];
+
+export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
+  const [file, setFile] = React.useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: banner
-      ? { ...banner, school: banner.school ? banner.school.split(", ") : [], media: undefined }
+      ? { ...banner, school: banner.school ? banner.school.split(", ") : [], targetAudience: banner.targetAudience ? banner.targetAudience.split(", ") : [], media: undefined }
       : {
           name: "",
-          targetAudience: "All",
+          targetAudience: ["All"],
           school: [],
           startDate: "",
           endDate: "",
@@ -89,12 +92,12 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
   React.useEffect(() => {
     if (open) {
       if (banner) {
-        form.reset({ ...banner, school: banner.school ? banner.school.split(", ") : [], media: undefined });
+        form.reset({ ...banner, school: banner.school ? banner.school.split(", ") : [], targetAudience: banner.targetAudience ? banner.targetAudience.split(", ") : [], media: undefined });
         setImagePreview(banner.media);
       } else {
         form.reset({
           name: "",
-          targetAudience: "All",
+          targetAudience: ["All"],
           school: [],
           startDate: "",
           endDate: "",
@@ -102,26 +105,26 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
         });
         setImagePreview(null);
       }
+      setFile(null);
     }
   }, [banner, form, open]);
 
-  React.useEffect(() => {
-    // Clean up blob URLs to prevent memory leaks
-    return () => {
-      if (imagePreview && imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+        setFile(selectedFile);
+        setImagePreview(URL.createObjectURL(selectedFile));
+    }
+  };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    console.log('DEBUG: Form values on submit', values);
     const schoolValue =
-      values.targetAudience === 'School Admins' && Array.isArray(values.school)
+      values.targetAudience.includes('School Admins') && Array.isArray(values.school)
         ? values.school.join(', ')
         : '';
-    
-    const mediaUrl = values.media?.[0] ? URL.createObjectURL(values.media[0]) : banner?.media;
-    onSave({ ...values, school: schoolValue, media: mediaUrl });
+
+    onSave({ ...values, school: schoolValue, media: imagePreview || '', targetAudience: values.targetAudience.join(', ') }, file);
     setOpen(false);
   };
 
@@ -185,32 +188,53 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Target Audience</FormLabel>
-                  <Select
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      if (value !== 'School Admins') {
-                        form.setValue('school', []);
-                      }
-                    }}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a target audience" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="School Admins">School Admins</SelectItem>
-                      <SelectItem value="Teachers">Teachers</SelectItem>
-                      <SelectItem value="Students">Students</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start font-normal">
+                          <span className="truncate">
+                            {(!field.value || field.value.length === 0) && "Select audiences"}
+                            {field.value?.includes('All') && 'All audiences selected'}
+                            {field.value && !field.value.includes('All') && field.value.length === 1 && field.value[0]}
+                            {field.value && !field.value.includes('All') && field.value.length > 1 && `${field.value.length} audiences selected`}
+                          </span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                        <DropdownMenuCheckboxItem
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked ? ['All', ...audienceOptions.filter(o => o !== 'All') ] : []);
+                          }}
+                          checked={field.value?.includes('All')}
+                        >
+                          All
+                        </DropdownMenuCheckboxItem>
+                        <DropdownMenuSeparator />
+                        {audienceOptions.filter(o => o !== 'All').map((option) => (
+                          <DropdownMenuCheckboxItem
+                            key={option}
+                            checked={field.value?.includes(option)}
+                            onCheckedChange={(checked) => {
+                              const currentSelection = Array.isArray(field.value) ? field.value.filter(v => v !== 'All') : [];
+                              const newSelection = checked
+                                ? [...currentSelection, option]
+                                : currentSelection.filter((name) => name !== option);
+                              if (newSelection.length === audienceOptions.length - 1) {
+                                field.onChange(['All', ...newSelection]);
+                              } else {
+                                field.onChange(newSelection);
+                              }
+                            }}
+                          >
+                            {option}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {targetAudience === "School Admins" && (
+            {targetAudience.includes("School Admins") && (
               <FormField
                 control={form.control}
                 name="school"
@@ -231,14 +255,14 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
                       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
                         <DropdownMenuCheckboxItem
                           onCheckedChange={(checked) => {
-                            field.onChange(checked ? ['All', ...schoolsData.map(s => s.name)] : []);
+                            field.onChange(checked ? ['All', ...schools.map(s => s.name)] : []);
                           }}
                           checked={field.value?.includes('All')}
                         >
                           All
                         </DropdownMenuCheckboxItem>
                         <DropdownMenuSeparator />
-                        {schoolsData.map((school) => (
+                        {schools.map((school) => (
                           <DropdownMenuCheckboxItem
                             key={school.id}
                             checked={field.value?.includes(school.name)}
@@ -247,7 +271,7 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
                               const newSelection = checked
                                 ? [...currentSelection, school.name]
                                 : currentSelection.filter((name) => name !== school.name);
-                              if (newSelection.length === schoolsData.length) {
+                              if (newSelection.length === schools.length) {
                                 field.onChange(['All', ...newSelection]);
                               } else {
                                 field.onChange(newSelection);
@@ -302,15 +326,7 @@ export function AddBannerDialog({ banner, onSave }: AddBannerDialogProps) {
                     <Input 
                       type="file" 
                       accept="image/*" 
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        field.onChange(e.target.files);
-                        if (file) {
-                          setImagePreview(URL.createObjectURL(file));
-                        } else {
-                          setImagePreview(banner ? banner.media : null);
-                        }
-                      }}
+                      onChange={handleFileChange}
                     />
                   </FormControl>
                   <FormMessage />

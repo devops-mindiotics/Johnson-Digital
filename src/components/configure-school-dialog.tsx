@@ -12,25 +12,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { getClasses, createClass, updateClass as updateSchoolClass, deleteClass as deleteSchoolClass } from '@/lib/api/schoolApi';
-import { getAllClasses as getMasterClasses, getAllSeries as getMasterSeries, getAllPackages as getMasterPackages } from '@/lib/api/masterApi';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import { EditSchoolClassDialog } from './edit-school-class-dialog';
 
+const NONE_VALUE = 'none';
+
 export function ConfigureSchoolDialog({ 
     isOpen, 
     onClose, 
     schools, 
+    masterClasses, 
+    masterSeries, 
+    masterPackages,
     onClassConfigured
 }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedSchool, setSelectedSchool] = useState<string | null>(null);
   const [classes, setClasses] = useState<any[]>([]);
-  const [masterClasses, setMasterClasses] = useState<any[]>([]);
-  const [masterSeries, setMasterSeries] = useState<any[]>([]);
-  const [masterPackages, setMasterPackages] = useState<any[]>([]);
   const [availableMasterClasses, setAvailableMasterClasses] = useState<any[]>([]);
 
   const [newClassId, setNewClassId] = useState('');
@@ -44,9 +47,6 @@ export function ConfigureSchoolDialog({
   const resetState = () => {
     setSelectedSchool(null);
     setClasses([]);
-    setMasterClasses([]);
-    setMasterSeries([]);
-    setMasterPackages([]);
     setAvailableMasterClasses([]);
     setNewClassId('');
     setNewClassSeries('');
@@ -57,34 +57,15 @@ export function ConfigureSchoolDialog({
   };
 
   useEffect(() => {
-    if (isOpen) {
-      async function fetchMasterData() {
-        try {
-          const [masterClassData, masterSeriesData, masterPackagesData] = await Promise.all([
-            getMasterClasses(),
-            getMasterSeries(),
-            getMasterPackages(),
-          ]);
-          setMasterClasses(masterClassData || []);
-          setMasterSeries(masterSeriesData || []);
-          setMasterPackages(masterPackagesData || []);
-        } catch (error) {
-          console.error("Failed to fetch master data:", error);
-          setMasterClasses([]);
-          setMasterSeries([]);
-          setMasterPackages([]);
-        }
-      }
-      fetchMasterData();
-    } else {
-      resetState();
+    if (!isOpen) {
+        resetState();
     }
   }, [isOpen]);
 
   async function fetchClasses(schoolId: string) {
-    if (schoolId) {
+    if (schoolId && user?.tenantId) {
       try {
-        const classData = await getClasses(schoolId);
+        const classData = await getClasses(user.tenantId, schoolId);
         setClasses(classData || []);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
@@ -101,14 +82,9 @@ export function ConfigureSchoolDialog({
     } else {
         setClasses([]);
     }
-  }, [selectedSchool]);
+  }, [selectedSchool, user]);
 
   useEffect(() => {
-    if (!selectedSchool) {
-        setAvailableMasterClasses([]);
-        return;
-    }
-
     if (Array.isArray(masterClasses) && Array.isArray(classes)) {
       const configuredClassIds = new Set(classes.map(c => c.id));
       const available = masterClasses.filter(mc => mc.id && !configuredClassIds.has(mc.id));
@@ -116,7 +92,7 @@ export function ConfigureSchoolDialog({
     } else {
       setAvailableMasterClasses(masterClasses || []);
     }
-  }, [classes, masterClasses, selectedSchool]);
+  }, [classes, masterClasses]);
 
   const handleOperationComplete = () => {
     if (selectedSchool) fetchClasses(selectedSchool);
@@ -124,7 +100,7 @@ export function ConfigureSchoolDialog({
   }
 
   const handleAddClass = async () => {
-    if (!selectedSchool || !newClassId || !newClassLicenses) {
+    if (!selectedSchool || !newClassId || !newClassLicenses || !user?.tenantId) {
       toast({ variant: "destructive", title: "Error", description: "Please select a school, class, and enter license count." });
       return;
     }
@@ -135,23 +111,26 @@ export function ConfigureSchoolDialog({
         return;
     }
     
-    const selectedSeries = masterSeries.find(s => s.id === newClassSeries);
-    const selectedPackage = masterPackages.find(p => p.id === newClassPackage);
+    const seriesId = newClassSeries === NONE_VALUE ? '' : newClassSeries;
+    const packageId = newClassPackage === NONE_VALUE ? '' : newClassPackage;
+
+    const selectedSeries = masterSeries.find(s => s.id === seriesId);
+    const selectedPackage = masterPackages.find(p => p.id === packageId);
 
     const classPayload = {
       data: {
         classId: newClassId,
         name: selectedClass.name,
-        seriesId: selectedSeries?.id || 'NA',
-        seriesName: selectedSeries?.name || 'NA',
-        packageId: selectedPackage?.id || 'NA',
-        packageName: selectedPackage?.name || 'NA',
+        seriesId: seriesId,
+        seriesName: selectedSeries?.name || null,
+        packageId: packageId,
+        packageName: selectedPackage?.name || null,
         licensesCount: parseInt(newClassLicenses, 10),
       }
     };
 
     try {
-      await createClass(selectedSchool, classPayload);
+      await createClass(user.tenantId, selectedSchool, classPayload);
       toast({ title: "Success", description: "Class added successfully." });
       setNewClassId('');
       setNewClassSeries('');
@@ -165,12 +144,12 @@ export function ConfigureSchoolDialog({
   };
 
   const handleUpdateClass = async (classId: string, updatedData: any) => {
-    if (!selectedSchool) return;
+    if (!selectedSchool || !user?.tenantId) return;
 
     const classPayload = { data: { ...updatedData } };
 
     try {
-        await updateSchoolClass(selectedSchool, classId, classPayload);
+        await updateSchoolClass(user.tenantId, selectedSchool, classId, classPayload);
         toast({ title: "Success", description: "Class updated successfully." });
         handleOperationComplete();
         setIsEditClassDialogOpen(false);
@@ -181,9 +160,9 @@ export function ConfigureSchoolDialog({
   };
 
   const handleDelete = async (classId: string) => {
-    if(!selectedSchool) return;
+    if(!selectedSchool || !user?.tenantId) return;
     try {
-        await deleteSchoolClass(selectedSchool, classId);
+        await deleteSchoolClass(user.tenantId, selectedSchool, classId);
         toast({ title: "Success", description: "Class deleted successfully." });
         handleOperationComplete();
     } catch (error) {
@@ -222,7 +201,7 @@ export function ConfigureSchoolDialog({
             </Select>
 
             {selectedSchool && (
-                <>
+                <div>
                 <h3 className="text-lg font-semibold mb-2">Existing Classes</h3>
                 <div className="rounded-md border">
                     <Table className="min-w-full divide-y divide-gray-200">
@@ -240,8 +219,8 @@ export function ConfigureSchoolDialog({
                         {classes.map(c => (
                             <TableRow key={c.id}>
                                 <TableCell className="hidden md:table-cell">{c.name}</TableCell>
-                                <TableCell className="hidden md:table-cell">{(masterSeries.find(ms => ms.id === c.seriesId)?.name) || c.seriesName}</TableCell>
-                                <TableCell className="hidden md:table-cell">{c.packageName}</TableCell>
+                                <TableCell className="hidden md:table-cell">{c.seriesName || 'N/A'}</TableCell>
+                                <TableCell className="hidden md:table-cell">{c.packageName || 'N/A'}</TableCell>
                                 <TableCell className="hidden md:table-cell">{c.licensesCount}</TableCell>
                                 <TableCell className="text-right hidden md:table-cell">
                                     <DropdownMenu>
@@ -258,8 +237,8 @@ export function ConfigureSchoolDialog({
                                 </TableCell>
                                 <TableCell className="md:hidden">
                                     <div className="font-medium">{c.name}</div>
-                                    <div className="text-sm text-muted-foreground">Series: {(masterSeries.find(ms => ms.id === c.seriesId)?.name) || c.seriesName}</div>
-                                    <div className="text-sm text-muted-foreground">Package: {c.packageName}</div>
+                                    <div className="text-sm text-muted-foreground">Series: {c.seriesName || 'N/A'}</div>
+                                    <div className="text-sm text-muted-foreground">Package: {c.packageName || 'N/A'}</div>
                                     <div className="text-sm text-muted-foreground">Licenses: {c.licensesCount}</div>
                                     <div className="flex justify-end">
                                         <DropdownMenu>
@@ -299,6 +278,7 @@ export function ConfigureSchoolDialog({
                                 <SelectValue placeholder="Select Series (Optional)" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value={NONE_VALUE}>No Series</SelectItem>
                                 {(masterSeries || []).map(ms => (
                                     <SelectItem key={ms.id} value={ms.id}>{ms.name}</SelectItem>
                                 ))}
@@ -307,9 +287,11 @@ export function ConfigureSchoolDialog({
 
                         <Select onValueChange={setNewClassPackage} value={newClassPackage || ''}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Package (Optional)" />
+                                <SelectValue placeholder="Select Package (Optional)
+" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value={NONE_VALUE}>No Package</SelectItem>
                                 {(masterPackages || []).map(mp => (
                                     <SelectItem key={mp.id} value={mp.id}>{mp.name}</SelectItem>
                                 ))}
@@ -326,7 +308,7 @@ export function ConfigureSchoolDialog({
                 <div className="flex justify-end mt-4">
                     <Button onClick={handleAddClass}>Add Class</Button>
                 </div>
-                </>
+                </div>
             )}
             </div>
             <DialogFooter className="mt-4">

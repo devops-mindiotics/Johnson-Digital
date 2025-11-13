@@ -6,25 +6,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { Edit, PlusCircle, Trash2, Users } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getAllClasses, createClass, updateClass, deleteClass } from '@/lib/api/masterApi';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -46,11 +33,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Class {
   id: string;
   name: string;
   description: string;
+  status: string;
 }
 
 export default function MasterClassesPage() {
@@ -58,9 +47,7 @@ export default function MasterClassesPage() {
   const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [classToDelete, setClassToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClasses();
@@ -85,25 +72,16 @@ export default function MasterClassesPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setClassToDelete(id);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (classToDelete) {
-      try {
-        await deleteClass(classToDelete);
-        fetchClasses();
-        setIsDeleteDialogOpen(false);
-        setClassToDelete(null);
-      } catch (error) {
-        console.error('Failed to delete class', error);
-      }
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteClass(id);
+      fetchClasses();
+    } catch (error) {
+      console.error('Failed to delete class', error);
     }
   };
 
-  const handleSave = async (classData: { name: string, description: string }) => {
+  const handleSave = async (classData: Omit<Class, 'id'>) => {
     try {
       if (selectedClass) {
         await updateClass(selectedClass.id, classData);
@@ -132,44 +110,48 @@ export default function MasterClassesPage() {
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {classes.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell>{c.description}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewStudents(c.id)}>
-                          View Students
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(c)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(c.id)} className="text-red-600">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {classes.map((c) => (
+            <Card key={c.id} className="flex flex-col">
+              <CardHeader>
+                <CardTitle>{c.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <p>{c.description}</p>
+                <p className="text-sm text-gray-500 mt-2">Status: {c.status}</p>
+              </CardContent>
+              <CardFooter className="flex justify-end space-x-2">
+                <Button variant="outline" size="sm" onClick={() => handleViewStudents(c.id)}>
+                  <Users className="mr-2 h-3.5 w-3.5" />
+                  Students
+                </Button>
+                <Button variant="secondary" size="icon" onClick={() => handleEdit(c)}>
+                  <Edit className="h-3.5 w-3.5" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="icon">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the class.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(c.id)}>Yes, delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </CardContent>
 
@@ -179,21 +161,6 @@ export default function MasterClassesPage() {
         onSave={handleSave}
         initialData={selectedClass}
       />
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the class.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Yes, delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }
@@ -201,26 +168,29 @@ export default function MasterClassesPage() {
 interface ClassDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSave: (data: { name: string, description: string }) => void;
+  onSave: (data: Omit<Class, 'id'>) => void;
   initialData: Class | null;
 }
 
 const ClassDialog: React.FC<ClassDialogProps> = ({ isOpen, setIsOpen, onSave, initialData }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('active');
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
       setDescription(initialData.description);
+      setStatus(initialData.status);
     } else {
       setName('');
       setDescription('');
+      setStatus('active');
     }
   }, [initialData]);
 
   const handleSave = () => {
-    onSave({ name, description });
+    onSave({ name, description, status });
   };
 
   return (
@@ -237,6 +207,18 @@ const ClassDialog: React.FC<ClassDialogProps> = ({ isOpen, setIsOpen, onSave, in
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Description</Label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="status" className="text-right">Status</Label>
+            <Select onValueChange={setStatus} value={status}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>

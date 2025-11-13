@@ -5,7 +5,7 @@ import {
   LogOut,
   Plus,
   Settings,
-  User as UserIcon,ChevronLeft,ChevronRight,UserCircle, Crown
+  User as UserIcon,ChevronLeft,ChevronRight,UserCircle, Crown, Mail, Phone, Shield
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -52,15 +52,24 @@ export function HomepageHeader() {
     return 'Good Evening';
   };
 
+  const getSalutation = () => {
+    if (user && user.gender) {
+      if (user.gender.toLowerCase() === 'male') return 'Mr.';
+      if (user.gender.toLowerCase() === 'female') return 'Ms.';
+    }
+    return '';
+  };
+
   
   const userRole = getRoles() || STUDENT;
 
-  const baseName = user.displayName ? user.displayName.replace(/^(Dr\.|Mr\.|Ms\.)\s+/, '') : '';
-  let displayName = baseName;
-  const displayClass = "Class-V";
+  const salutation = getSalutation();
+  const displayName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}`: '';
+  const finalDisplayName = `Hi ${salutation ? `${salutation} ` : ''}${displayName}`;
+  const displayClass = userRole === STUDENT ? "Class-10" : "Class-V";
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm md:px-6 z-10">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 md:px-6">
       <div className="flex items-center gap-2">
         {showBackButton && (
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
@@ -69,22 +78,22 @@ export function HomepageHeader() {
             </Button>
         )}
         <SidebarTrigger />
-        <div className="flex flex-col">
+        <div className="flex flex-col pt-2">
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
             <div className="flex items-center gap-2">
-                <p className="text-sm">{displayName}</p>
+                <p className="text-sm">{finalDisplayName}</p>
                 {userRole === STUDENT && (
                 <p className="hidden text-sm text-muted-foreground sm:block">
                     ({displayClass})
                 </p>
                 )}
-                 {userRole === STUDENT && (
-                    <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
-                        <Crown className="w-3 h-3 mr-1" />
-                        Premium
-                    </span>
-                )}
             </div>
+            {userRole === STUDENT && (
+                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full w-fit mt-1">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium
+                </span>
+            )}
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -99,7 +108,7 @@ export function HomepageHeader() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>{displayName}</DropdownMenuItem>
+                  <DropdownMenuItem>{finalDisplayName}</DropdownMenuItem>
                   <DropdownMenuItem>Jane Doe</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -115,7 +124,7 @@ export function HomepageHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>{displayName}</DropdownMenuItem>
+                  <DropdownMenuItem>{finalDisplayName}</DropdownMenuItem>
                   <DropdownMenuItem>Jane Doe</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -195,54 +204,54 @@ export function HomepageHeader() {
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={user.avatarUrl ?? "https://picsum.photos/100"} alt={displayName} data-ai-hint="person avatar" />
-                <AvatarFallback>{baseName.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuContent className="w-64" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium leading-none">{displayName}</p>
-                  {userRole === STUDENT && (
-                  <p className="hidden text-sm text-muted-foreground sm:block">
-                      ({displayClass})
-                  </p>
-                 )}
-                    {userRole === STUDENT && (
-                        <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full">
-                        <Crown className="w-3 h-3 mr-1" />
-                        Premium
-                        </span>
-                    )}
+              <div className="flex items-center gap-3 p-2">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={user.avatarUrl ?? "https://picsum.photos/100"} alt={displayName} />
+                  <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <p className="text-base font-semibold leading-none">{displayName}</p>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
-                 <p className="text-xs leading-none text-muted-foreground">
-                  {user.phone}
-                </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {userRole}
-                </p>
-                 <p className="text-xs leading-none text-muted-foreground">
-                  email@example.com
-                </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <div className="p-2 space-y-2">
+                <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">{userRole}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">{user.phone}</p>
+                </div>
+            </div>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <Link href="/homepage/profile" passHref>
-                <DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
                   <UserCircle className="mr-2 h-4 w-4 text-purple-500" />
                   <span>Profile</span>
                 </DropdownMenuItem>
               </Link>
               {(userRole === STUDENT || userRole === TEACHER) && (
-  <Link href="/homepage/settings" passHref>
-  </Link>
-)}
+                <Link href="/homepage/settings" passHref>
+                    <DropdownMenuItem className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4 text-blue-500" />
+                        <span>Settings</span>
+                    </DropdownMenuItem>
+                </Link>
+              )}
 
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem onClick={logout} className="cursor-pointer">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

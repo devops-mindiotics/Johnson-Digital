@@ -1,3 +1,4 @@
+'use client';
 // src/lib/api/auth.ts
 import apiClient from './client';
 import { setJWT } from '@/lib/utils/token';
@@ -14,7 +15,13 @@ export async function loginUser(mobile: string, password: string): Promise<Login
   const response = await apiClient.post('/auth/login', { data: { phone, password } });
   const data = response.data;
 
-  if (data) {
+  if (data?.data?.user) {
+    const user = data.data.user;
+    if (data.data.schools && data.data.schools.length > 0) {
+      user.schoolId = data.data.schools[0].schoolId;
+      user.tenantId = data.data.schools[0].tenantId;
+    }
+    localStorage.setItem('educentral-user', JSON.stringify(user));
     setJWT(data);
     saveRoles(data);
   }

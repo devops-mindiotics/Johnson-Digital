@@ -1,46 +1,68 @@
-import React from 'react';
+'use client';
+
+import * as React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreVertical } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-export type Banner = {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  school: string;
-  targetAudience: string;
-  startDate: string;
-  endDate: string;
-  status: 'Published' | 'Draft' | 'Archived';
-};
+import Image from 'next/image';
+import { Banner } from '@/types/banner';
+import { EditBannerDialog } from '@/components/edit-banner-dialog';
 
 interface BannerCardProps {
   banner: Banner;
-  onView: (banner: Banner) => void;
-  onEdit: (banner: Banner) => void;
-  onDelete: (banner: Banner) => void;
+  schools: { id: string; name: string }[];
+  updateBanner: (banner: Banner, file: File | null) => void;
+  deleteBanner: (bannerId: string) => void;
 }
 
-export const BannerCard: React.FC<BannerCardProps> = ({ banner, onView, onEdit, onDelete }) => {
+export const BannerCard: React.FC<BannerCardProps> = ({ banner, schools, updateBanner, deleteBanner }) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="p-0">
-        <img src={banner.image} alt={banner.title} className="w-full h-48 object-cover" />
+    <Card>
+      <CardHeader>
+        <CardTitle>{banner.name}</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <CardTitle className="text-lg font-bold mb-2">{banner.title}</CardTitle>
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-          <span>{banner.school}</span>
-          <Badge variant={banner.status === 'Published' ? 'default' : 'secondary'}>{banner.status}</Badge>
+      <CardContent>
+        {banner.media && (
+          <div className="relative h-40 w-full mb-4">
+            <Image src={banner.media} alt={banner.name} layout="fill" objectFit="cover" />
+          </div>
+        )}
+        <div className="space-y-2">
+          <div>
+            <strong>Target Audience:</strong>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {banner.targetAudience.split(', ').map(audience => (
+                <Badge key={audience}>{audience}</Badge>
+              ))}
+            </div>
+          </div>
+          <div>
+            <strong>Schools:</strong>
+            <p>{banner.school}</p>
+          </div>
+          <div>
+            <strong>Start Date:</strong>
+            <p>{banner.startDate}</p>
+          </div>
+          <div>
+            <strong>End Date:</strong>
+            <p>{banner.endDate}</p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground truncate">{banner.description}</p>
       </CardContent>
-      <CardFooter className="p-4 flex justify-end gap-2">
-        <Button variant="outline" onClick={() => onView(banner)}>View</Button>
-        <Button onClick={() => onEdit(banner)}>Edit</Button>
+      <CardFooter className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>Edit</Button>
+        <Button variant="destructive" onClick={() => deleteBanner(banner.id)}>Delete</Button>
       </CardFooter>
+      <EditBannerDialog 
+        isOpen={isEditDialogOpen} 
+        onClose={() => setIsEditDialogOpen(false)} 
+        banner={banner}
+        onSave={updateBanner}
+        schools={schools}
+      />
     </Card>
   );
 };
