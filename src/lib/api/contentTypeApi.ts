@@ -2,34 +2,57 @@
 
 import apiClient from "./client";
 
-export async function getAllContentTypes(): Promise<any[]> {
+export async function getAllContentTypes(page: number = 1, limit: number = 20): Promise<any> {
     try {
       const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) return [];
+      if (!tenantData) return { data: [], pagination: {} };
       const parsed = JSON.parse(tenantData);
       const token = localStorage.getItem("contextJWT");
 
       const tenantId = parsed?.tenantId || null;
 
-      if (!tenantId) return [];
+      if (!tenantId) return { data: [], pagination: {} };
 
       const response = await apiClient.get(
-        `/tenants/${tenantId}/masters/content-names`,
+        `/tenants/${tenantId}/masters/content-types`,
         {
+          params: { page, limit },
           headers: {
-            Authorization: `Bearer ${token}`,
-          },
+            Authorization: `Bearer ${token}`
+          }
         }
       );
 
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
-          return response.data.data;
-      }
-
-      return [];
+      return response.data;
     } catch (err: any) {
       console.error("❌ getAllContentTypes error:", err.response?.data || err.message);
-      return [];
+      return { data: [], pagination: {} };
+    }
+}
+
+export async function getContentTypeById(contentTypeId: string): Promise<any> {
+    try {
+        const tenantData = localStorage.getItem("contextInfo");
+        if (!tenantData) throw new Error("Context info not found");
+        const parsed = JSON.parse(tenantData);
+        const token = localStorage.getItem("contextJWT");
+        const tenantId = parsed?.tenantId;
+
+        if (!tenantId) throw new Error("Tenant ID not found");
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/masters/content-types/${contentTypeId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        return response.data.data;
+    } catch (err: any) {
+        console.error("❌ getContentTypeById error:", err.response?.data || err.message);
+        throw err;
     }
 }
 
@@ -41,7 +64,7 @@ export async function createContentType(contentTypeData: { name: string; descrip
         const token = localStorage.getItem("contextJWT");
         const tenantId = parsed?.tenantId;
 
-        if (!tenantId) throw new Error("Tenant ID not found");
+        if (!tenantId) throw new Error("Tenant or user details not found");
 
         const payload = {
             data: {
@@ -49,16 +72,16 @@ export async function createContentType(contentTypeData: { name: string; descrip
                 code: `CNT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
                 description: contentTypeData.description,
                 status: contentTypeData.status,
-            },
+            }
         };
 
         const response = await apiClient.post(
-            `/tenants/${tenantId}/masters/content-names`,
+            `/tenants/${tenantId}/masters/content-types`,
             payload,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                    Authorization: `Bearer ${token}`
+                }
             }
         );
 
@@ -77,23 +100,23 @@ export async function updateContentType(contentTypeId: string, contentTypeData: 
         const token = localStorage.getItem("contextJWT");
         const tenantId = parsed?.tenantId;
 
-        if (!tenantId) throw new Error("Tenant ID not found");
+        if (!tenantId) throw new Error("Tenant or user details not found");
 
         const payload = {
             data: {
                 name: contentTypeData.name,
                 description: contentTypeData.description,
                 status: contentTypeData.status,
-            },
+            }
         };
 
         const response = await apiClient.put(
-            `/tenants/${tenantId}/masters/content-names/${contentTypeId}`,
+            `/tenants/${tenantId}/masters/content-types/${contentTypeId}`,
             payload,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                    Authorization: `Bearer ${token}`
+                }
             }
         );
 
@@ -115,11 +138,11 @@ export async function deleteContentType(contentTypeId: string): Promise<any> {
         if (!tenantId) throw new Error("Tenant ID not found");
 
         const response = await apiClient.delete(
-            `/tenants/${tenantId}/masters/content-names/${contentTypeId}`,
+            `/tenants/${tenantId}/masters/content-types/${contentTypeId}`,
             {
                 headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                    Authorization: `Bearer ${token}`
+                }
             }
         );
 

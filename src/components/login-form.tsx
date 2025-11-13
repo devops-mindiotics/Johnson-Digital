@@ -108,7 +108,7 @@ export function LoginForm() {
               </FormItem>
             )}
           />
-          <div className="text-right">
+          <div className="-mt-4 text-right">
             <Button variant="link" asChild className="p-0 h-auto">
                 <a href="/forgot-password" className="text-sm font-medium text-primary hover:underline">Forgot Password?</a>
             </Button>

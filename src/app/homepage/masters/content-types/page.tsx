@@ -8,7 +8,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, PlusCircle, Trash2 } from 'lucide-react';
+import { Edit, PlusCircle, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getAllContentTypes, createContentType, updateContentType, deleteContentType } from '@/lib/api/contentTypeApi';
 import {
@@ -41,22 +41,39 @@ interface ContentType {
   status: string;
 }
 
+interface Pagination {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+}
+
 export default function MasterContentTypesPage() {
   const isMobile = useIsMobile();
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContentType, setSelectedContentType] = useState<ContentType | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, totalItems: 0, totalPages: 1 });
 
   useEffect(() => {
-    fetchContentTypes();
-  }, []);
+    fetchContentTypes(pagination?.page ?? 1, pagination?.limit ?? 10);
+  }, [pagination?.page, pagination?.limit]);
 
-  const fetchContentTypes = async () => {
+  const fetchContentTypes = async (page: number, limit: number) => {
     try {
-      const response = await getAllContentTypes();
-      setContentTypes(response);
+      const response = await getAllContentTypes(page, limit);
+      if (response && response.data && Array.isArray(response.data.contentTypes)) {
+        setContentTypes(response.data.contentTypes);
+      } else {
+        setContentTypes([]);
+      }
+      
+      if (response && response.data && response.data.meta && response.data.meta.pagination) {
+        setPagination(response.data.meta.pagination);
+      }
     } catch (error) {
       console.error('Failed to fetch content types', error);
+      setContentTypes([]);
     }
   };
 
@@ -73,7 +90,7 @@ export default function MasterContentTypesPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteContentType(id);
-      fetchContentTypes();
+      fetchContentTypes(pagination.page, pagination.limit);
     } catch (error) {
       console.error('Failed to delete content type', error);
     }
@@ -86,11 +103,17 @@ export default function MasterContentTypesPage() {
       } else {
         await createContentType(contentTypeData);
       }
-      fetchContentTypes();
+      fetchContentTypes(pagination.page, pagination.limit);
       setIsDialogOpen(false);
       setSelectedContentType(null);
     } catch (error) {
       console.error('Failed to save content type', error);
+    }
+  };
+  
+  const handlePageChange = (newPage: number) => {
+    if (newPage > 0 && newPage <= pagination.totalPages) {
+        setPagination(prev => ({ ...prev, page: newPage }));
     }
   };
 
@@ -105,45 +128,58 @@ export default function MasterContentTypesPage() {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {contentTypes.map((c) => (
-            <Card key={c.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle>{c.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p>{c.description}</p>
-                <p className="text-sm text-gray-500 mt-2">Status: {c.status}</p>
-              </CardContent>
-              <CardFooter className="flex justify-end space-x-2">
-                <Button variant="secondary" size="icon" onClick={() => handleEdit(c)}>
-                  <Edit className="h-3.5 w-3.5" />
-                  <span className="sr-only">Edit</span>
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="icon">
-                      <Trash2 className="h-3.5 w-3.5" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the content type.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(c.id)}>Yes, delete</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardFooter>
-            </Card>
-          ))}
+          {Array.isArray(contentTypes) && contentTypes.length > 0 ? (
+            contentTypes.map((c) => (
+              <Card key={c.id} className="flex flex-col">
+                <CardHeader>
+                  <CardTitle>{c.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p>{c.description}</p>
+                  <p className="text-sm text-gray-500 mt-2">Status: {c.status}</p>
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button variant="secondary" size="icon" onClick={() => handleEdit(c)}>
+                    <Edit className="h-3.5 w-3.5" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="icon">
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the content type.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(c.id)}>Yes, delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </CardFooter>
+              </Card>
+            ))
+          ) : (
+            <p>No content types found.</p>
+          )}
         </div>
       </CardContent>
+      <CardFooter className="flex justify-center items-center space-x-2">
+        <Button variant="outline" size="icon" onClick={() => handlePageChange(pagination.page - 1)} disabled={pagination.page <= 1}>
+            <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span>Page {pagination.page} of {pagination.totalPages}</span>
+        <Button variant="outline" size="icon" onClick={() => handlePageChange(pagination.page + 1)} disabled={pagination.page >= pagination.totalPages}>
+            <ChevronRight className="h-4 w-4" />
+        </Button>
+      </CardFooter>
 
       <ContentTypeDialog
         isOpen={isDialogOpen}
