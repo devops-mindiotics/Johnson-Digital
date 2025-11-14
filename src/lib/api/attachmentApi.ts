@@ -28,3 +28,28 @@ export async function createAttachment(attachmentData: any): Promise<any> {
     throw err;
   }
 }
+
+export async function getSignedUrlForViewing(attachmentId: string): Promise<any> {
+  try {
+    const tenantData = localStorage.getItem("contextInfo");
+    if (!tenantData) throw new Error("Context info not found");
+    const parsed = JSON.parse(tenantData);
+    const token = localStorage.getItem("contextJWT");
+    const tenantId = parsed?.tenantId;
+
+    if (!tenantId) throw new Error("Tenant ID not found");
+
+    const response = await apiClient.get(
+      `/tenants/${tenantId}/attachments/${attachmentId}/signed-view-url`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (err: any) {
+    console.error("❌ getSignedUrlForViewing error:", err.response?.data || err.message);
+    throw err;
+  }
+}

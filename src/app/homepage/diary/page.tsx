@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { getDiaryEntries, createDiaryEntry, updateDiaryEntry, deleteDiaryEntry } from "@/lib/api/diaryApi";
+import { getDiaryEntries, createDiaryEntry, updateDiaryEntry, deleteDiaryEntry, getSignedUrlForViewing } from "@/lib/api/diaryApi";
 import { getAllStudents } from "@/lib/api/userApi";
 
 const DiaryPage = () => {
@@ -35,6 +35,7 @@ const DiaryPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDiary, setEditingDiary] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewableUrls, setViewableUrls] = useState({});
 
   useEffect(() => {
     const fetchDiaries = async () => {
@@ -141,6 +142,16 @@ const DiaryPage = () => {
   const openEditModal = (diary) => {
     setEditingDiary(diary);
     setIsModalOpen(true);
+  };
+
+  const fetchViewableUrl = async (attachmentId) => {
+    if (viewableUrls[attachmentId]) return;
+    try {
+      const response = await getSignedUrlForViewing(user.tenantId, user.schoolId, attachmentId);
+      setViewableUrls(prev => ({ ...prev, [attachmentId]: response.data.viewUrl }));
+    } catch (error) {
+      console.error("Failed to fetch viewable URL:", error);
+    }
   };
 
   return (
@@ -256,7 +267,7 @@ const DiaryPage = () => {
                         <div className="mt-3">
                             <h4 className="text-xs font-semibold text-gray-500 mb-1">Attachments:</h4>
                             {diary.attachments.map((att, index) => (
-                                <a key={index} href={att.fileUrl} target="_blank" rel="noreferrer" className="flex items-center text-sm text-blue-600 hover:underline">
+                                <a key={index} href={viewableUrls[att.attachmentId] || '#'} target="_blank" rel="noreferrer" onMouseEnter={() => fetchViewableUrl(att.attachmentId)} className="flex items-center text-sm text-blue-600 hover:underline">
                                     <Paperclip className="h-3 w-3 mr-1.5" />
                                     {att.fileName}
                                 </a>

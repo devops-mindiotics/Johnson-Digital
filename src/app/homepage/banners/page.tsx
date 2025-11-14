@@ -7,7 +7,6 @@ import { getAllBanners, createBanner, updateBanner, deleteBanner, getSignedUrl, 
 import { createAttachment } from '@/lib/api/attachmentApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DebugDialog } from '@/components/debug-dialog';
 import { BannerCard } from '@/components/banner-card';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -18,23 +17,37 @@ const BannersPage = () => {
   const [loading, setLoading] = React.useState(true);
   const [schools, setSchools] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = React.useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = React.useState<Record<string, any>>({});
-  const [showDebugDialog, setShowDebugDialog] = React.useState(false);
 
   const fetchBanners = async (schoolId: string | null) => {
     try {
       setLoading(true);
-      const { records } = await getAllBanners(user.tenantId, 1, 10, schoolId);
+      console.log('Fetching banners for school:', schoolId);
+      const { records } = await getAllBanners(1, 10, schoolId, user.role);
+      console.log('Raw response from getAllBanners:', records);
+
       setRawBanners(records);
-      setData(records.map((banner: any) => ({
-        id: banner.id.toString(),
-        name: banner.title,
-        school: banner.targetAudience.schoolIds.join(', '),
-        targetAudience: Object.keys(banner.targetAudience).filter(key => banner.targetAudience[key] === true && !['all', 'schoolIds'].includes(key)).join(', '),
-        startDate: new Date(banner.startDate).toISOString().split('T')[0],
-        endDate: new Date(banner.endDate).toISOString().split('T')[0],
-        media: banner.attachmentUrl || '',
-      })));
+
+      const mappedData = records.map((banner: any) => {
+        const targetAudience = banner.targetAudience || {};
+        const schoolIds = Array.isArray(targetAudience.schoolIds) ? targetAudience.schoolIds.join(', ') : '';
+        const audienceKeys = Object.keys(targetAudience)
+          .filter(key => targetAudience[key] === true && !['all', 'schoolIds'].includes(key))
+          .join(', ');
+
+        return {
+          id: banner.id.toString(),
+          name: banner.title || '',
+          school: schoolIds,
+          targetAudience: audienceKeys,
+          startDate: new Date(banner.startDate).toISOString().split('T')[0],
+          endDate: new Date(banner.endDate).toISOString().split('T')[0],
+          media: banner.attachmentUrl || '',
+        };
+      });
+
+      console.log('Mapped data for rendering:', mappedData);
+      setData(mappedData);
+
     } catch (error) {
       console.error("Error fetching banners:", error);
     } finally {
@@ -66,7 +79,6 @@ const BannersPage = () => {
     try {
         let attachmentId = '';
         let attachmentUrl = '';
-        const debugPayload: Record<string, any> = {};
 
         if (file) {
             const signedUrlPayload = {
@@ -81,9 +93,7 @@ const BannersPage = () => {
                 filename: file.name,
                 expiresIn: 3600,
               };
-            debugPayload.signedUrlPayload = signedUrlPayload;
             const signedUrlData = await getSignedUrl(signedUrlPayload);
-            debugPayload.signedUrlData = signedUrlData;
 
             await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
 
@@ -100,12 +110,10 @@ const BannersPage = () => {
                 filePath: signedUrlData.filePath,
                 uploadedBy: 'Narayana',
             };
-            debugPayload.attachmentPayload = attachmentPayload;
 
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
             attachmentUrl = newAttachment.url;
-            debugPayload.newAttachment = newAttachment;
         }
 
       const newBanner = {
@@ -122,11 +130,8 @@ const BannersPage = () => {
         startDate: banner.startDate,
         endDate: banner.endDate,
       };
-      debugPayload.createBannerPayload = newBanner;
-      setDebugInfo(debugPayload);
-      setShowDebugDialog(true);
 
-      await createBanner(user.tenantId, newBanner);
+      await createBanner(newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error creating banner:", error);
@@ -138,7 +143,6 @@ const BannersPage = () => {
         const originalBanner = rawBanners.find(b => b.id === updatedBanner.id);
         let attachmentId = originalBanner?.attachmentId || '';
         let attachmentUrl = updatedBanner.media;
-        const debugPayload: Record<string, any> = {};
 
         if (file) {
             const signedUrlPayload = {
@@ -153,9 +157,7 @@ const BannersPage = () => {
                 filename: file.name,
                 expiresIn: 3600,
               };
-            debugPayload.signedUrlPayload = signedUrlPayload;
             const signedUrlData = await getSignedUrl(signedUrlPayload);
-            debugPayload.signedUrlData = signedUrlData;
 
             await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
 
@@ -172,12 +174,10 @@ const BannersPage = () => {
                 filePath: signedUrlData.filePath,
                 uploadedBy: 'Narayana',
             };
-            debugPayload.attachmentPayload = attachmentPayload;
             
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
             attachmentUrl = newAttachment.url;
-            debugPayload.newAttachment = newAttachment;
         }
 
         const newBanner = {
@@ -194,20 +194,17 @@ const BannersPage = () => {
             startDate: updatedBanner.startDate,
             endDate: updatedBanner.endDate,
           };
-      debugPayload.updateBannerPayload = newBanner;
-      setDebugInfo(debugPayload);
-      setShowDebugDialog(true);
 
-      await updateBanner(user.tenantId, updatedBanner.id, newBanner);
+      await updateBanner(updatedBanner.id, newBanner);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error updating banner:", error);
-    } 
+    }
   };
 
   const handleDeleteBanner = async (bannerId: string) => {
     try {
-      await deleteBanner(user.tenantId, bannerId);
+      await deleteBanner(bannerId);
       fetchBanners(selectedSchool);
     } catch (error) {
       console.error("Error deleting banner:", error);
@@ -220,7 +217,6 @@ const BannersPage = () => {
 
   return (
     <div className="space-y-4">
-        <DebugDialog open={showDebugDialog} onOpenChange={setShowDebugDialog} debugInfo={debugInfo} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Banners</h1>
         <div className="flex items-center gap-2">

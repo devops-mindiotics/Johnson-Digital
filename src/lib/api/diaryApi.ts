@@ -1,10 +1,12 @@
-
+'use client';
 import apiClient from "./client";
 import { DIARY_ENDPOINT } from "./endpoint";
+import { getSignedUrlForViewing as getAttachmentSignedUrl } from "./attachmentApi";
 
 export interface DiaryAttachment {
   fileName: string;
   fileUrl: string;
+  attachmentId: string;
 }
 
 export interface DiaryEntry {
@@ -18,10 +20,20 @@ export interface DiaryEntry {
   assignedTo: "all" | "specific";
   studentIds?: string[];
   attachments?: DiaryAttachment[];
-  createdBy?: any; 
+  createdBy?: any;
   userType?: string;
   status?: "active" | "archived" | "deleted";
 }
+
+export const getSignedUrlForViewing = async (
+  tenantId: string,
+  schoolId: string,
+  attachmentId: string
+) => {
+  // This function now calls the canonical implementation from attachmentApi.ts,
+  // ignoring tenantId and schoolId as they are handled by the context.
+  return await getAttachmentSignedUrl(attachmentId);
+};
 
 export const createDiaryEntry = async (
   tenantId: string,
@@ -31,53 +43,6 @@ export const createDiaryEntry = async (
   const response = await apiClient.post(
     `/${DIARY_ENDPOINT(tenantId, schoolId)}`,
     { data }
-  );
-  return response.data;
-};
-
-export const getDiaryEntries = async (
-  tenantId: string,
-  schoolId: string,
-  params: { classId?: string; sectionId?: string; studentId?: string; date?: string }
-) => {
-  const response = await apiClient.get(
-    `/${DIARY_ENDPOINT(tenantId, schoolId)}`,
-    { params }
-  );
-  return response.data;
-};
-
-export const getDiaryEntryById = async (
-  tenantId: string,
-  schoolId: string,
-  diaryId: string
-) => {
-  const response = await apiClient.get(
-    `/${DIARY_ENDPOINT(tenantId, schoolId)}/${diaryId}`
-  );
-  return response.data;
-};
-
-export const updateDiaryEntry = async (
-  tenantId: string,
-  schoolId: string,
-  diaryId: string,
-  data: Partial<DiaryEntry>
-) => {
-  const response = await apiClient.put(
-    `/${DIARY_ENDPOINT(tenantId, schoolId)}/${diaryId}`,
-    { data }
-  );
-  return response.data;
-};
-
-export const deleteDiaryEntry = async (
-  tenantId: string,
-  schoolId: string,
-  diaryId: string
-) => {
-  const response = await apiClient.delete(
-    `/${DIARY_ENDPOINT(tenantId, schoolId)}/${diaryId}`
   );
   return response.data;
 };
