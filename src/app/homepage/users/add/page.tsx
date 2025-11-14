@@ -212,6 +212,7 @@ function AddUserPageForm() {
     if (values.type === 'Student') {
       try {
         const studentPayload = {
+          data: {
             phone: values.mobileNumber,
             password: values.password,
             firstName: values.firstName,
@@ -245,9 +246,10 @@ function AddUserPageForm() {
               state: values.state,
               pincode: values.pincode
             }
+          }
         };
 
-        await createStudent(user.tenantId, schoolId, values.classId, studentPayload);
+        await createStudent(user.token, user.tenantId, schoolId, values.classId, studentPayload);
         setFeedbackTitle('Success');
         setFeedbackMessage('Student created successfully.');
         setCreationSuccess(true);
@@ -282,7 +284,7 @@ function AddUserPageForm() {
             status: 'active',
             expiryDate: values.expiryDate,
         };
-        await createTeacher(schoolId, teacherData);
+        await createTeacher(user.token, schoolId, teacherData);
         setFeedbackTitle('Success');
         setFeedbackMessage('Teacher created successfully.');
         setCreationSuccess(true);

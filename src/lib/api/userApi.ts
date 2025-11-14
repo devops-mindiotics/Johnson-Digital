@@ -129,11 +129,11 @@ export const createTeacher = async (token: string, tenantId: string, schoolId: s
     }
 };
 
-export const getAllStudents = async (token: string, tenantId: string, schoolId: string) => {
+export const getAllStudents = async (token: string, tenantId: string, schoolId: string, params: any = {}) => {
     if (!token) throw new Error("Authentication token not provided");
     try {
-        const response = await apiClient.get(`/tenants/${tenantId}/schools/${schoolId}/students`, getHeaders(token));
-        return response.data.data;
+        const response = await apiClient.get(`/tenants/${tenantId}/schools/${schoolId}/students`, { ...getHeaders(token), params });
+        return response.data;
     } catch (err: any) {
         console.error("❌ getAllStudents error:", err.response?.data || err.message);
         throw err;
@@ -162,10 +162,10 @@ export const getStudentById = async (token: string, tenantId: string, schoolId: 
     }
 }
 
-export const createStudent = async (token: string, tenantId: string, schoolId: string, data: any) => {
+export const createStudent = async (token: string, tenantId: string, schoolId: string, classId: string, data: any) => {
     if (!token) throw new Error("Authentication token not provided");
     try {
-        const response = await apiClient.post(`/tenants/${tenantId}/schools/${schoolId}/students`, data, getHeaders(token));
+        const response = await apiClient.post(`/tenants/${tenantId}/schools/${schoolId}/classes/${classId}/students`, data, getHeaders(token));
         return response.data;
     } catch (err: any) {
         console.error("❌ createStudent error:", err.response?.data || err.message);
@@ -245,10 +245,21 @@ export const deleteTeacher = async (token: string, tenantId: string, schoolId: s
 export const updateStudent = async (token: string, tenantId: string, schoolId: string, studentId: string, data: any) => {
     if (!token) throw new Error("Authentication token not provided");
     try {
-        const response = await apiClient.put(`/tenants/${tenantId}/schools/${schoolId}/students/${studentId}`, data, getHeaders(token));
+        const response = await apiClient.patch(`/tenants/${tenantId}/schools/${schoolId}/students/${studentId}`, data, getHeaders(token));
         return response.data;
     } catch (err: any) {
         console.error("❌ updateStudent error:", err.response?.data || err.message);
+        throw err;
+    }
+};
+
+export const updateStudentStatus = async (token: string, tenantId: string, schoolId: string, studentId: string, status: string) => {
+    if (!token) throw new Error("Authentication token not provided");
+    try {
+        const response = await apiClient.patch(`/tenants/${tenantId}/schools/${schoolId}/students/${studentId}/status`, { data: { status } }, getHeaders(token));
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ updateStudentStatus error:", err.response?.data || err.message);
         throw err;
     }
 };

@@ -18,15 +18,15 @@ const getContext = () => {
     if (!tenantId) {
         throw new Error("Tenant ID not found in context info");
     }
-    if (!userId) {
-        throw new Error("User ID not found in context info");
-    }
     return { tenantId, token, userId };
 }
 
 export async function createBanner(bannerData: any): Promise<any> {
   try {
     const { tenantId, token, userId } = getContext();
+    if (!userId) {
+        throw new Error("User ID not found in context, cannot create banner.");
+    }
     const payload = {
         ...bannerData,
         createdBy: userId,
@@ -112,6 +112,9 @@ export async function updateBanner(
 ): Promise<any> {
   try {
     const { tenantId, token, userId } = getContext();
+     if (!userId) {
+        throw new Error("User ID not found in context, cannot update banner.");
+    }
     const payload = {
         ...bannerData,
         updatedBy: userId,
@@ -135,6 +138,9 @@ export async function updateBanner(
 export async function deleteBanner(bannerId: string): Promise<any> {
   try {
     const { tenantId, token, userId } = getContext();
+     if (!userId) {
+        throw new Error("User ID not found in context, cannot delete banner.");
+    }
     const response = await apiClient.delete(
       `/tenants/${tenantId}/banners/${bannerId}`,
       {

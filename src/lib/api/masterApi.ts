@@ -12,7 +12,8 @@ const getContext = () => {
     const tenantData = localStorage.getItem("contextInfo");
     const token = localStorage.getItem("contextJWT");
     if (!tenantData || !token) {
-        throw new Error("Context information not found in local storage");
+        // Return nulls and let the consuming function decide if it is an error
+        return { tenantId: null, token: null, userId: null };
     }
     const parsed = JSON.parse(tenantData);
     const tenantId = parsed?.tenantId;
@@ -20,15 +21,16 @@ const getContext = () => {
     if (!tenantId) {
         throw new Error("Tenant ID not found in context info");
     }
-    if (!userId) {
-        throw new Error("User ID not found in context info");
-    }
+    // Allow userId to be null, checks will be performed in functions that require it
     return { tenantId, token, userId };
 }
 
 export async function getAllSeries(): Promise<any[]> {
     try {
       const { tenantId, token } = getContext();
+      if (!tenantId || !token) {
+        throw new Error("Context information not found, cannot fetch series.");
+      }
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/series`,
@@ -46,13 +48,16 @@ export async function getAllSeries(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllSeries error:", err.response?.data || err.message);
-      return [];
+      throw err; // Re-throw the error to be caught by the caller
     }
   }
 
 export async function createSeries(series: { name: string, description: string }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot create series.");
+        }
 
         const seriesPayload = {
             data: {
@@ -84,6 +89,9 @@ export async function createSeries(series: { name: string, description: string }
 export async function updateSeries(seriesId: string, series: { name: string, description: string }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot update series.");
+        }
 
         const seriesPayload = {
             data: {
@@ -115,6 +123,9 @@ export async function updateSeries(seriesId: string, series: { name: string, des
 export async function deleteSeries(seriesId: string): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot delete series.");
+        }
 
         const response = await apiClient.delete(
             `/tenants/${tenantId}/masters/series/${seriesId}`,
@@ -140,6 +151,9 @@ export async function deleteSeries(seriesId: string): Promise<any> {
 export async function getAllClasses(): Promise<any[]> {
     try {
         const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch classes.");
+        }
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/classes`,
@@ -157,13 +171,16 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllClasses error:", err.response?.data || err.message);
-      return [];
+      throw err;
     }
   }
 
   export async function getAllSubjects(): Promise<any[]> {
     try {
         const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch subjects.");
+        }
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/subjects?status=active`,
@@ -181,13 +198,16 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllSubjects error:", err.response?.data || err.message);
-      return [];
+      throw err;
     }
   }
 
   export async function getAllPackages(): Promise<any[]> {
     try {
         const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch packages.");
+        }
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/packages`,
@@ -205,7 +225,7 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllPackages error:", err.response?.data || err.message);
-      return [];
+      throw err;
     }
   }
 
@@ -217,6 +237,9 @@ export async function getAllClasses(): Promise<any[]> {
   }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot create package.");
+        }
   
       const response = await apiClient.post(
         `/tenants/${tenantId}/masters/packages`,
@@ -243,6 +266,9 @@ export async function getAllClasses(): Promise<any[]> {
   }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot update package.");
+        }
   
       const response = await apiClient.patch(
         `/tenants/${tenantId}/masters/packages/${packageId}`,
@@ -264,6 +290,9 @@ export async function getAllClasses(): Promise<any[]> {
   export async function deletePackage(packageId: string): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot delete package.");
+        }
 
       const response = await apiClient.delete(
         `/tenants/${tenantId}/masters/packages/${packageId}`,
@@ -289,6 +318,9 @@ export async function getAllClasses(): Promise<any[]> {
   export async function createClass(classData: { name: string; description: string; }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot create class.");
+        }
 
         const payload = {
             name: classData.name,
@@ -317,6 +349,9 @@ export async function getAllClasses(): Promise<any[]> {
 export async function updateClass(classId: string, classData: { name: string; description: string; }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot update class.");
+        }
 
         const payload = {
             name: classData.name,
@@ -345,6 +380,9 @@ export async function updateClass(classId: string, classData: { name: string; de
 export async function deleteClass(classId: string): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot delete class.");
+        }
 
         const response = await apiClient.delete(
             `/tenants/${tenantId}/masters/classes/${classId}`,
@@ -370,6 +408,9 @@ export async function deleteClass(classId: string): Promise<any> {
 export async function createLesson(lesson: { name: string; description: string; classId: string; subjectId: string; }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Context information not found, cannot create lesson.");
+        }
 
         const lessonPayload = {
             data: {
@@ -403,6 +444,9 @@ export async function createLesson(lesson: { name: string; description: string; 
 export async function updateLesson(lessonId: string, lesson: { name: string, description: string, status: string, classId: string, subjectId: string }, meta: { modifiedBy: string, role: string }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
+        if (!userId || !tenantId || !token) {
+            throw new Error("User/Ccontext information not found, cannot update lesson.");
+        }
 
         const lessonPayload = {
             data: {

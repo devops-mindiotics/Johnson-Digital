@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { updateUser, getStudentById } from '@/lib/api/userApi';
+import { updateUser, getStudentById, updateStudent } from '@/lib/api/userApi';
 import { getClassesBySchool, getSectionsByClass } from '@/lib/api/classesApi';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
@@ -140,10 +140,10 @@ export default function EditUserClient() {
       form.reset(defaultValues);
       setLoading(false);
 
-      if (parsedUser.type === 'Student' && user?.tenantId && schoolId && parsedUser.id) {
+      if (parsedUser.type === 'Student' && user?.token && user?.tenantId && schoolId && parsedUser.id) {
         async function fetchStudentDetails() {
           try {
-            const studentDetails = await getStudentById(user.tenantId, schoolId, parsedUser.id);
+            const studentDetails = await getStudentById(user.token, user.tenantId, schoolId, parsedUser.id);
             if (studentDetails) {
               const studentFormValues = {
                 ...defaultValues,
@@ -184,23 +184,71 @@ export default function EditUserClient() {
   }, [selectedSchoolId, selectedClass]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!selectedSchoolId || !user?.tenantId || !userData?.id || !userData?.type) {
+    if (!selectedSchoolId || !user?.tenantId || !userData?.id || !userData?.type || !user?.token) {
       toast({ title: 'Error', description: 'Missing critical information to update user.', variant: 'destructive' });
       return;
     }
 
-    try {
-      await updateUser(user.tenantId, userData.id, { ...values, schoolId: selectedSchoolId, type: userData.type });
-      setFeedbackTitle('Success');
-      setFeedbackMessage('User updated successfully.');
-      setUpdateSuccess(true);
-      setShowFeedbackDialog(true);
-    } catch (error: any) {
-      console.error('Failed to update user:', error);
-      const message = error.response?.data?.message || 'Failed to update user.';
-      setFeedbackTitle('Error');
-      setFeedbackMessage(message);
-      setShowFeedbackDialog(true);
+    if (userData.type === 'Student') {
+        const studentPayload = {
+            student: {
+                status: values.status,
+                classDetails: {
+                    classId: values.classId,
+                    className: classes.find(c => c.id === values.classId)?.name || '',
+                    sectionId: values.section,
+                    sectionName: sections.find(s => s.id === values.section)?.name || '',
+                    academicYear: values.academicYear,
+                    rollNumber: values.rollNumber,
+                },
+                guardian: {
+                    fatherName: values.fatherName,
+                    motherName: values.motherName,
+                },
+                 gender: values.gender,
+                 admissionNo: values.admissionNumber,
+                 pen: values.pen,
+                 dob: values.dob,
+            },
+            address: {
+                line1: values.address,
+                city: values.city,
+                district: values.district,
+                state: values.state,
+                pincode: values.pincode,
+            },
+            phone: values.mobileNumber,
+            firstName: values.firstName,
+            lastName: values.lastName,
+        };
+
+        try {
+            await updateStudent(user.token, user.tenantId, selectedSchoolId, userData.id, studentPayload);
+            setFeedbackTitle('Success');
+            setFeedbackMessage('Student updated successfully.');
+            setUpdateSuccess(true);
+            setShowFeedbackDialog(true);
+        } catch (error: any) {
+            console.error('Failed to update student:', error);
+            const message = error.response?.data?.message || 'Failed to update student.';
+            setFeedbackTitle('Error');
+            setFeedbackMessage(message);
+            setShowFeedbackDialog(true);
+        }
+    } else {
+        try {
+          await updateUser(user.token, userData.id, userData.type, user.tenantId, selectedSchoolId, values);
+          setFeedbackTitle('Success');
+          setFeedbackMessage('User updated successfully.');
+          setUpdateSuccess(true);
+          setShowFeedbackDialog(true);
+        } catch (error: any) {
+          console.error('Failed to update user:', error);
+          const message = error.response?.data?.message || 'Failed to update user.';
+          setFeedbackTitle('Error');
+          setFeedbackMessage(message);
+          setShowFeedbackDialog(true);
+        }
     }
   }
 
@@ -487,7 +535,7 @@ export default function EditUserClient() {
                     render={({ field }) => ( 
                       <FormItem> 
                         <FormLabel>Section</FormLabel> 
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <Select onValuechange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a section" />
