@@ -18,18 +18,34 @@ const BannersPage = () => {
   const [schools, setSchools] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = React.useState<string | null>(null);
 
-  const fetchBanners = async (schoolId: string | null) => {
+  const fetchData = async (schoolId: string | null) => {
+    if (!user?.tenantId) return;
+
     try {
       setLoading(true);
-      console.log('Fetching banners for school:', schoolId);
-      const { records } = await getAllBanners(1, 10, schoolId, user.role);
-      console.log('Raw response from getAllBanners:', records);
+      // 1. Fetch schools
+      const schoolRecords = await getAllSchools(user.tenantId);
+      const fetchedSchools = schoolRecords && Array.isArray(schoolRecords)
+        ? schoolRecords.map((school: any) => ({ id: school.id, name: school.schoolName }))
+        : [];
+      setSchools(fetchedSchools);
 
-      setRawBanners(records);
+      // 2. Fetch banners
+      const { records: bannerRecords } = await getAllBanners(1, 10, schoolId, user.role);
+      setRawBanners(bannerRecords);
 
-      const mappedData = records.map((banner: any) => {
+      // 3. Map banners with school names
+      const mappedData = bannerRecords.map((banner: any) => {
         const targetAudience = banner.targetAudience || {};
-        const schoolIds = Array.isArray(targetAudience.schoolIds) ? targetAudience.schoolIds.join(', ') : '';
+        const schoolIds = Array.isArray(targetAudience.schoolIds) ? targetAudience.schoolIds : [];
+        
+        const schoolNames = schoolIds
+          .map((id: string) => {
+              const school = fetchedSchools.find(s => s.id === id);
+              return school ? school.name : id;
+          })
+          .join(', ');
+
         const audienceKeys = Object.keys(targetAudience)
           .filter(key => targetAudience[key] === true && !['all', 'schoolIds'].includes(key))
           .join(', ');
@@ -37,7 +53,7 @@ const BannersPage = () => {
         return {
           id: banner.id.toString(),
           name: banner.title || '',
-          school: schoolIds,
+          school: schoolNames,
           targetAudience: audienceKeys,
           startDate: new Date(banner.startDate).toISOString().split('T')[0],
           endDate: new Date(banner.endDate).toISOString().split('T')[0],
@@ -45,33 +61,18 @@ const BannersPage = () => {
         };
       });
 
-      console.log('Mapped data for rendering:', mappedData);
       setData(mappedData);
 
     } catch (error) {
-      console.error("Error fetching banners:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSchools = async () => {
-    if (!user?.tenantId) return;
-    try {
-      const records = await getAllSchools(user.tenantId);
-      if (records && Array.isArray(records)) {
-        setSchools(records.map((school: any) => ({ id: school.id, name: school.schoolName })));
-      }
-    } catch (error) {
-      console.error('Error fetching schools:', error);
-    }
-  };
-
   React.useEffect(() => {
-    if (!user?.tenantId) return;
-    fetchBanners(selectedSchool);
-    if (user?.tenantId) {
-        fetchSchools();
+    if(user?.tenantId) {
+        fetchData(selectedSchool);
     }
   }, [selectedSchool, user]);
 
@@ -108,7 +109,7 @@ const BannersPage = () => {
                 contentType: file.type,
                 filename: file.name,
                 filePath: signedUrlData.filePath,
-                uploadedBy: 'Narayana',
+                uploadedBy: user?.id || 'Narayana',
             };
 
             const newAttachment = await createAttachment(attachmentPayload);
@@ -129,10 +130,11 @@ const BannersPage = () => {
         },
         startDate: banner.startDate,
         endDate: banner.endDate,
+        createdBy: user?.id || ''
       };
 
       await createBanner(newBanner);
-      fetchBanners(selectedSchool);
+      fetchData(selectedSchool);
     } catch (error) {
       console.error("Error creating banner:", error);
     }
@@ -172,7 +174,7 @@ const BannersPage = () => {
                 contentType: file.type,
                 filename: file.name,
                 filePath: signedUrlData.filePath,
-                uploadedBy: 'Narayana',
+                uploadedBy: user?.id || 'Narayana',
             };
             
             const newAttachment = await createAttachment(attachmentPayload);
@@ -193,10 +195,11 @@ const BannersPage = () => {
             },
             startDate: updatedBanner.startDate,
             endDate: updatedBanner.endDate,
+            updatedBy: user?.id || ''
           };
 
       await updateBanner(updatedBanner.id, newBanner);
-      fetchBanners(selectedSchool);
+      fetchData(selectedSchool);
     } catch (error) {
       console.error("Error updating banner:", error);
     }
@@ -204,8 +207,8 @@ const BannersPage = () => {
 
   const handleDeleteBanner = async (bannerId: string) => {
     try {
-      await deleteBanner(bannerId);
-      fetchBanners(selectedSchool);
+      await deleteBanner(bannerId, user?.id || '');
+      fetchData(selectedSchool);
     } catch (error) {
       console.error("Error deleting banner:", error);
     }

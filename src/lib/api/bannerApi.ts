@@ -5,7 +5,7 @@ import { getSignedUrlForViewing } from "./attachmentApi";
 
 const getContext = () => {
     if (typeof window === 'undefined') {
-        return { tenantId: null, token: null };
+        return { tenantId: null, token: null, userId: null };
     }
     const tenantData = localStorage.getItem("contextInfo");
     const token = localStorage.getItem("contextJWT");
@@ -14,18 +14,26 @@ const getContext = () => {
     }
     const parsed = JSON.parse(tenantData);
     const tenantId = parsed?.tenantId;
+    const userId = parsed?.id;
     if (!tenantId) {
         throw new Error("Tenant ID not found in context info");
     }
-    return { tenantId, token };
+    if (!userId) {
+        throw new Error("User ID not found in context info");
+    }
+    return { tenantId, token, userId };
 }
 
 export async function createBanner(bannerData: any): Promise<any> {
   try {
-    const { tenantId, token } = getContext();
+    const { tenantId, token, userId } = getContext();
+    const payload = {
+        ...bannerData,
+        createdBy: userId,
+    };
     const response = await apiClient.post(
       `/tenants/${tenantId}/banners`,
-      { data: bannerData },
+      { data: payload },
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -103,10 +111,14 @@ export async function updateBanner(
   bannerData: any
 ): Promise<any> {
   try {
-    const { tenantId, token } = getContext();
+    const { tenantId, token, userId } = getContext();
+    const payload = {
+        ...bannerData,
+        updatedBy: userId,
+    };
     const response = await apiClient.put(
       `/tenants/${tenantId}/banners/${bannerId}`,
-      { data: bannerData },
+      { data: payload },
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -122,12 +134,17 @@ export async function updateBanner(
 
 export async function deleteBanner(bannerId: string): Promise<any> {
   try {
-    const { tenantId, token } = getContext();
+    const { tenantId, token, userId } = getContext();
     const response = await apiClient.delete(
       `/tenants/${tenantId}/banners/${bannerId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`
+        },
+        data: {
+            meta: {
+                updatedBy: userId
+            }
         }
       }
     );

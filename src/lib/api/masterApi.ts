@@ -5,16 +5,30 @@ export * from './subjectApi';
 export * from './lessonApi';
 export * from './bannerApi';
 
+const getContext = () => {
+    if (typeof window === 'undefined') {
+        return { tenantId: null, token: null, userId: null };
+    }
+    const tenantData = localStorage.getItem("contextInfo");
+    const token = localStorage.getItem("contextJWT");
+    if (!tenantData || !token) {
+        throw new Error("Context information not found in local storage");
+    }
+    const parsed = JSON.parse(tenantData);
+    const tenantId = parsed?.tenantId;
+    const userId = parsed?.id;
+    if (!tenantId) {
+        throw new Error("Tenant ID not found in context info");
+    }
+    if (!userId) {
+        throw new Error("User ID not found in context info");
+    }
+    return { tenantId, token, userId };
+}
+
 export async function getAllSeries(): Promise<any[]> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) return [];
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-  
-      const tenantId = parsed?.tenantId || null;
-  
-      if (!tenantId) return [];
+      const { tenantId, token } = getContext();
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/series`,
@@ -38,13 +52,7 @@ export async function getAllSeries(): Promise<any[]> {
 
 export async function createSeries(series: { name: string, description: string }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const seriesPayload = {
             data: {
@@ -52,6 +60,7 @@ export async function createSeries(series: { name: string, description: string }
                 code: series.name,
                 description: series.description,
                 status: "active",
+                createdBy: userId,
             },
         };
 
@@ -74,13 +83,7 @@ export async function createSeries(series: { name: string, description: string }
 
 export async function updateSeries(seriesId: string, series: { name: string, description: string }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const seriesPayload = {
             data: {
@@ -88,6 +91,7 @@ export async function updateSeries(seriesId: string, series: { name: string, des
                 code: series.name, // Ensure code is included
                 description: series.description,
                 status: "active",
+                updatedBy: userId,
             },
         };
 
@@ -110,13 +114,7 @@ export async function updateSeries(seriesId: string, series: { name: string, des
 
 export async function deleteSeries(seriesId: string): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const response = await apiClient.delete(
             `/tenants/${tenantId}/masters/series/${seriesId}`,
@@ -124,6 +122,11 @@ export async function deleteSeries(seriesId: string): Promise<any> {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
+                data: {
+                    meta: {
+                        updatedBy: userId
+                    }
+                }
             }
         );
 
@@ -136,14 +139,7 @@ export async function deleteSeries(seriesId: string): Promise<any> {
 
 export async function getAllClasses(): Promise<any[]> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) return [];
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-  
-      const tenantId = parsed?.tenantId || null;
-  
-      if (!tenantId) return [];
+        const { tenantId, token } = getContext();
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/classes`,
@@ -167,14 +163,7 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function getAllSubjects(): Promise<any[]> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) return [];
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-  
-      const tenantId = parsed?.tenantId || null;
-  
-      if (!tenantId) return [];
+        const { tenantId, token } = getContext();
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/subjects?status=active`,
@@ -198,14 +187,7 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function getAllPackages(): Promise<any[]> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) return [];
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-  
-      const tenantId = parsed?.tenantId || null;
-  
-      if (!tenantId) return [];
+        const { tenantId, token } = getContext();
   
       const response = await apiClient.get(
         `/tenants/${tenantId}/masters/packages`,
@@ -234,17 +216,11 @@ export async function getAllClasses(): Promise<any[]> {
     status: string;
   }): Promise<any> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) throw new Error("Context info not found");
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-      const tenantId = parsed?.tenantId;
-  
-      if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
   
       const response = await apiClient.post(
         `/tenants/${tenantId}/masters/packages`,
-        { data: packagePayload },
+        { data: { ...packagePayload, createdBy: userId } },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -266,17 +242,11 @@ export async function getAllClasses(): Promise<any[]> {
     status: string;
   }): Promise<any> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) throw new Error("Context info not found");
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-      const tenantId = parsed?.tenantId;
-  
-      if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
   
       const response = await apiClient.patch(
         `/tenants/${tenantId}/masters/packages/${packageId}`,
-        { data: packagePayload },
+        { data: { ...packagePayload, updatedBy: userId } },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -293,20 +263,19 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function deletePackage(packageId: string): Promise<any> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) throw new Error("Context info not found");
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-      const tenantId = parsed?.tenantId;
-  
-      if (!tenantId) throw new Error("Tenant ID not found");
-  
+        const { tenantId, token, userId } = getContext();
+
       const response = await apiClient.delete(
         `/tenants/${tenantId}/masters/packages/${packageId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          data: {
+            meta: {
+                updatedBy: userId
+            }
+        }
         }
       );
   
@@ -319,18 +288,13 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function createClass(classData: { name: string; description: string; }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const payload = {
             name: classData.name,
             description: classData.description,
             code: classData.name,
+            createdBy: userId
         };
 
         const response = await apiClient.post(
@@ -352,18 +316,13 @@ export async function getAllClasses(): Promise<any[]> {
 
 export async function updateClass(classId: string, classData: { name: string; description: string; }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const payload = {
             name: classData.name,
             description: classData.description,
             code: classData.name,
+            updatedBy: userId
         };
 
         const response = await apiClient.patch(
@@ -385,13 +344,7 @@ export async function updateClass(classId: string, classData: { name: string; de
 
 export async function deleteClass(classId: string): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const response = await apiClient.delete(
             `/tenants/${tenantId}/masters/classes/${classId}`,
@@ -399,6 +352,11 @@ export async function deleteClass(classId: string): Promise<any> {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
+                data: {
+                    meta: {
+                        updatedBy: userId
+                    }
+                }
             }
         );
 
@@ -411,13 +369,7 @@ export async function deleteClass(classId: string): Promise<any> {
 
 export async function createLesson(lesson: { name: string; description: string; classId: string; subjectId: string; }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const lessonPayload = {
             data: {
@@ -427,6 +379,7 @@ export async function createLesson(lesson: { name: string; description: string; 
                 classId: lesson.classId,
                 subjectId: lesson.subjectId,
                 status: "active",
+                createdBy: userId,
             },
         };
 
@@ -447,22 +400,19 @@ export async function createLesson(lesson: { name: string; description: string; 
     }
 }
 
-export async function updateLesson(lessonId: string, lesson: { name: string, description: string, status: string }): Promise<any> {
+export async function updateLesson(lessonId: string, lesson: { name: string, description: string, status: string, classId: string, subjectId: string }, meta: { modifiedBy: string, role: string }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
-        const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-
-        if (!tenantId) throw new Error("Tenant ID not found");
+        const { tenantId, token, userId } = getContext();
 
         const lessonPayload = {
             data: {
                 name: lesson.name,
                 description: lesson.description,
                 status: lesson.status,
+                classId: lesson.classId,
+                subjectId: lesson.subjectId,
             },
+            meta: { ...meta, updatedBy: userId },
         };
 
         const response = await apiClient.put(

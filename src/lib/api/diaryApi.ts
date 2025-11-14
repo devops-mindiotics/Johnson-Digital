@@ -40,9 +40,35 @@ export const createDiaryEntry = async (
   schoolId: string,
   data: DiaryEntry
 ) => {
+    const tenantData = localStorage.getItem("contextInfo");
+    if (!tenantData) throw new Error("Context info not found");
+    const parsed = JSON.parse(tenantData);
+    const userId = parsed?.id;
+    if (!userId) throw new Error("User ID not found");
+
+    const payload = {
+        ...data,
+        createdBy: userId
+    }
+
   const response = await apiClient.post(
     `/${DIARY_ENDPOINT(tenantId, schoolId)}`,
-    { data }
+    { data: payload }
   );
   return response.data;
 };
+
+export const getDiaryEntries = async (tenantId: string, schoolId: string) => {
+    // TODO: Implement this function
+    return [];
+}
+
+export const updateDiaryEntry = async (tenantId: string, schoolId: string, entryId: string, data: DiaryEntry) => {
+    // TODO: Implement this function
+    return {};
+}
+
+export const deleteDiaryEntry = async (tenantId: string, schoolId: string, entryId: string) => {
+    // TODO: Implement this function
+    return {};
+}

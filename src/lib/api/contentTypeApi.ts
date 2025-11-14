@@ -63,8 +63,9 @@ export async function createContentType(contentTypeData: { name: string; descrip
         const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
         const tenantId = parsed?.tenantId;
+        const userId = parsed?.id;
 
-        if (!tenantId) throw new Error("Tenant or user details not found");
+        if (!tenantId || !userId) throw new Error("Tenant or user details not found");
 
         const payload = {
             data: {
@@ -72,6 +73,7 @@ export async function createContentType(contentTypeData: { name: string; descrip
                 code: `CNT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
                 description: contentTypeData.description,
                 status: contentTypeData.status,
+                createdBy: userId,
             }
         };
 
@@ -99,14 +101,16 @@ export async function updateContentType(contentTypeId: string, contentTypeData: 
         const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
         const tenantId = parsed?.tenantId;
+        const userId = parsed?.id;
 
-        if (!tenantId) throw new Error("Tenant or user details not found");
+        if (!tenantId || !userId) throw new Error("Tenant or user details not found");
 
         const payload = {
             data: {
                 name: contentTypeData.name,
                 description: contentTypeData.description,
                 status: contentTypeData.status,
+                updatedBy: userId,
             }
         };
 
@@ -134,14 +138,20 @@ export async function deleteContentType(contentTypeId: string): Promise<any> {
         const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
         const tenantId = parsed?.tenantId;
+        const userId = parsed?.id;
 
-        if (!tenantId) throw new Error("Tenant ID not found");
+        if (!tenantId || !userId) throw new Error("Tenant or user details not found");
 
         const response = await apiClient.delete(
             `/tenants/${tenantId}/masters/content-types/${contentTypeId}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`
+                },
+                data: {
+                    meta: {
+                        updatedBy: userId
+                    }
                 }
             }
         );

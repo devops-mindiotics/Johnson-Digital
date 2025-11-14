@@ -9,12 +9,19 @@ export async function createAttachment(attachmentData: any): Promise<any> {
     const parsed = JSON.parse(tenantData);
     const token = localStorage.getItem("contextJWT");
     const tenantId = parsed?.tenantId;
+    const userId = parsed?.id;
 
     if (!tenantId) throw new Error("Tenant ID not found");
+    if (!userId) throw new Error("User ID not found");
+
+    const payload = {
+      ...attachmentData,
+      createdBy: userId,
+    };
 
     const response = await apiClient.post(
       `/tenants/${tenantId}/attachments`,
-      { data: attachmentData },
+      { data: payload },
       {
         headers: {
           Authorization: `Bearer ${token}`,

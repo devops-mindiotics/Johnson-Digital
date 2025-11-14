@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Lesson {
   id: string;
@@ -56,6 +57,7 @@ interface Subject {
 
 export default function MasterLessonsPage() {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -73,8 +75,11 @@ export default function MasterLessonsPage() {
   const fetchLessons = async () => {
     try {
       const filters = {
-        classId: selectedClass === 'all' ? undefined : selectedClass,
-        subjectId: selectedSubject === 'all' ? undefined : selectedSubject,
+        page: 1,
+        limit: 10,
+        classId: selectedClass === 'all' ? '' : selectedClass,
+        subjectId: selectedSubject === 'all' ? '' : selectedSubject,
+        status: 'active',
       };
       const response = await getAllLessons(filters);
       setLessons(response);
@@ -123,7 +128,10 @@ export default function MasterLessonsPage() {
   const handleSave = async (lessonData:  Omit<Lesson, 'id'>) => {
     try {
       if (selectedLesson) {
-        await updateLesson(selectedLesson.id, lessonData);
+        const { name, description, classId, subjectId, status } = lessonData;
+        const data = { name, description, classId, subjectId, status };
+        const meta = { modifiedBy: user?.id || '', role: user?.role || '' };
+        await updateLesson(selectedLesson.id, data, meta);
       } else {
         await createLesson(lessonData);
       }

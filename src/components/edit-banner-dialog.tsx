@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Banner } from '@/types/banner';
 import { MultiSelect } from '@/components/ui/multi-select';
@@ -29,20 +28,25 @@ export const EditBannerDialog: React.FC<EditBannerDialogProps> = ({ isOpen, onCl
   React.useEffect(() => {
     if (banner) {
       setName(banner.name);
-      setTargetAudience(banner.targetAudience.split(', '));
-      setSelectedSchools(banner.school.split(', '));
+      setTargetAudience(banner.targetAudience ? banner.targetAudience.split(', ').filter(Boolean) : []);
+      
+      const schoolNames = banner.school ? banner.school.split(', ').map(s => s.trim()) : [];
+      const schoolIds = schoolNames.map(name => schools.find(s => s.name === name)?.id).filter(Boolean) as string[];
+      setSelectedSchools(schoolIds);
+      
       setStartDate(banner.startDate);
       setEndDate(banner.endDate);
     }
-  }, [banner]);
+  }, [banner, schools]);
 
   const handleSave = () => {
     if (banner) {
+        const schoolNames = selectedSchools.map(id => schools.find(s => s.id === id)?.name || id);
       onSave({
         id: banner.id,
         name,
         targetAudience: targetAudience.join(', '),
-        school: selectedSchools.join(', '),
+        school: schoolNames.join(', '),
         startDate,
         endDate,
         media: banner.media,
@@ -54,6 +58,8 @@ export const EditBannerDialog: React.FC<EditBannerDialogProps> = ({ isOpen, onCl
   if (!isOpen) {
     return null;
   }
+
+  const audienceOptions = ['School Admins', 'Teachers', 'Students'];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -71,45 +77,23 @@ export const EditBannerDialog: React.FC<EditBannerDialogProps> = ({ isOpen, onCl
           </div>
           <div className="space-y-2">
             <Label>Target Audience</Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="all" checked={targetAudience.includes('All')} onCheckedChange={(checked) => {
-                if (checked) {
-                  setTargetAudience(['All']);
-                } else {
-                  setTargetAudience([]);
-                }
-              }} />
-              <Label htmlFor="all">All</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="school-admins" checked={targetAudience.includes('School Admins')} onCheckedChange={(checked) => {
-                if (checked) {
-                  setTargetAudience(prev => [...prev, 'School Admins']);
-                } else {
-                  setTargetAudience(prev => prev.filter(item => item !== 'School Admins'));
-                }
-              }}/>
-              <Label htmlFor="school-admins">School Admins</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Checkbox id="teachers" checked={targetAudience.includes('Teachers')} onCheckedChange={(checked) => {
-                    if (checked) {
-                        setTargetAudience(prev => [...prev, 'Teachers']);
-                    } else {
-                        setTargetAudience(prev => prev.filter(item => item !== 'Teachers'));
-                    }
-                }} />
-                <Label htmlFor="teachers">Teachers</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Checkbox id="students" checked={targetAudience.includes('Students')} onCheckedChange={(checked) => {
-                    if (checked) {
-                        setTargetAudience(prev => [...prev, 'Students']);
-                    } else {
-                        setTargetAudience(prev => prev.filter(item => item !== 'Students'));
-                    }
-                }} />
-                <Label htmlFor="students">Students</Label>
+            <div className="flex flex-wrap gap-4">
+              {audienceOptions.map(opt => (
+                <div key={opt} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={opt.toLowerCase().replace(' ', '-')}
+                    checked={targetAudience.includes(opt)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setTargetAudience(prev => [...prev, opt]);
+                      } else {
+                        setTargetAudience(prev => prev.filter(item => item !== opt));
+                      }
+                    }}
+                  />
+                  <Label htmlFor={opt.toLowerCase().replace(' ', '-')}>{opt}</Label>
+                </div>
+              ))}
             </div>
           </div>
           <div className="space-y-2">
