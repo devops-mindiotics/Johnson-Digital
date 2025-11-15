@@ -2,7 +2,8 @@
 import { createContext, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Represents the class details for a student
+// NOTE: These interfaces are now aligned with the API response and src/types/loginresponse.ts
+
 interface ClassDetails {
   sectionName: string;
   classId: string;
@@ -12,44 +13,51 @@ interface ClassDetails {
   sectionId: string;
 }
 
-// Represents a single school associated with a user from the API response
 interface School {
   tenantId: string;
+  tenantName?: string;
   schoolId: string;
-  id: string; // Adding id for frontend consistency
+  schoolName?: string;
+  id: string;
   roles: string[];
-  classDetails?: ClassDetails; // Optional class details for students
+  classDetails?: ClassDetails;
 }
 
-// Represents a tenant role from the API response
 interface TenantRole {
-    tenantId: string;
-    roles: string[];
+  tenantId: string;
+  tenantName: string;
+  roles: string[];
 }
 
+// This is the definitive User object structure that will be stored in localStorage
 interface User {
-    id: string;
-    name: string;
-    email: string;
-    tenantId: string;
-    schoolId?: string; // schoolId is optional but should be present for school-level users
-    role: string;
-    firstName?: string;
-    lastName?: string;
-    gender?: string;
-    phone?: string;
-    avatarUrl?: string;
-    schools: School[]; // User can be associated with multiple schools
-    classDetails?: ClassDetails; // Optional class details for students
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  avatarUrl?: string;
+
+  // Core authorization properties
+  role: string; // The user's primary, active role
+  tenantId: string;
+  tenantName?: string;
+  schoolId?: string; // Only present for school-level users
+
+  // Full, original data from the API for other modules to use
+  schools: School[];
+  tenantRoles: TenantRole[];
+  classDetails?: ClassDetails;
 }
 
-// Represents the structure of the data object within the API login response
 interface LoginData {
-    user: Partial<User>;
-    schools: any[]; // The schools array from the API
-    tenantRoles?: TenantRole[];
-    sessionJwt: string;
-    contextJwt: string;
+  user: Partial<User>;
+  schools: any[];
+  tenantRoles?: TenantRole[];
+  sessionJwt: string;
+  contextJwt: string;
 }
 
 interface AuthContextType {
@@ -62,103 +70,112 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const router = useRouter();
-  
-    useEffect(() => {
-        try {
-          const storedUser = localStorage.getItem('educentral-user');
-          if (storedUser) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-            console.log("AuthProvider: Loaded user from localStorage", parsedUser);
-          }
-        } catch (error) {
-          console.error('AuthProvider: Failed to parse user from localStorage', error);
-          localStorage.removeItem('educentral-user');
-        } finally {
-          setIsLoading(false);
-        }
-      }, []);
-    
-      const login = useCallback((data: LoginData) => {
-        console.log("AuthProvider: Login process started with data:", data);
-        const { user: apiUser, schools: apiSchools = [], tenantRoles = [], sessionJwt, contextJwt } = data;
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-        let primaryTenantId: string | undefined;
-        let primarySchoolId: string | undefined;
-        let classDetails: ClassDetails | undefined;
-
-        // Determine tenantId based on user role
-        if (tenantRoles && tenantRoles.length > 0) {
-            primaryTenantId = tenantRoles[0].tenantId;
-            console.log("AuthProvider: Tenant ID derived from tenantRoles:", primaryTenantId);
-        } else if (apiSchools && apiSchools.length > 0) {
-            primaryTenantId = apiSchools[0].tenantId;
-            primarySchoolId = apiSchools[0].schoolId;
-            classDetails = apiSchools[0].classDetails;
-            console.log("AuthProvider: Tenant ID and School ID derived from schools array:", primaryTenantId, primarySchoolId);
-        } else {
-            console.error("AuthProvider Error: Cannot determine tenantId from login response.", data);
-            // Handle cases where tenantId cannot be determined. Maybe logout or show an error.
-            return; 
-        }
-
-        if (!primaryTenantId) {
-            console.error("AuthProvider FATAL: Tenant ID is undefined. Aborting login.", data);
-            return;
-        }
-
-        const formattedSchools = apiSchools.map(school => ({
-          ...school,
-          id: school.schoolId,
-        }));
-
-        const userForContext: User = {
-          ...apiUser,
-          id: apiUser.id!,
-          name: `${apiUser.firstName} ${apiUser.lastName}`,
-          email: apiUser.email!,
-          role: apiUser.roles?.[0] || '',
-          tenantId: primaryTenantId,
-          schoolId: primarySchoolId,
-          schools: formattedSchools,
-          classDetails: classDetails,
-        };
-
-        console.log("AuthProvider: Final user object for context:", userForContext);
-
-        const contextInfo = {
-            tenantId: primaryTenantId,
-            schoolId: primarySchoolId,
-            classDetails: classDetails,
-        };
-        
-        console.log("AuthProvider: Storing contextInfo in localStorage:", contextInfo);
-        
-        setUser(userForContext);
-        localStorage.setItem('educentral-user', JSON.stringify(userForContext));
-        localStorage.setItem('contextInfo', JSON.stringify(contextInfo));
-        localStorage.setItem('sessionJWT', sessionJwt);
-        localStorage.setItem('contextJWT', contextJwt);
-        
-        router.push('/homepage');
-      }, [router]);
-    
-      const logout = useCallback(() => {
-        setUser(null);
-        localStorage.removeItem('educentral-user');
-        localStorage.removeItem('contextInfo');
-        localStorage.removeItem('sessionJWT');
-        localStorage.removeItem('contextJWT');
-        localStorage.removeItem('roles');
-        router.push('/login');
-      }, [router]);
-    
-      return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
-          {children}
-        </AuthContext.Provider>
-      );
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('educentral-user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        console.log("AuthProvider: Loaded user from localStorage", parsedUser);
+      }
+    } catch (error) {
+      console.error('AuthProvider: Failed to parse user from localStorage', error);
+      localStorage.removeItem('educentral-user');
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
+
+  const login = useCallback((data: LoginData) => {
+    console.log("AuthProvider: Login process started with data:", data);
+    const { user: apiUser, schools: apiSchools = [], tenantRoles = [], sessionJwt, contextJwt } = data;
+
+    let primaryTenantId: string | undefined;
+    let tenantName: string | undefined;
+    let primarySchoolId: string | undefined;
+    let primaryRole: string | undefined;
+    let classDetails: ClassDetails | undefined;
+
+    // HIERARCHICAL LOGIC: Determine role and IDs based on the API response structure
+    // Priority 1: Check for a role at the Tenant level.
+    if (tenantRoles?.[0]?.roles?.length > 0) {
+      const tenant = tenantRoles[0];
+      primaryTenantId = tenant.tenantId;
+      tenantName = tenant.tenantName;
+      primaryRole = tenant.roles[0];
+      console.log(`AuthProvider: Detected TENANT role (${primaryRole}) for tenant ${primaryTenantId}`);
+
+    // Priority 2: If no tenant role, check for a role at the School level.
+    } else if (apiSchools?.[0]?.roles?.length > 0) {
+      const school = apiSchools[0];
+      primaryTenantId = school.tenantId;
+      tenantName = school.tenantName; 
+      primarySchoolId = school.schoolId;
+      primaryRole = school.roles[0];
+      classDetails = school.classDetails;
+      console.log(`AuthProvider: Detected SCHOOL role (${primaryRole}) for school ${primarySchoolId}`);
+
+    } else {
+      console.error("AuthProvider FATAL: Cannot determine a valid role from login response. Aborting.", data);
+      // Optionally, you can trigger a logout or show an error message to the user here.
+      return;
+    }
+
+    if (!primaryTenantId || !primaryRole) {
+      console.error("AuthProvider FATAL: Could not resolve TenantId or a primary Role. Aborting login.", { primaryTenantId, primaryRole });
+      return;
+    }
+
+    const formattedSchools = apiSchools.map(school => ({
+      ...school,
+      id: school.schoolId, // Ensure a consistent `id` field for frontend use
+    }));
+
+    // CONSTRUCT THE DEFINITIVE USER OBJECT
+    const userForContext: User = {
+      // Base user info
+      ...apiUser,
+      id: apiUser.id!,
+      name: `${apiUser.firstName} ${apiUser.lastName}`,
+      email: apiUser.email!,
+
+      // Derived primary role and IDs
+      role: primaryRole,
+      tenantId: primaryTenantId,
+      tenantName: tenantName,
+      schoolId: primarySchoolId,
+      classDetails: classDetails,
+
+      // Full original data for other modules
+      tenantRoles: tenantRoles, 
+      schools: formattedSchools,
+    };
+
+    console.log("AuthProvider: Storing FINAL, COMPLETE user object to localStorage:", userForContext);
+
+    setUser(userForContext);
+    localStorage.setItem('educentral-user', JSON.stringify(userForContext));
+    localStorage.setItem('sessionJWT', sessionJwt);
+    localStorage.setItem('contextJWT', contextJwt);
+
+    router.push('/homepage');
+  }, [router]);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem('educentral-user');
+    localStorage.removeItem('sessionJWT');
+    localStorage.removeItem('contextJWT');
+    router.push('/login');
+  }, [router]);
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}

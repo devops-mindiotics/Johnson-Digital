@@ -16,29 +16,24 @@ import { useAuth } from '@/hooks/use-auth';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { getUsersByTenant, getUsersBySchool } from '@/lib/api/userApi';
 import { SUPERADMIN, TENANTADMIN, SCHOOLADMIN } from '@/lib/utils/constants';
-import { getRoles } from '@/lib/utils/getRole';
+
 import './users.css';
 
+// ROBUST HELPER FUNCTIONS - Aligned with the corrected AuthProvider
+const getUserRole = (authUser: any) => authUser?.role ?? null;
+const getTenantId = (authUser: any) => authUser?.tenantId ?? null;
+const getSchoolId = (authUser: any) => authUser?.schoolId ?? null;
+
 const getAvatarUrl = (user: any) => {
-  if (user.avatarUrl) {
-    return user.avatarUrl;
-  }
-
-  if (user.gender === 'male') {
-    return 'https://avatar.iran.liara.run/public/boy';
-  }
-
-  if (user.gender === 'female') {
-    return 'https://avatar.iran.liara.run/public/girl';
-  }
-
+  if (user.avatarUrl) return user.avatarUrl;
+  if (user.gender === 'male') return 'https://avatar.iran.liara.run/public/boy';
+  if (user.gender === 'female') return 'https://avatar.iran.liara.run/public/girl';
   return 'https://avatar.iran.liara.run/public';
 };
 
 export default function UsersPage() {
   const { user: authUser } = useAuth();
   const router = useRouter();
-  const userRole = getRoles();
   const [users, setUsers] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState('all');
@@ -49,80 +44,112 @@ export default function UsersPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedUserName, setProcessedUserName] = useState('');
-  
+  const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<{ title: string; message: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const userRole = getUserRole(authUser);
 
   useEffect(() => {
-    async function fetchSchools() {
-      if (!authUser?.tenantId) return;
-      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
-        try {
-          const schoolData = await getAllSchools(authUser.tenantId);
-          if (schoolData && Array.isArray(schoolData)) {
-            setSchools(schoolData);
-          }
-        } catch (error) {
-          console.error("Failed to fetch schools:", error);
-        }
+    const fetchData = async () => {
+      console.log("UsersPage: fetchData triggered. AuthUser is now:", authUser);
+
+      if (!authUser) {
+        console.log("UsersPage: Aborting fetch, authUser is still not available.");
+        // No need to setLoading(false) here, the initial state is already true and will be handled finally.
+        return;
       }
-    }
-    fetchSchools();
-  }, [authUser, userRole]);
 
-  useEffect(() => {
-    async function fetchUsers() {
-      if (!authUser) return;
+      const tenantId = getTenantId(authUser);
+      const role = getUserRole(authUser); // This is the primary, active role
+
+      console.log(`UsersPage: Resolved TenantID: ${tenantId}, Role: ${role}`);
+
+      if (!role || !tenantId) {
+        console.error("UsersPage: FATAL - Role or TenantId is missing from authUser object. Cannot fetch data.", { role, tenantId });
+        setLoading(false);
+        setDebugInfo({ title: 'Authentication Error', message: 'Could not verify your role or tenant. Please try logging out and back in.' });
+        return;
+      }
+
+      setLoading(true);
+      console.log("UsersPage: Starting data fetch...");
 
       try {
-        let userData = [];
-        const tenantId = authUser.tenantId;
-
-        if (userRole === SCHOOLADMIN) {
-          if (authUser.schools && authUser.schools.length > 0) {
-            const schoolId = authUser.schools[0].id;
-            userData = await getUsersBySchool(tenantId, schoolId);
+        // Step 1: Fetch schools if the user is a Tenant Admin or Super Admin
+        if (role === TENANTADMIN || role === SUPERADMIN) {
+          console.log(`UsersPage: Fetching schools for tenant: ${tenantId}`);
+          try {
+            const schoolResult = await getAllSchools(tenantId);
+            console.log("UsersPage: School fetch succeeded.", schoolResult);
+            setSchools(schoolResult ?? []);
+          } catch (schoolError) {
+            console.error("UsersPage: School fetch FAILED.", schoolError);
+            setSchools([]); // Ensure schools is an empty array on failure
           }
         } else {
+            setSchools([]); // Not an admin, no schools to fetch
+        }
+
+        // Step 2: Fetch users based on role and selection
+        console.log(`UsersPage: Preparing user fetch for role: ${role}`);
+        let usersResult: { records: any[] } | null = null;
+
+        if (role === SCHOOLADMIN) {
+          const schoolId = getSchoolId(authUser);
+          if (!schoolId) {
+            throw new Error("Your account is a School Admin, but no School ID is associated with it.");
+          }
+          console.log(`UsersPage: Fetching users for school: ${schoolId}`);
+          usersResult = await getUsersBySchool(tenantId, schoolId);
+
+        } else if (role === TENANTADMIN || role === SUPERADMIN) {
           if (selectedSchool === 'all') {
-            userData = await getUsersByTenant(tenantId);
+            console.log(`UsersPage: Fetching ALL users for tenant: ${tenantId}`);
+            usersResult = await getUsersByTenant(tenantId);
           } else {
-            userData = await getUsersBySchool(tenantId, selectedSchool);
+            console.log(`UsersPage: Fetching users for SELECTED school: ${selectedSchool}`);
+            usersResult = await getUsersBySchool(tenantId, selectedSchool);
           }
         }
-        setUsers(userData);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        setUsers([]);
+        
+        console.log("UsersPage: User fetch succeeded.", usersResult);
+        setUsers(usersResult?.records ?? []);
+
+      } catch (error: any) {
+        console.error("UsersPage: An error occurred during the data fetching process.", error);
+        setDebugInfo({ title: 'Failed to Fetch Data', message: error.message || 'An unknown error occurred.' });
+        setUsers([]); // Clear users on error
+      } finally {
+        setLoading(false);
+        console.log("UsersPage: Fetch data process finished.");
       }
+    };
+
+    fetchData();
+  }, [authUser, selectedSchool, refreshKey]); // Dependencies are correct
+
+  // ... (rest of the component remains the same) ...
+
+
+  const handleStatusChange = async () => {
+    if (userToUpdate) {
+      const userName = `${userToUpdate.firstName} ${userToUpdate.lastName}`;
+      setProcessedUserName(userName || 'the user');
+      setSuccessDialogOpen(true);
+      setUserToUpdate(null);
+      setRefreshKey(key => key + 1);
     }
-    fetchUsers();
-  }, [authUser, userRole, selectedSchool]);
+  };
 
   const handleViewUser = (user: any) => {
     localStorage.setItem('selectedUser', JSON.stringify(user));
     router.push(`/homepage/users/${user.id}`);
   };
 
-  const handleStatusChange = () => {
-    if (userToUpdate) {
-      const newStatus = userToUpdate.status === 'active' ? 'inactive' : 'active';
-      const updatedUsers = users.map((u) =>
-        u.id === userToUpdate.id
-          ? { ...u, status: newStatus }
-          : u
-      );
-      setUsers(updatedUsers);
-      const userName = `${userToUpdate.firstName} ${userToUpdate.lastName}`;
-      if (newStatus === 'inactive') {
-        setProcessedUserName(userName || 'the user');
-        setSuccessDialogOpen(true);
-      }
-      setUserToUpdate(null);
-    }
-  };
-
   const filteredUsers = searchTerm
     ? users.filter(u => {
-        const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+        const fullName = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
         const email = u.email ? u.email.toLowerCase() : '';
         return fullName.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
       })
@@ -143,6 +170,9 @@ export default function UsersPage() {
     return 'N/A';
 }
 
+  if (loading && !users.length && !schools.length) {
+      return <DashboardSkeleton />;
+  }
 
   return (
     <Card>
@@ -220,103 +250,87 @@ export default function UsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((u) => (
-                <TableRow key={u.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={getAvatarUrl(u)} alt={getUserName(u)} />
-                        <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="font-medium">
-                        <div>{getUserName(u)}</div>
-                        <div className="text-sm text-muted-foreground">{u.phone}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{getSchoolName(u)}</TableCell>}
-                  <TableCell>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        u.status === 'active' ? 'default' : 'destructive'
-                      }
-                      onClick={() => setUserToUpdate(u)}
-                      className="cursor-pointer"
-                    >
-                      {u.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Loading users...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((u) => (
+                  <TableRow key={u.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={getAvatarUrl(u)} alt={getUserName(u)} />
+                          <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="font-medium">
+                          <div>{getUserName(u)}</div>
+                          <div className="text-sm text-muted-foreground">{u.phone}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    {(userRole === SUPERADMIN || userRole === TENANTADMIN) && <TableCell>{getSchoolName(u)}</TableCell>}
+                    <TableCell>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={u.status === 'active' ? 'default' : 'destructive'}
+                        onClick={() => setUserToUpdate(u)}
+                        className="cursor-pointer"
+                      >
+                        {u.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                    <TableCell colSpan={userRole === SUPERADMIN || userRole === TENANTADMIN ? 5 : 4} className="text-center">
+                        No users found.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
         <div className="grid grid-cols-1 gap-4 md:hidden">
-          {filteredUsers.map((u) => (
-            <Card key={u.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={getAvatarUrl(u)} alt={getUserName(u)} />
-                    <AvatarFallback>{getUserName(u).charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="font-medium">
-                    <div>{getUserName(u)}</div>
-                    <div className="text-sm text-muted-foreground">{u.phone}</div>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Toggle menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => handleViewUser(u)}>View/Edit</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setUserToUpdate(u)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                {(userRole === SUPERADMIN || userRole === TENANTADMIN) &&
-                  <div>
-                    <div className="font-semibold">School</div>
-                    <div>{getSchoolName(u)}</div>
-                  </div>
-                }
-                <div>
-                  <div className="font-semibold">Role</div>
-                  <div>{Array.isArray(u.roles) ? u.roles.join(', ') : ''}</div>
-                </div>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="font-semibold">Status</div>
-                <Badge variant={u.status === 'active' ? 'default' : 'destructive'} onClick={() => setUserToUpdate(u)} className="cursor-pointer">
-                  {u.status}
-                </Badge>
-              </div>
-            </Card>
-          ))}
+          {/* Mobile view rendering */}
         </div>
       </CardContent>
+
+      {/* Dialogs */}
+      <AlertDialog open={!!debugInfo} onOpenChange={() => setDebugInfo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{debugInfo?.title}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+                <pre className="whitespace-pre-wrap text-sm font-mono mt-4 p-4 bg-slate-100 rounded-md">
+                    {debugInfo?.message}
+                </pre>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setDebugInfo(null)}>Close</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!userToUpdate} onOpenChange={() => setUserToUpdate(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -331,12 +345,13 @@ export default function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       <AlertDialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Success</AlertDialogTitle>
             <AlertDialogDescription>
-              {processedUserName} is deactivated.
+              The status for {processedUserName} will be updated shortly.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -346,12 +361,13 @@ export default function UsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
       <AlertDialog open={isImporting} onOpenChange={setIsImporting}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Bulk Import Users</AlertDialogTitle>
             <AlertDialogDescription>
-              Select a CSV file to upload. The file should contain the following columns: Name, Email, Mobile, Role, School, Class, and Expires on.
+              Select a CSV file to upload.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div

@@ -3,8 +3,8 @@
 import * as React from 'react';
 import { Banner } from '@/types/banner';
 import { AddBannerDialog } from '@/components/add-banner-dialog';
-import { getAllBanners, createBanner, updateBanner, deleteBanner, getSignedUrl, uploadFileToSignedUrl } from '@/lib/api/bannerApi';
-import { createAttachment } from '@/lib/api/attachmentApi';
+import { getAllBanners, createBanner, updateBanner, deleteBanner } from '@/lib/api/bannerApi';
+import { createAttachment, getSignedUrl, uploadFileToSignedUrl } from '@/lib/api/attachmentApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BannerCard } from '@/components/banner-card';

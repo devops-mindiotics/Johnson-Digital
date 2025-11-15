@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
 import {
   Card,
   CardContent,
@@ -18,7 +17,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -30,73 +28,37 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { MonitorPlay,  ChevronDown, ChevronRight, MoreVertical, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages } from '@/lib/api/masterApi';
-
-const initialContentData = {
-  'Nursery-ABC-English-Alphabet': [
-    { contentType: 'Video', contentName: 'Alphabet Song', status: 'Active', package: 'Term 1' },
-    { contentType: 'PDF', contentName: 'Letter Tracing', status: 'Inactive', package: 'Term 1' },
-  ],
-  'II-NCERT-Mathematics-Numbers': [
-    { contentType: 'PDF', contentName: 'Counting 1 to 100', status: 'Active', package: 'Term 2' },
-  ],
-  '10-NCERT-Science-Biology': [
-    { contentType: 'PDF', contentName: 'Cell Structure', status: 'Pending', package: 'Term 3' },
-  ],
-  '12-NCERT-Physics-Mechanics': [
-    { contentType: 'PPT', contentName: 'Laws of Motion', status: 'Active', package: 'Individual' },
-  ],
-};
+import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages, getAllContentTypes } from '@/lib/api/masterApi';
+import { getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
+import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent } from '@/lib/api/attachmentApi';
 
 const getContentTypeIcon = (contentType) => {
-    switch (contentType) {
-        case 'Video':
-            return <Video className="h-5 w-5 text-blue-500" />;
-        case 'PDF':
-            return <FileText className="h-5 w-5 text-red-500" />;
-        case 'PPT':
-            return <Presentation className="h-5 w-5 text-orange-500" />;
-        case 'Image':
-            return <ImageIcon className="h-5 w-5 text-purple-500" />;
-        default:
-            return <FileText className="h-5 w-5" />;
+    const type = contentType?.toLowerCase();
+    switch (type) {
+        case 'video': return <Video className="h-5 w-5 text-blue-500" />;
+        case 'pdf': return <FileText className="h-5 w-5 text-red-500" />;
+        case 'ppt': return <Presentation className="h-5 w-5 text-orange-500" />;
+        case 'image': return <ImageIcon className="h-5 w-5 text-purple-500" />;
+        default: return <FileText className="h-5 w-5" />;
     }
 };
 
 const StatusBadge = ({ status }) => {
-  const statusVariant = {
-    Active: 'success',
-    Inactive: 'destructive',
-    Pending: 'secondary',
-  }[status] || 'default';
-
+  const statusVariant = { active: 'success', inactive: 'destructive' }[status] || 'default';
   return <Badge variant={statusVariant}>{status}</Badge>;
 };
 
 export default function ContentManagementPage() {
     const { user } = useAuth();
     const isTenantAdmin = user?.roles.includes('TENANT_ADMIN');
-    const [contentData, setContentData] = useState(initialContentData);
-    const [filteredData, setFilteredData] = useState(initialContentData);
+    const [contentData, setContentData] = useState({});
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState({
-      class: 'All',
-      series: 'All',
-      subject: 'All',
-      package: 'All'
-    });
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [showFilters, setShowFilters] = useState(true); // Default to showing filters
+
     const searchParams = useSearchParams();
-    const isMobile = useIsMobile();
-    const [classes, setClasses] = useState([]);
-    const [series, setSeries] = useState([]);
-    const [subjects, setSubjects] = useState([]);
-    const [packages, setPackages] = useState([]);
 
     useEffect(() => {
         if (searchParams.get('add') === 'true' && isTenantAdmin) {
@@ -104,266 +66,195 @@ export default function ContentManagementPage() {
         }
     }, [searchParams, isTenantAdmin]);
 
+    const handleAddContent = (newContent) => {
+        // In a real app, you would refetch the content list here
+        setIsAddDialogOpen(false);
+        setShowSuccessDialog(true);
+    };
+
+    const handleNextContent = () => {
+        setShowSuccessDialog(false);
+        setIsAddDialogOpen(true);
+    };
+
+    const handleSearch = (filters) => {
+        const fetchContent = async () => {
+            if (!user?.tenantId) return;
+            try {
+                const content = await getSubjectContent(user.tenantId, {
+                    class: filters.classId,
+                    series: filters.seriesId,
+                    subject: filters.subjectId,
+                    package: filters.packageId || 'NA',
+                });
+
+                // Group content by lesson
+                const groupedByLesson = content.reduce((acc, item) => {
+                    const key = `${item.class}-${item.series}-${item.subject}-${item.lesson}`;
+                    if (!acc[key]) {
+                        acc[key] = [];
+                    }
+                    acc[key].push({ 
+                        contentType: item.filename.split('.').pop(), // Simple type extraction
+                        contentName: item.filename,
+                        status: item.status,
+                        package: item.package
+                    });
+                    return acc;
+                }, {});
+                setContentData(groupedByLesson);
+            } catch (error) {
+                console.error("Failed to fetch content:", error);
+                setContentData({}); // Reset on error
+            }
+        };
+
+        fetchContent();
+    };
+
+    return (
+        <>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Content Management</CardTitle>
+                    <CardDescription>Manage all your learning materials in one place.</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isTenantAdmin && (
+                        <Button onClick={() => setIsAddDialogOpen(true)}>
+                            <MonitorPlay className="mr-2 h-4 w-4" /> Add New Content
+                        </Button>
+                    )}
+                    <Button onClick={() => setShowFilters(!showFilters)} variant="outline">
+                        <Filter className="mr-2 h-4 w-4" /> {showFilters ? 'Hide' : 'Show'} Filters
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {showFilters && <FilterControls onSearch={handleSearch} />}
+                <ContentList contentData={contentData} />
+              </CardContent>
+            </Card>
+            
+            {isTenantAdmin && <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />}
+            
+            <ConfirmationDialog 
+                isOpen={showSuccessDialog} 
+                onNext={handleNextContent}
+                onDismiss={() => setShowSuccessDialog(false)}
+            />
+        </>
+    );
+}
+
+function FilterControls({ onSearch }) {
+    const [filters, setFilters] = useState({ classId: '', seriesId: '', subjectId: '', packageId: '' });
+    const [classes, setClasses] = useState([]);
+    const [series, setSeries] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+    const [packages, setPackages] = useState([]);
+
     useEffect(() => {
         const fetchFiltersData = async () => {
             try {
-                const [classesData, seriesData, subjectsData, packagesData] = await Promise.all([
-                    getAllClasses(),
-                    getAllSeries(),
-                    getAllSubjects(),
-                    getAllPackages(),
+                const [classesData, seriesData, packagesData] = await Promise.all([
+                    getAllClasses(), getAllSeries(), getAllPackages(),
                 ]);
                 setClasses(classesData);
                 setSeries(seriesData);
-                setSubjects(subjectsData);
                 setPackages(packagesData);
-            } catch (error) {
-                console.error("Failed to fetch filters data:", error);
-            }
+            } catch (error) { console.error("Failed to fetch filters data:", error); }
         };
         fetchFiltersData();
     }, []);
 
+    // Fetch subjects when a class is selected
     useEffect(() => {
-        const filtered = Object.entries(contentData).filter(([key, contents]) => {
-            const [classValue, seriesValue, subjectValue] = key.split('-');
-            const classFilter = filters.class === 'All' || classValue === filters.class;
-            const seriesFilter = filters.series === 'All' || seriesValue === filters.series;
-            const subjectFilter = filters.subject === 'All' || subjectValue === filters.subject;
-            const packageFilter = filters.package === 'All' || contents.some(c => c.package === filters.package);
-            return classFilter && seriesFilter && subjectFilter && packageFilter;
-        });
-        setFilteredData(Object.fromEntries(filtered));
-    }, [filters, contentData]);
+        if (filters.classId) {
+            getAllSubjects(filters.classId).then(setSubjects).catch(err => console.error(err));
+        } else {
+            setSubjects([]); // Clear subjects if no class is selected
+        }
+    }, [filters.classId]);
 
-    const handleFilterChange = (filterName, value) => {
-        setFilters(prev => ({ ...prev, [filterName]: value }));
-    };
-
-    const handleAddContent = (newContent) => {
-        const key = `${newContent.class}-${newContent.series}-${newContent.subject}-${newContent.lesson}`.replace(/ /g, '-');
-        const newContentWithStatus = { ...newContent, status: 'Pending' };
-        setContentData(prevData => ({
-            ...prevData,
-            [key]: [...(prevData[key] || []), newContentWithStatus]
-        }));
-        setIsAddDialogOpen(false);
-    };
-
-    const handleUpdateContent = (lessonKey, contentIndex, updatedContent) => {
-        setContentData(prevData => {
-            const newContent = [...prevData[lessonKey]];
-            newContent[contentIndex] = { ...newContent[contentIndex], ...updatedContent };
-            return { ...prevData, [lessonKey]: newContent };
+    const handleSelectChange = (name, value) => {
+        setFilters(prev => {
+            const newFilters = { ...prev, [name]: value };
+            if (name === 'classId') {
+                newFilters.subjectId = ''; // Reset subject when class changes
+            }
+            return newFilters;
         });
     };
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Content Management</CardTitle>
-            <CardDescription>
-              Manage all your learning materials in one place.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            {isTenantAdmin && (
-              <>
-                <Button onClick={() => setIsAddDialogOpen(true)} className="hidden md:flex">
-                    <MonitorPlay className="mr-2" />
-                    Add New Content
-                </Button>
-                <Button onClick={() => setIsAddDialogOpen(true)} size="icon" className="md:hidden">
-                    <MonitorPlay />
-                </Button>
-              </>
-            )}
-            <Button onClick={() => setShowFilters(!showFilters)} variant="outline" className="hidden md:flex">
-                <Filter className="mr-2" />
-                Filter
-            </Button>
-             <Button onClick={() => setShowFilters(!showFilters)} size="icon" variant="outline" className="md:hidden">
-                <Filter />
-            </Button>
-          </div>
+    const handleSearchClick = () => {
+        if (filters.classId && filters.seriesId && filters.subjectId) {
+            onSearch(filters);
+        } else {
+            alert('Please select Class, Series, and Subject.');
+        }
+    };
+
+    return (
+        <div className="flex flex-wrap items-center gap-4 mb-6 p-4 border rounded-lg">
+            <div className="flex-1 min-w-[150px]"><Label>Class</Label><Select name="classId" value={filters.classId} onValueChange={(v) => handleSelectChange('classId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{classes.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Series</Label><Select name="seriesId" value={filters.seriesId} onValueChange={(v) => handleSelectChange('seriesId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{series.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Subject</Label><Select name="subjectId" value={filters.subjectId} onValueChange={(v) => handleSelectChange('subjectId', v)} disabled={!filters.classId}><SelectTrigger><SelectValue placeholder={!filters.classId ? "Select Class first" : "Select..."} /></SelectTrigger><SelectContent>{subjects.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Package (Optional)</Label><Select name="packageId" value={filters.packageId} onValueChange={(v) => handleSelectChange('packageId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{packages.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <Button onClick={handleSearchClick} className="self-end">Search</Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        {showFilters && (
-            <div className="mb-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="class-filter">Class</Label>
-                        <Select value={filters.class} onValueChange={(value) => handleFilterChange('class', value)}>
-                            <SelectTrigger id="class-filter">
-                                <SelectValue placeholder="Select a class" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All</SelectItem>
-                                {classes.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="series-filter">Series</Label>
-                         <Select value={filters.series} onValueChange={(value) => handleFilterChange('series', value)}>
-                            <SelectTrigger id="series-filter">
-                                <SelectValue placeholder="Select a series" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All</SelectItem>
-                                {series.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="subject-filter">Subject</Label>
-                        <Select value={filters.subject} onValueChange={(value) => handleFilterChange('subject', value)}>
-                            <SelectTrigger id="subject-filter">
-                                <SelectValue placeholder="Select a subject" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All</SelectItem>
-                                {subjects.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="package-filter">Package</Label>
-                         <Select value={filters.package} onValueChange={(value) => handleFilterChange('package', value)}>
-                            <SelectTrigger id="package-filter">
-                                <SelectValue placeholder="Select a package" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All</SelectItem>
-                                {packages.map(option => <SelectItem key={option.id} value={option.id}>{option.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-            </div>
-        )}
-        <ContentList contentData={filteredData} onUpdateContent={handleUpdateContent} />
-      </CardContent>
-      {isTenantAdmin && <AddContentDialog isOpen={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddContent={handleAddContent} />}
-    </Card>
-  );
+    );
 }
 
-function ContentList({ contentData, onUpdateContent }) {
-    const [openKey, setOpenKey] = useState(Object.keys(contentData)[0] || null);
+function ContentList({ contentData }) {
+    const [openKey, setOpenKey] = useState(null);
 
     useEffect(() => {
-        if (Object.keys(contentData).length > 0 && !contentData[openKey]) {
-            setOpenKey(Object.keys(contentData)[0]);
-        } else if (Object.keys(contentData).length === 0) {
-            setOpenKey(null);
-        }
-    }, [contentData, openKey]);
+        // Automatically open the first group if contentData is available
+        const keys = Object.keys(contentData);
+        setOpenKey(keys.length > 0 ? keys[0] : null);
+    }, [contentData]);
+
 
     return (
         <div className="space-y-4">
             {Object.keys(contentData).length === 0 ? (
-                <div className="col-span-full text-center py-10">
-                    <p className="text-muted-foreground">No content found matching your filters.</p>
-                </div>
+                <div className="text-center py-10"><p className="text-muted-foreground">No content found. Use the filters above to search for content.</p></div>
             ) : (
-              Object.entries(contentData).map(([key, contents]) => {
-                  const [classValue, seriesValue, subjectValue, lesson] = key.split('-');
-                  const isRowOpen = openKey === key;
-
-                  return (
-                      <Card key={key} className="overflow-hidden">
-                          <CardHeader
-                              className="flex flex-row justify-between items-center p-4 cursor-pointer hover:bg-muted/50"
-                              onClick={() => setOpenKey(isRowOpen ? null : key)}
-                          >
-                             <div>
-                                  <CardTitle className="text-lg">{lesson}</CardTitle>
-                                  <CardDescription className="flex items-center gap-2 text-sm pt-1">
-                                     <span>{`Class - ${classValue}`}</span>
-                                     <span>&bull;</span>
-                                     <span>{seriesValue}</span>
-                                     <span>&bull;</span>
-                                     <span>{subjectValue}</span>
-                                  </CardDescription>
-                             </div>
-                              <div className="flex items-center gap-2">
-                                  <LessonActions lesson={{ class: classValue, series: seriesValue, subject: subjectValue, lesson }} />
-                                  {isRowOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-                              </div>
-                          </CardHeader>
-                          {isRowOpen && (
-                              <CardContent className="p-4 border-t">
-                                  <h4 className="font-semibold mb-3 text-md">Contents</h4>
-                                  <div className="space-y-3">
-                                      {contents.map((content, index) => (
-                                          <div key={index} className="flex items-center justify-between p-3 rounded-md border bg-muted/20">
-                                              <div className="flex items-center gap-3">
-                                                  {getContentTypeIcon(content.contentType)}
-                                                  <div>
-                                                      <p className="font-medium">{content.contentName}</p>
-                                                      <p className="text-sm text-muted-foreground">{content.contentType}</p>
-                                                  </div>
-                                              </div>
-                                              <div className="flex items-center gap-4">
-                                                  <StatusBadge status={content.status} />
-                                                  <ContentActions content={content} contentIndex={index} lessonKey={key} onUpdateContent={onUpdateContent} />
-                                              </div>
-                                          </div>
-                                      ))}
-                                  </div>
-                              </CardContent>
-                          )}
-                      </Card>
-                  )
-              })
+                Object.entries(contentData).map(([key, contents]) => {
+                    const [classValue, seriesValue, subjectValue, lesson] = key.split('-');
+                    const isRowOpen = openKey === key;
+                    return (
+                        <Card key={key}>
+                            <CardHeader className="flex flex-row justify-between items-center p-4 cursor-pointer" onClick={() => setOpenKey(isRowOpen ? null : key)}>
+                                <div>
+                                    <CardTitle className="text-lg">{lesson}</CardTitle>
+                                    <CardDescription>{`${classValue} • ${seriesValue} • ${subjectValue}`}</CardDescription>
+                                </div>
+                                <ChevronDown className={`transform transition-transform ${isRowOpen ? 'rotate-180' : ''}`} />
+                            </CardHeader>
+                            {isRowOpen && (
+                                <CardContent className="p-4 border-t">
+                                    {contents.map((content, index) => (
+                                        <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
+                                            <div className="flex items-center gap-3">
+                                                {getContentTypeIcon(content.contentType)}
+                                                <p className="font-medium">{content.contentName}</p>
+                                            </div>
+                                            <StatusBadge status={content.status} />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            )}
+                        </Card>
+                    );
+                })
             )}
         </div>
-    )
-}
-
-function LessonActions({ lesson }) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-5 w-5" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <EditLessonDialog lesson={lesson} trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>} />
-                <DeleteLessonDialog trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete</DropdownMenuItem>} />
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
-}
-
-function ContentActions({ content, contentIndex, lessonKey, onUpdateContent }) {
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                 <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-5 w-5" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>Edit</DropdownMenuItem>
-                <DeleteContentDialog trigger={<DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete</DropdownMenuItem>} />
-            </DropdownMenuContent>
-            <EditContentDialog
-                isOpen={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                content={content}
-                contentIndex={contentIndex}
-                lessonKey={lessonKey}
-                onUpdateContent={onUpdateContent}
-            />
-        </DropdownMenu>
-    )
+    );
 }
 
 function ContentTypeBox({ icon, label, isSelected, onSelect }) {
@@ -372,8 +263,7 @@ function ContentTypeBox({ icon, label, isSelected, onSelect }) {
             onClick={onSelect}
             className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                 isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50'
-            }`}
-        >
+            }`}>
             {icon}
             <span className="mt-2 text-sm font-medium">{label}</span>
         </div>
@@ -381,355 +271,183 @@ function ContentTypeBox({ icon, label, isSelected, onSelect }) {
 }
 
 function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
-    const [newValues, setNewValues] = useState({ series: '', package: '', subject: '', lesson: '', contentName: '' });
-    const [selectedContentType, setSelectedContentType] = useState('');
-    const [showSeriesDropdown, setShowSeriesDropdown] = useState(false);
-    const [seriesOptions, setSeriesOptions] = useState<any[]>([]);
-    const [packageOptions, setPackageOptions] = useState<any[]>([]);
-    const [subjectOptions, setSubjectOptions] = useState<any[]>([]);
-    const [classesOptions, setClassesOptions] = useState<any[]>([]);
-    const [showPackageDropdown, setShowPackageDropdown] = useState(false);
-    const [showContentNameInput, setShowContentNameInput] = useState(false);
-    const [showNewSeriesInput, setShowNewSeriesInput] = useState(false);
-    const [showNewPackageInput, setShowNewPackageInput] = useState(false);
-    const [showNewSubjectInput, setShowNewSubjectInput] = useState(false);
-    const [showNewLessonInput, setShowNewLessonInput] = useState(false);
+    const { user } = useAuth();
+    const [formValues, setFormValues] = useState({ classId: '', seriesId: '', packageId: '', subjectId: '', lessonId: '', contentName: '' });
+    const [selectedVisualContentType, setSelectedVisualContentType] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [classes, setClasses] = useState([]);
+    const [series, setSeries] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+    const [packages, setPackages] = useState([]);
+    const [lessons, setLessons] = useState([]);
+    const [contentNameOptions, setContentNameOptions] = useState([]);
 
     useEffect(() => {
-        async function fetchAllData() {
-            try {
-                const [series, classes, packages, subjects] = await Promise.all([
-                    getAllSeries(),
-                    getAllClasses(),
-                    getAllPackages(),
-                    getAllSubjects()
-                ]);
-                setSeriesOptions(series);
-                setClassesOptions(classes);
-                setPackageOptions(packages);
-                setSubjectOptions(subjects);
-            } catch (error) {
-                console.error("Failed to fetch dropdown data:", error);
+        async function fetchDropdowns() {
+            if (isOpen) {
+                try {
+                    const [cls, srs, sub, pkg, contentTypes] = await Promise.all([
+                        getAllClasses(), getAllSeries(), getAllSubjects(), getAllPackages(), getAllContentTypes()
+                    ]);
+                    setClasses(cls);
+                    setSeries(srs);
+                    setSubjects(sub);
+                    setPackages(pkg);
+                    setContentNameOptions(contentTypes);
+                } catch (error) { 
+                    console.error("Failed to fetch dropdown data:", error);
+                }
             }
         }
-        if (isOpen) {
-            fetchAllData();
-        }
+        fetchDropdowns();
     }, [isOpen]);
 
+    useEffect(() => {
+        async function fetchLessons() {
+            if (formValues.classId && formValues.subjectId) {
+                try {
+                    const lessonsData = await getLessonsByClassIdAndSubjectId(formValues.classId, formValues.subjectId);
+                    setLessons(lessonsData);
+                } catch (error) {
+                    console.error("Failed to fetch lessons:", error);
+                    setLessons([]); // Clear on error
+                }
+            } else {
+                setLessons([]); // Clear if class/subject is not selected
+            }
+        }
+        fetchLessons();
+    }, [formValues.classId, formValues.subjectId]);
+
+    const handleSelectChange = (name, value) => {
+      setFormValues(prev => {
+        const newValues = { ...prev, [name]: value };
+        if (name === 'classId' || name === 'subjectId') {
+            newValues.lessonId = '';
+        }
+        return newValues;
+      });
+    };
+    
+    const handleFileChange = (e) => setSelectedFile(e.target.files ? e.target.files[0] : null);
+
     const resetForm = () => {
-        setNewValues({ series: '', package: '', subject: '', lesson: '', contentName: '' });
-        setSelectedContentType('');
-        setShowSeriesDropdown(false);
-        setShowPackageDropdown(false);
-        setShowContentNameInput(false);
-        setShowNewSeriesInput(false);
-        setShowNewPackageInput(false);
-        setShowNewSubjectInput(false);
-        setShowNewLessonInput(false);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        const newContent = {
-            class: formData.get('class'),
-            series: showNewSeriesInput ? newValues.series : formData.get('series'),
-            package: showNewPackageInput ? newValues.package : formData.get('package'),
-            subject: showNewSubjectInput ? newValues.subject : formData.get('subject'),
-            lesson: showNewLessonInput ? newValues.lesson : formData.get('lesson'),
-            contentType: selectedContentType,
-            contentName: showContentNameInput ? newValues.contentName : formData.get('content-name'),
-        };
-        onAddContent(newContent);
-        resetForm();
-    };
-
-    const handleSelectChange = (field, value) => {
-        const handlerMap = {
-            'series': setShowNewSeriesInput,
-            'package': setShowNewPackageInput,
-            'subject': setShowNewSubjectInput,
-            'lesson': setShowNewLessonInput,
-            'contentName': setShowContentNameInput,
-        };
-        const handler = handlerMap[field];
-        if (handler) {
-            handler(value === 'new');
+        setFormValues({ classId: '', seriesId: '', packageId: '', subjectId: '', lessonId: '', contentName: '' });
+        setSelectedVisualContentType('');
+        setSelectedFile(null);
+        setLessons([]);
+        if (document.getElementById('upload')) {
+          document.getElementById('upload').value = '';
         }
     };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetForm(); onOpenChange(open); }}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Add New Content</DialogTitle>
-          <DialogDescription>
-            Fill in the details below to add new content.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
-                <div className="space-y-2">
-                    <Label htmlFor="class">Class</Label>
-                    <Select name="class">
-                        <SelectTrigger id="class">
-                            <SelectValue placeholder="Select a class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {classesOptions.map((classOption) => (
-                                <SelectItem key={classOption.id} value={classOption.id}>{classOption.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="series">Series</Label>
-                    <Select name="series" onValueChange={(value) => handleSelectChange('series', value)}>
-                        <SelectTrigger id="series">
-                            <SelectValue placeholder="Select a series" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {seriesOptions.map((series) => (
-                                <SelectItem key={series.id} value={series.id}>{series.name}</SelectItem>
-                            ))}
-                            <SelectItem value="new">Add new series...</SelectItem>
-                        </SelectContent>
-                    </Select>
-                   {showNewSeriesInput && <Input placeholder="Enter new series" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, series: e.target.value}))} />}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="package">Package</Label>
-                    <Select name="package" onValueChange={(value) => handleSelectChange('package', value)}>
-                        <SelectTrigger id="package">
-                            <SelectValue placeholder="Select a package" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {packageOptions.map((pkgOption) => (
-                            <SelectItem key={pkgOption.id} value={pkgOption.id}>{pkgOption.name}</SelectItem>
-                        ))}
-                        <SelectItem value="new">Add new package...</SelectItem>
-                    </SelectContent>
-                    </Select>
-                    {showNewPackageInput && <Input placeholder="Enter new package" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, package: e.target.value}))} />}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="subject">Subject</Label>
-                    <Select name="subject" onValueChange={(value) => handleSelectChange('subject', value)}>
-                        <SelectTrigger id="subject">
-                            <SelectValue placeholder="Select a subject" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {subjectOptions.map((subOption) => (
-                                <SelectItem key={subOption.id} value={subOption.id}>{subOption.name}</SelectItem>
-                            ))}
-                             <SelectItem value="new">Add new subject...</SelectItem>
-                        </SelectContent>
-                    </Select>
-                     {showNewSubjectInput && <Input placeholder="Enter new subject" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, subject: e.target.value}))} />}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="lesson">Lesson</Label>
-                    <Select name="lesson" onValueChange={(value) => handleSelectChange('lesson', value)}>
-                        <SelectTrigger id="lesson">
-                            <SelectValue placeholder="Select a lesson" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Alphabet">Alphabet</SelectItem>
-                            <SelectItem value="Numbers">Numbers</SelectItem>
-                            <SelectItem value="Biology">Biology</SelectItem>
-                            <SelectItem value="Mechanics">Mechanics</SelectItem>
-                            <SelectItem value="new">Add new lesson...</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    {showNewLessonInput && <Input placeholder="Enter new lesson" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, lesson: e.target.value}))} />}
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                    <Label>Content Type</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-                        <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedContentType === 'Video'} onSelect={() => setSelectedContentType('Video')} />
-                        <ContentTypeBox icon={<FileText className="h-7 w-7" />} label="PDF" isSelected={selectedContentType === 'PDF'} onSelect={() => setSelectedContentType('PDF')} />
-                        <ContentTypeBox icon={<Presentation className="h-7 w-7" />} label="PPT" isSelected={selectedContentType === 'PPT'} onSelect={() => setSelectedContentType('PPT')} />
-                        <ContentTypeBox icon={<ImageIcon className="h-7 w-7" />} label="Image" isSelected={selectedContentType === 'Image'} onSelect={() => setSelectedContentType('Image')} />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="content-name">Content Name</Label>
-                    <Select name="content-name" onValueChange={(value) => handleSelectChange('contentName', value)}>
-                        <SelectTrigger id="content-name">
-                            <SelectValue placeholder="Select a content name" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Animation Video">Animation Video</SelectItem>
-                            <SelectItem value="Lesson Plan">Lesson Plan</SelectItem>
-                            <SelectItem value="Content Book">Content Book</SelectItem>
-                            <SelectItem value="Work Book">Work Book</SelectItem>
-                            <SelectItem value="Answer Key">Answer Key</SelectItem>
-                            <SelectItem value="new">Add New</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    {showContentNameInput && <Input placeholder="Enter new content name" className="mt-2" onChange={(e) => setNewValues(prev => ({...prev, contentName: e.target.value}))} />}
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="upload">Upload</Label>
-                    <Input id="upload" type="file" />
-                </div>
-            </div>
-            <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Upload Content</Button>
-            </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedFile) { alert("File upload is mandatory."); return; }
+        if (!selectedVisualContentType) { alert("Please select a Content Type."); return; }
 
-function EditLessonDialog({ lesson, trigger }) {
+        setIsSubmitting(true);
+        try {
+            const signedUrlPayload = {
+                bucketType: "content",
+                series: formValues.seriesId,
+                subject: formValues.subjectId,
+                lesson: formValues.lessonId,
+                package: formValues.packageId || "NA",
+                class: formValues.classId,
+                contentType: selectedFile.type,
+                filename: selectedFile.name,
+                expiresIn: 3600
+            };
+            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, selectedFile);
+
+            await createAttachment({
+                attachmentId: signedUrlData.attachmentId,
+                name: formValues.contentName,
+                type: selectedVisualContentType.toLowerCase(),
+                mimeType: selectedFile.type,
+                packageId: formValues.packageId || "NA",
+            }, user.id);
+
+            onAddContent({ ...formValues, contentType: selectedVisualContentType, attachmentId: signedUrlData.attachmentId });
+            resetForm();
+        } catch (error) {
+            console.error("Content creation failed:", error);
+            alert("Failed to upload content. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    
     return (
-        <Dialog>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+        <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetForm(); onOpenChange(open); }}>
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
-                    <DialogTitle>Edit Lesson</DialogTitle>
-                    <DialogDescription>
-                        Fill in the details below to edit the lesson.
-                    </DialogDescription>
+                    <DialogTitle>Add New Content</DialogTitle>
+                    <DialogDescription>Fill in the details below to add new content.</DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="class">Class</Label>
-                        <Input id="class" defaultValue={`Class - ${lesson.class}`} />
+                <form onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 overflow-y-auto max-h-[70vh]">
+                        <div className="space-y-2"><Label>Class</Label><Select name="classId" value={formValues.classId} onValueChange={(v) => handleSelectChange('classId', v)} required><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{classes.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label>Series</Label><Select name="seriesId" value={formValues.seriesId} onValueChange={(v) => handleSelectChange('seriesId', v)} required><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{series.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label>Subject</Label><Select name="subjectId" value={formValues.subjectId} onValueChange={(v) => handleSelectChange('subjectId', v)} required><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{subjects.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+                        <div className="space-y-2"><Label>Package (Optional)</Label><Select name="packageId" value={formValues.packageId} onValueChange={(v) => handleSelectChange('packageId', v)}><SelectTrigger><SelectValue placeholder="Select package (optional)" /></SelectTrigger><SelectContent>{packages.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+                        <div className="space-y-2">
+                            <Label>Lesson</Label>
+                            <Select name="lessonId" value={formValues.lessonId} onValueChange={(v) => handleSelectChange('lessonId', v)} required disabled={!formValues.classId || !formValues.subjectId}>
+                                <SelectTrigger><SelectValue placeholder={!formValues.classId || !formValues.subjectId ? "Select Class & Subject first" : "Select..."} /></SelectTrigger>
+                                <SelectContent>{lessons.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                            <Label>Content Type</Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
+                                <ContentTypeBox icon={<Video className="h-7 w-7" />} label="Video" isSelected={selectedVisualContentType === 'Video'} onSelect={() => setSelectedVisualContentType('Video')} />
+                                <ContentTypeBox icon={<FileText className="h-7 w-7" />} label="PDF" isSelected={selectedVisualContentType === 'PDF'} onSelect={() => setSelectedVisualContentType('PDF')} />
+                                <ContentTypeBox icon={<Presentation className="h-7 w-7" />} label="PPT" isSelected={selectedVisualContentType === 'PPT'} onSelect={() => setSelectedVisualContentType('PPT')} />
+                                <ContentTypeBox icon={<ImageIcon className="h-7 w-7" />} label="Image" isSelected={selectedVisualContentType === 'Image'} onSelect={() => setSelectedVisualContentType('Image')} />
+                            </div>
+                        </div>
+                         <div className="space-y-2">
+                             <Label>Content Name</Label>
+                             <Select name="contentName" value={formValues.contentName} onValueChange={(v) => handleSelectChange('contentName', v)} required>
+                                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                                <SelectContent>
+                                    {contentNameOptions && contentNameOptions.map((o) => (
+                                        <SelectItem key={o.id} value={o.name}>{o.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                             </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="upload">Upload</Label>
+                            <Input id="upload" type="file" onChange={handleFileChange} required />
+                        </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="series">Series</Label>
-                        <Input id="series" defaultValue={lesson.series} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="subject">Subject</Label>
-                        <Input id="subject" defaultValue={lesson.subject} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="lesson">Lesson</Label>
-                        <Input id="lesson" defaultValue={lesson.lesson} />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button type="submit">Save Changes</Button>
-                </DialogFooter>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>Cancel</Button>
+                        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Uploading...' : 'Upload Content'}</Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     );
 }
 
-function DeleteLessonDialog({ trigger }) {
+function ConfirmationDialog({ isOpen, onNext, onDismiss }) {
     return (
-        <Dialog>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <Dialog open={isOpen} onOpenChange={onDismiss}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Are you sure you want to delete this lesson?</DialogTitle>
-                    <DialogDescription>
-                        This action cannot be undone. This will permanently delete the lesson and all its contents.
-                    </DialogDescription>
+                    <DialogTitle>Success!</DialogTitle>
+                    <DialogDescription>Your content has been uploaded successfully.</DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button variant="outline">Cancel</Button>
-                    <Button variant="destructive">Delete</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-function EditContentDialog({ isOpen, onOpenChange, content, contentIndex, lessonKey, onUpdateContent }) {
-  const form = useForm({
-    defaultValues: {
-      contentName: content.contentName,
-      status: content.status,
-    },
-  });
-
-  useEffect(() => {
-    form.reset({ contentName: content.contentName, status: content.status });
-  }, [content, form]);
-
-  const onSubmit = (data) => {
-    onUpdateContent(lessonKey, contentIndex, data);
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Edit Content</DialogTitle>
-          <DialogDescription>
-            Fill in the details below to edit the content.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 p-4">
-              <FormField
-                control={form.control}
-                name="contentName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Content Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Changes</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DeleteContentDialog({ trigger }) {
-    return (
-        <Dialog>
-            <DialogTrigger asChild>{trigger}</DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Are you sure you want to delete this content?</DialogTitle>
-                    <DialogDescription>
-                        This action cannot be undone. This will permanently delete the content.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                    <Button variant="outline">Cancel</Button>
-                    <Button variant="destructive">Delete</Button>
+                    <Button variant="outline" onClick={onDismiss}>Dismiss</Button>
+                    <Button onClick={onNext}>Add Next Content</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

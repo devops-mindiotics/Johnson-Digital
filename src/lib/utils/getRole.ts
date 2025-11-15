@@ -108,3 +108,8 @@ export function getContextInfo(): Record<string, string> | null {
         return null;
     }
 }
+
+export function getTenantId(): string | null {
+    const contextInfo = getContextInfo();
+    return contextInfo?.tenantId || null;
+}

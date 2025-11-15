@@ -1,186 +1,92 @@
-'use client';
+import apiClient from './client';
+import { getTenantId } from '../utils/getRole';
 
-import apiClient from "./client";
-import { z } from "zod";
-
-const lessonSchema = z.object({
-  title: z.string(),
-  description: z.string().optional(),
-  status: z.enum(["active", "inactive"]),
-  classId: z.string(),
-  subjectId: z.string(),
-});
-
-export type Lesson = z.infer<typeof lessonSchema>;
-
-const getContext = () => {
-    if (typeof window === 'undefined') {
-        return { tenantId: null, token: null, userId: null };
-    }
-    const tenantData = localStorage.getItem("contextInfo");
-    const token = localStorage.getItem("contextJWT");
-    if (!tenantData || !token) {
-        return { tenantId: null, token: null, userId: null };
-    }
-    const parsed = JSON.parse(tenantData);
-    const tenantId = parsed?.tenantId;
-    const userId = parsed?.id;
+export const getLessonsByClassIdAndSubjectId = async (classId: string, subjectId: string) => {
+    const tenantId = getTenantId();
     if (!tenantId) {
-        throw new Error("Tenant ID not found in context info");
+        throw new Error("Tenant ID not found");
     }
-    return { tenantId, token, userId };
-}
-
-export async function getAllLessons(params: { page: number; limit: number; classId: string; subjectId: string; status: 'active' | 'inactive' }): Promise<any[]> {
-  try {
-    const { tenantId, token } = getContext();
-    if (!tenantId || !token) {
-        throw new Error("Context information not found, cannot fetch lessons.");
-    }
-
-    const response = await apiClient.get(
-      `/tenants/${tenantId}/masters/lessons`,
-      {
-        params,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
-      return response.data.data.records;
-    }
-
-    return [];
-  } catch (err: any) {
-    console.error("❌ getAllLessons error:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
-export async function getLessonsByClassAndSubject(classId: string, subjectId: string): Promise<any[]> {
     try {
-      const { tenantId, token } = getContext();
-      if (!tenantId || !token) {
-          throw new Error("Context information not found, cannot fetch lessons.");
-      }
-  
-      const response = await apiClient.get(
-        `/tenants/${tenantId}/masters/lessons?classId=${classId}&subjectId=${subjectId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await apiClient.get(`/tenants/${tenantId}/masters/lessons?classId=${classId}&subjectId=${subjectId}`);
+        if (response.data && response.data.data && Array.isArray(response.data.data.lessons)) {
+            return response.data.data.lessons;
         }
-      );
-  
-      if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
-        return response.data.data.records;
-      }
-  
-      return [];
-    } catch (err: any) {
-      console.error("❌ getLessonsByClassAndSubject error:", err.response?.data || err.message);
-      throw err;
+        return [];
+    } catch (error) {
+        console.error("Failed to fetch lessons:", error);
+        throw error;
     }
-  }
+};
 
-export async function createLesson(lesson: { name: string; description: string; classId: string; subjectId: string; status: string; }): Promise<any> {
+export const getAllLessons = async () => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
     try {
-        const { tenantId, token, userId } = getContext();
-        if (!userId || !tenantId || !token) {
-            throw new Error("User/Context information not found, cannot create lesson.");
+        const response = await apiClient.get(`/tenants/${tenantId}/masters/lessons`);
+        if (response.data && response.data.data && Array.isArray(response.data.data.lessons)) {
+            return response.data.data.lessons;
         }
+        return [];
+    } catch (error) {
+        console.error("Failed to fetch lessons:", error);
+        return [];
+    }
+};
 
-        const lessonPayload = {
-            data: {
-                name: lesson.name,
-                code: `LES-${Math.random().toString(36).substr(2, 7)}`,
-                description: lesson.description,
-                classId: lesson.classId,
-                subjectId: lesson.subjectId,
-                status: lesson.status,
-                createdBy: userId,
-            },
-        };
-
-        const response = await apiClient.post(
-            `/tenants/${tenantId}/masters/lessons`,
-            lessonPayload,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
+export const createLesson = async (lessonData: any) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
+    try {
+        const response = await apiClient.post(`/tenants/${tenantId}/masters/lessons`, { ...lessonData, tenantId });
         return response.data;
-    } catch (err: any) {
-        console.error("❌ createLesson error:", err.response?.data || err.message);
-        throw err;
+    } catch (error) {
+        console.error("Failed to create lesson:", error);
+        throw error;
     }
-}
+};
 
-export async function updateLesson(lessonId: string, lesson: { name: string, description: string, status: string, classId: string, subjectId: string }, meta: { modifiedBy: string, role: string }): Promise<any> {
+export const updateLesson = async (lessonId: string, lessonData: any) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
     try {
-        const { tenantId, token, userId } = getContext();
-        if (!userId || !tenantId || !token) {
-            throw new Error("User/Context information not found, cannot update lesson.");
-        }
-
-        const lessonPayload = {
-            data: {
-                name: lesson.name,
-                description: lesson.description,
-                status: lesson.status,
-                classId: lesson.classId,
-                subjectId: lesson.subjectId,
-            },
-            meta: { ...meta, updatedBy: userId },
-        };
-
-        const response = await apiClient.put(
-            `/tenants/${tenantId}/masters/lessons/${lessonId}`,
-            lessonPayload,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-
+        const response = await apiClient.put(`/tenants/${tenantId}/masters/lessons/${lessonId}`, lessonData);
         return response.data;
-    } catch (err: any) {
-        console.error("❌ updateLesson error:", err.response?.data || err.message);
-        throw err;
+    } catch (error) {
+        console.error("Failed to update lesson:", error);
+        throw error;
     }
-}
+};
 
-export async function deleteLesson(lessonId: string): Promise<any> {
+export const deleteLesson = async (lessonId: string) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
     try {
-        const { tenantId, token, userId } = getContext();
-        if (!userId || !tenantId || !token) {
-            throw new Error("User/Context information not found, cannot delete lesson.");
-        }
-
-        const response = await apiClient.delete(
-            `/tenants/${tenantId}/masters/lessons/${lessonId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                data: {
-                    meta: {
-                        updatedBy: userId
-                    }
-                }
-            }
-        );
-
+        const response = await apiClient.delete(`/tenants/${tenantId}/masters/lessons/${lessonId}`);
         return response.data;
-    } catch (err: any) {
-        console.error("❌ deleteLesson error:", err.response?.data || err.message);
-        throw err;
+    } catch (error) {
+        console.error("Failed to delete lesson:", error);
+        throw error;
     }
-}
+};
+
+export const createContent = async (contentData: any) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
+    try {
+        const response = await apiClient.post(`/tenants/${tenantId}/contents`, { data: contentData });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to create content:", error);
+        throw error;
+    }
+};

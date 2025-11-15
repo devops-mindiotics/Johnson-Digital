@@ -173,14 +173,12 @@ export const createStudent = async (token: string, tenantId: string, schoolId: s
     }
 };
 
-export const getUsersBySchool = async (token: string, tenantId: string, schoolId: string, params: any = {}) => {
-    if (!token) throw new Error("Authentication token not provided");
+export const getUsersBySchool = async (tenantId: string, schoolId: string, params: any = {}) => {
     if (!tenantId) throw new Error("Tenant ID not provided");
     if (!schoolId) throw new Error("School ID not provided");
 
     try {
         const response = await apiClient.get(`/tenants/${tenantId}/schools/${schoolId}/users`, {
-            ...getHeaders(token),
             params: params
         });
 
@@ -197,13 +195,11 @@ export const getUsersBySchool = async (token: string, tenantId: string, schoolId
     }
 }
 
-export const getUsersByTenant = async (token: string, tenantId: string, params: any = {}) => {
-    if (!token) throw new Error("Authentication token not provided");
+export const getUsersByTenant = async (tenantId: string, params: any = {}) => {
     if (!tenantId) throw new Error("Tenant ID not provided");
 
     try {
         const response = await apiClient.get(`/tenants/${tenantId}/users`, {
-            ...getHeaders(token),
             params: params
         });
 

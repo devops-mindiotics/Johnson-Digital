@@ -25,6 +25,33 @@ const getContext = () => {
     return { tenantId, token, userId };
 }
 
+export async function getLessonsByClassIdSubjectId(classId: string, subjectId: string): Promise<any[]> {
+    try {
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch lessons.");
+        }
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/masters/lessons?classId=${classId}&subjectId=${subjectId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && response.data.data && Array.isArray(response.data.data.lessons)) {
+            return response.data.data.lessons;
+        }
+
+        return [];
+    } catch (err: any) {
+        console.error("❌ getLessonsByClassIdSubjectId error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
 export async function getAllSeries(): Promise<any[]> {
     try {
       const { tenantId, token } = getContext();
@@ -225,6 +252,33 @@ export async function getAllClasses(): Promise<any[]> {
       return [];
     } catch (err: any) {
       console.error("❌ getAllPackages error:", err.response?.data || err.message);
+      throw err;
+    }
+  }
+
+  export async function getAllContentTypes(): Promise<any[]> {
+    try {
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch content types.");
+        }
+  
+      const response = await apiClient.get(
+        `/tenants/${tenantId}/masters/content-types?status=active`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data.data.contentTypes)) {
+          return response.data.data.contentTypes;
+      }
+  
+      return [];
+    } catch (err: any) {
+      console.error("❌ getAllContentTypes error:", err.response?.data || err.message);
       throw err;
     }
   }
