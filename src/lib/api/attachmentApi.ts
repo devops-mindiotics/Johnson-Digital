@@ -3,33 +3,33 @@
 import apiClient from "./client";
 import { ATTACHMENT_SUBJECT_CONTENT_ENDPOINT } from "./endpoint";
 
+// A helper function to get the current user from localStorage
+const getUserFromStorage = () => {
+  if (typeof window === 'undefined') return null;
+  const userData = localStorage.getItem("educentral-user");
+  if (!userData) throw new Error("User data (educentral-user) not found in localStorage");
+  return JSON.parse(userData);
+};
+
 export async function createAttachment(attachmentData: any): Promise<any> {
   try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) throw new Error("Context info not found in localStorage");
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId;
-    const userId = parsed?.id;
+    const user = getUserFromStorage();
+    const tenantId = user?.tenantId;
+    const userId = user?.id;
 
-    if (!tenantId) throw new Error("Tenant ID not found in context info");
-    if (!userId) throw new Error("User ID (id) not found in context info");
-    if (!token) throw new Error("Context JWT not found in localStorage");
+    if (!tenantId) throw new Error("Tenant ID not found in user data");
+    if (!userId) throw new Error("User ID (id) not found in user data");
 
     const payload = {
       ...attachmentData,
       createdBy: userId,
-      tenantName: "Beta Education",
+      tenantName: "Beta Education", // This may need to be dynamic in the future
     };
 
+    // The authorization header is now handled automatically by the apiClient interceptor
     const response = await apiClient.post(
       `/tenants/${tenantId}/attachments`,
-      { data: payload },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      { data: payload }
     );
 
     return response.data.data;
@@ -41,22 +41,14 @@ export async function createAttachment(attachmentData: any): Promise<any> {
 
 export async function getSignedUrlForViewing(attachmentId: string): Promise<any> {
   try {
-    const tenantData = localStorage.getItem("contextInfo");
-    if (!tenantData) throw new Error("Context info not found");
-    const parsed = JSON.parse(tenantData);
-    const token = localStorage.getItem("contextJWT");
-    const tenantId = parsed?.tenantId;
+    const user = getUserFromStorage();
+    const tenantId = user?.tenantId;
 
-    if (!tenantId) throw new Error("Tenant ID not found");
-    if (!token) throw new Error("Context JWT not found");
+    if (!tenantId) throw new Error("Tenant ID not found in user data");
 
+    // The authorization header is handled by the interceptor
     const response = await apiClient.get(
-      `/tenants/${tenantId}/attachments/${attachmentId}/signed-view-url`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      `/tenants/${tenantId}/attachments/${attachmentId}/signed-view-url`
     );
     return response.data.data;
   } catch (err: any) {
@@ -67,27 +59,19 @@ export async function getSignedUrlForViewing(attachmentId: string): Promise<any>
 
 export async function getSignedUrl(uploadData: any): Promise<any> {
     try {
-      const tenantData = localStorage.getItem("contextInfo");
-      if (!tenantData) throw new Error("Context info not found");
-      const parsed = JSON.parse(tenantData);
-      const token = localStorage.getItem("contextJWT");
-      const tenantId = parsed?.tenantId;
-      if (!tenantId) throw new Error("Tenant ID not found");
-      if (!token) throw new Error("Context JWT not found");
+      const user = getUserFromStorage();
+      const tenantId = user?.tenantId;
+      if (!tenantId) throw new Error("Tenant ID not found in user data");
 
       const modifiedUploadData = {
         ...uploadData,
         tenantName: "Beta Education",
       };
-
+      
+      // The authorization header is handled by the interceptor
       const response = await apiClient.post(
         `/tenants/${tenantId}/attachments/signed-upload-url`,
-        { data: modifiedUploadData },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { data: modifiedUploadData }
       );
       return response.data.data;
     } catch (err: any) {
@@ -106,7 +90,8 @@ export async function uploadFileToSignedUrl(signedUrl: string, file: File) {
         },
       });
       if (!response.ok) {
-        throw new Error(`File upload failed with status: ${response.status}`);
+        const errorText = await response.text();
+        throw new Error(`File upload failed with status: ${response.status}. Response: ${errorText}`);
       }
     } catch (error) {
       console.error('Error uploading file to signed URL:', error);
@@ -116,22 +101,15 @@ export async function uploadFileToSignedUrl(signedUrl: string, file: File) {
 
 export async function getSubjectContent(tenantId: string, payload: any): Promise<any[]> {
     try {
-      const token = localStorage.getItem("contextJWT");
-      if (!token) throw new Error("Context JWT not found");
-  
       const modifiedPayload = {
         ...payload,
         tenantName: "Beta Education",
       };
 
+      // The authorization header is handled by the interceptor
       const response = await apiClient.post(
         ATTACHMENT_SUBJECT_CONTENT_ENDPOINT(tenantId),
-        { data: modifiedPayload },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { data: modifiedPayload }
       );
   
       return response.data.data;

@@ -27,7 +27,13 @@ export const BannerCard: React.FC<BannerCardProps> = ({ banner, schools, updateB
       <CardContent className="flex-grow">
         {banner.media && (
           <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-            <Image src={banner.media} alt={banner.name} layout="fill" objectFit="cover" />
+            <Image 
+              src={banner.media} 
+              alt={banner.name} 
+              fill
+              priority
+              style={{ objectFit: "cover" }}
+            />
           </div>
         )}
         <div className="space-y-3">

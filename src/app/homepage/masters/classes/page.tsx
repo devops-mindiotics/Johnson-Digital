@@ -9,7 +9,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, PlusCircle, Trash2, Users } from 'lucide-react';
+import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getAllClasses, createClass, updateClass, deleteClass } from '@/lib/api/masterApi';
 import {
@@ -96,10 +96,6 @@ export default function MasterClassesPage() {
     }
   };
 
-  const handleViewStudents = (classId: string) => {
-    router.push(`/homepage/masters/classes/${classId}/students`);
-  };
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -121,10 +117,6 @@ export default function MasterClassesPage() {
                 <p className="text-sm text-gray-500 mt-2">Status: {c.status}</p>
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
-                <Button variant="outline" size="sm" onClick={() => handleViewStudents(c.id)}>
-                  <Users className="mr-2 h-3.5 w-3.5" />
-                  Students
-                </Button>
                 <Button variant="secondary" size="icon" onClick={() => handleEdit(c)}>
                   <Edit className="h-3.5 w-3.5" />
                   <span className="sr-only">Edit</span>

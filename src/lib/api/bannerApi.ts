@@ -3,42 +3,32 @@
 import apiClient from "./client";
 import { getSignedUrlForViewing } from "./attachmentApi";
 
-const getContext = () => {
-    if (typeof window === 'undefined') {
-        return { tenantId: null, token: null, userId: null };
-    }
-    const tenantData = localStorage.getItem("contextInfo");
-    const token = localStorage.getItem("contextJWT");
-    if (!tenantData || !token) {
-        throw new Error("Context information not found in local storage");
-    }
-    const parsed = JSON.parse(tenantData);
-    const tenantId = parsed?.tenantId;
-    const userId = parsed?.id;
-    if (!tenantId) {
-        throw new Error("Tenant ID not found in context info");
-    }
-    return { tenantId, token, userId };
-}
+// A helper function to get the current user from localStorage
+const getUserFromStorage = () => {
+  if (typeof window === 'undefined') return null;
+  const userData = localStorage.getItem("educentral-user");
+  if (!userData) throw new Error("User data (educentral-user) not found in localStorage");
+  return JSON.parse(userData);
+};
 
 export async function createBanner(bannerData: any): Promise<any> {
   try {
-    const { tenantId, token, userId } = getContext();
-    if (!userId) {
-        throw new Error("User ID not found in context, cannot create banner.");
-    }
+    const user = getUserFromStorage();
+    const tenantId = user?.tenantId;
+    const userId = user?.id;
+
+    if (!tenantId) throw new Error("Tenant ID not found in user data");
+    if (!userId) throw new Error("User ID not found in user data, cannot create banner.");
+
     const payload = {
         ...bannerData,
         createdBy: userId,
     };
+
+    // The authorization header is now handled automatically by the apiClient interceptor
     const response = await apiClient.post(
       `/tenants/${tenantId}/banners`,
-      { data: payload },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+      { data: payload }
     );
     return response.data.data;
   } catch (err: any) {
@@ -54,7 +44,10 @@ export async function getAllBanners(
     role: string | null,
 ): Promise<any> {
     try {
-        const { tenantId, token } = getContext();
+        const user = getUserFromStorage();
+        const tenantId = user?.tenantId;
+        if (!tenantId) throw new Error("Tenant ID not found in user data");
+
         let url = `/tenants/${tenantId}/banners?page=${page}&limit=${limit}`;
         if (schoolId) {
             url += `&schoolId=${schoolId}`;
@@ -63,11 +56,8 @@ export async function getAllBanners(
             url += `&role=${role}`;
         }
 
-        const response = await apiClient.get(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        // The authorization header is handled by the interceptor
+        const response = await apiClient.get(url);
 
         if (response.data && response.data.data && Array.isArray(response.data.data.records)) {
             const banners = response.data.data.records;
@@ -111,22 +101,21 @@ export async function updateBanner(
   bannerData: any
 ): Promise<any> {
   try {
-    const { tenantId, token, userId } = getContext();
-     if (!userId) {
-        throw new Error("User ID not found in context, cannot update banner.");
-    }
+    const user = getUserFromStorage();
+    const tenantId = user?.tenantId;
+    const userId = user?.id;
+    if (!tenantId) throw new Error("Tenant ID not found in user data");
+    if (!userId) throw new Error("User ID not found in user data, cannot update banner.");
+    
     const payload = {
         ...bannerData,
         updatedBy: userId,
     };
+
+    // The authorization header is handled by the interceptor
     const response = await apiClient.put(
       `/tenants/${tenantId}/banners/${bannerId}`,
-      { data: payload },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+      { data: payload }
     );
     return response.data.data;
   } catch (err: any) {
@@ -137,16 +126,17 @@ export async function updateBanner(
 
 export async function deleteBanner(bannerId: string): Promise<any> {
   try {
-    const { tenantId, token, userId } = getContext();
-     if (!userId) {
-        throw new Error("User ID not found in context, cannot delete banner.");
-    }
+    const user = getUserFromStorage();
+    const tenantId = user?.tenantId;
+    const userId = user?.id;
+
+    if (!tenantId) throw new Error("Tenant ID not found in user data");
+    if (!userId) throw new Error("User ID not found in user data, cannot delete banner.");
+
+    // The authorization header is handled by the interceptor
     const response = await apiClient.delete(
       `/tenants/${tenantId}/banners/${bannerId}`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
         data: {
             meta: {
                 updatedBy: userId

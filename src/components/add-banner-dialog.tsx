@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Image, Pencil, Plus } from "lucide-react";
-import { Banner } from "./banner-data-table";
+import { Banner } from "@/types/banner";
 import {
   Select,
   SelectContent,
@@ -61,53 +61,46 @@ const formSchema = z.object({
 );
 
 interface AddBannerDialogProps {
-  banner?: Banner;
   onSave: (banner: Omit<Banner, "id">, file: File | null) => void;
   schools: { id: string; name: string }[];
+  isDisabled?: boolean;
 }
 
 const audienceOptions = ["All", "School Admins", "Teachers", "Students"];
 
-export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProps) {
+export function AddBannerDialog({ onSave, schools, isDisabled }: AddBannerDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<string | null>(null);
   const [file, setFile] = React.useState<File | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: banner
-      ? { ...banner, school: banner.school ? banner.school.split(", ") : [], targetAudience: banner.targetAudience ? banner.targetAudience.split(", ") : [], media: undefined }
-      : {
-          name: "",
-          targetAudience: ["All"],
-          school: [],
-          startDate: "",
-          endDate: "",
-          media: undefined,
-        },
+    defaultValues: {
+        name: "",
+        targetAudience: ["All"],
+        school: [],
+        startDate: "",
+        endDate: "",
+        media: undefined,
+      },
   });
 
   const targetAudience = form.watch("targetAudience");
 
   React.useEffect(() => {
     if (open) {
-      if (banner) {
-        form.reset({ ...banner, school: banner.school ? banner.school.split(", ") : [], targetAudience: banner.targetAudience ? banner.targetAudience.split(", ") : [], media: undefined });
-        setImagePreview(banner.media);
-      } else {
-        form.reset({
-          name: "",
-          targetAudience: ["All"],
-          school: [],
-          startDate: "",
-          endDate: "",
-          media: undefined,
-        });
-        setImagePreview(null);
-      }
+      form.reset({
+        name: "",
+        targetAudience: ["All"],
+        school: [],
+        startDate: "",
+        endDate: "",
+        media: undefined,
+      });
+      setImagePreview(null);
       setFile(null);
     }
-  }, [banner, form, open]);
+  }, [form, open]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -118,7 +111,6 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
   };
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('DEBUG: Form values on submit', values);
     const schoolValue =
       values.targetAudience.includes('School Admins') && Array.isArray(values.school)
         ? values.school.join(', ')
@@ -131,29 +123,21 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {banner ? (
-          <Button variant="ghost" size="icon">
-            <Pencil className="h-4 w-4" />
-          </Button>
-        ) : (
-          <Button>
-            <span className="relative h-5 w-5 sm:mr-2">
-              <Image className="h-full w-full" />
-              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
-                <Plus className="h-3 w-3 text-primary-foreground" />
-              </span>
+        <Button disabled={isDisabled}>
+          <span className="relative h-5 w-5 sm:mr-2">
+            <Image alt='add banner' className="h-full w-full" />
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+              <Plus className="h-3 w-3 text-primary-foreground" />
             </span>
-            <span className="hidden sm:inline">Add Banner</span>
-          </Button>
-        )}
+          </span>
+          <span className="hidden sm:inline">Add Banner</span>
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{banner ? "Edit Banner" : "Add New Banner"}</DialogTitle>
+          <DialogTitle>Add New Banner</DialogTitle>
           <DialogDescription>
-            {banner
-              ? "Update the details of your banner."
-              : "Fill in the details to create a new banner."}
+            Fill in the details to create a new banner.
           </DialogDescription>
         </DialogHeader>
         
@@ -199,7 +183,7 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
                           </span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" modal={false}>
                         <DropdownMenuCheckboxItem
                           onCheckedChange={(checked) => {
                             field.onChange(checked ? ['All', ...audienceOptions.filter(o => o !== 'All') ] : []);
@@ -252,7 +236,7 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
                           </span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]" modal={false}>
                         <DropdownMenuCheckboxItem
                           onCheckedChange={(checked) => {
                             field.onChange(checked ? ['All', ...schools.map(s => s.name)] : []);
@@ -336,7 +320,7 @@ export function AddBannerDialog({ banner, onSave, schools }: AddBannerDialogProp
             <DialogFooter>
               <div className="flex flex-row justify-end space-x-2">
                 <Button variant="outline" type="button" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button type="submit">{banner ? "Save Changes" : "Create"}</Button>
+                <Button type="submit">Create</Button>
               </div>
             </DialogFooter>
           </form>

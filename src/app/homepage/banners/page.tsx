@@ -18,23 +18,25 @@ const BannersPage = () => {
   const [schools, setSchools] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedSchool, setSelectedSchool] = React.useState<string | null>(null);
 
-  const fetchData = async (schoolId: string | null) => {
-    if (!user?.tenantId) return;
+  const fetchData = React.useCallback(async (schoolId: string | null) => {
+    const userData = localStorage.getItem("educentral-user");
+    if (!userData) return;
+    const currentUser = JSON.parse(userData);
+
+    if (!currentUser?.tenantId || !currentUser.role) return;
 
     try {
       setLoading(true);
-      // 1. Fetch schools
-      const schoolRecords = await getAllSchools(user.tenantId);
+      const schoolRecords = await getAllSchools(currentUser.tenantId);
       const fetchedSchools = schoolRecords && Array.isArray(schoolRecords)
         ? schoolRecords.map((school: any) => ({ id: school.id, name: school.schoolName }))
         : [];
       setSchools(fetchedSchools);
 
-      // 2. Fetch banners
-      const { records: bannerRecords } = await getAllBanners(1, 10, schoolId, user.role);
+      const userRole = Array.isArray(currentUser.role) ? currentUser.role[0] : currentUser.role;
+      const { records: bannerRecords } = await getAllBanners(1, 10, schoolId, userRole);
       setRawBanners(bannerRecords);
 
-      // 3. Map banners with school names
       const mappedData = bannerRecords.map((banner: any) => {
         const targetAudience = banner.targetAudience || {};
         const schoolIds = Array.isArray(targetAudience.schoolIds) ? targetAudience.schoolIds : [];
@@ -68,15 +70,41 @@ const BannersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   React.useEffect(() => {
-    if(user?.tenantId) {
-        fetchData(selectedSchool);
-    }
-  }, [selectedSchool, user]);
+    fetchData(selectedSchool);
+  }, [selectedSchool, fetchData]);
 
-  const addBanner = async (banner: Omit<Banner, "id">, file: File | null) => {
+  const addBanner = React.useCallback(async (banner: Omit<Banner, "id">, file: File | null) => {
+    const userData = localStorage.getItem("educentral-user");
+    console.log("DEBUG: Raw user data from localStorage:", userData);
+
+    if (!userData) {
+        console.error("Error creating banner: User data not found in localStorage.");
+        return;
+    }
+
+    let currentUser;
+    try {
+        currentUser = JSON.parse(userData);
+        console.log("DEBUG: Parsed currentUser object:", currentUser);
+    } catch (e) {
+        console.error("Error parsing user data from localStorage:", e);
+        return;
+    }
+
+    if (!currentUser || !currentUser.id || !Array.isArray(currentUser.roles) || currentUser.roles.length === 0) {
+        console.error("CRITICAL CHECK FAILED: User object is invalid.", {
+            hasCurrentUser: !!currentUser,
+            hasId: !!(currentUser && currentUser.id),
+            isRoleArray: Array.isArray(currentUser && currentUser.roles),
+            hasRoles: !!(currentUser && currentUser.roles && currentUser.roles.length > 0)
+        });
+        console.error("Error creating banner: User is not authenticated or has no role.");
+        return;
+    }
+
     try {
         let attachmentId = '';
         let attachmentUrl = '';
@@ -109,13 +137,24 @@ const BannersPage = () => {
                 contentType: file.type,
                 filename: file.name,
                 filePath: signedUrlData.filePath,
-                uploadedBy: user?.id || 'Narayana',
+                uploadedBy: currentUser.id,
             };
 
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
             attachmentUrl = newAttachment.url;
         }
+
+        const schoolNames = banner.school ? banner.school.split(', ') : [];
+        const schoolIds = schoolNames.map(name => {
+            const school = schools.find(s => s.name === name);
+            return school ? school.id : null;
+        }).filter(Boolean) as string[];
+
+      const createdById = currentUser.id;
+      const createdRole = currentUser.roles[0];
+
+      console.log("DEBUG: Preparing to create banner with:", { createdBy: createdById, createdRole: createdRole });
 
       const newBanner = {
         title: banner.name,
@@ -126,11 +165,12 @@ const BannersPage = () => {
             schoolAdmins: banner.targetAudience.includes('School Admins'),
             teachers: banner.targetAudience.includes('Teachers'),
             students: banner.targetAudience.includes('Students'),
-            schoolIds: banner.school ? banner.school.split(', ') : [],
+            schoolIds: schoolIds,
         },
         startDate: banner.startDate,
         endDate: banner.endDate,
-        createdBy: user?.id || ''
+        createdBy: createdById,
+        createdRole: createdRole,
       };
 
       await createBanner(newBanner);
@@ -138,9 +178,21 @@ const BannersPage = () => {
     } catch (error) {
       console.error("Error creating banner:", error);
     }
-  };
+  }, [schools, fetchData, selectedSchool]);
 
-  const handleUpdateBanner = async (updatedBanner: Banner, file: File | null) => {
+  const handleUpdateBanner = React.useCallback(async (updatedBanner: Banner, file: File | null) => {
+    const userData = localStorage.getItem("educentral-user");
+    if (!userData) {
+        console.error("Error updating banner: User data not found in localStorage.");
+        return;
+    }
+    const currentUser = JSON.parse(userData);
+
+    if (!currentUser || !currentUser.id || !Array.isArray(currentUser.role) || currentUser.role.length === 0) {
+        console.error("Error updating banner: User is not authenticated or has no role.");
+        return;
+    }
+
     try {
         const originalBanner = rawBanners.find(b => b.id === updatedBanner.id);
         let attachmentId = originalBanner?.attachmentId || '';
@@ -174,13 +226,24 @@ const BannersPage = () => {
                 contentType: file.type,
                 filename: file.name,
                 filePath: signedUrlData.filePath,
-                uploadedBy: user?.id || 'Narayana',
+                uploadedBy: currentUser.id,
             };
             
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
             attachmentUrl = newAttachment.url;
         }
+
+        const schoolNames = updatedBanner.school ? updatedBanner.school.split(', ') : [];
+        const schoolIds = schoolNames.map(name => {
+            const school = schools.find(s => s.name === name);
+            return school ? school.id : null;
+        }).filter(Boolean) as string[];
+
+        const updatedById = currentUser.id;
+        const updatedRole = currentUser.role[0];
+
+        console.log("DEBUG: Preparing to update banner with:", { updatedBy: updatedById, updatedRole: updatedRole });
 
         const newBanner = {
             title: updatedBanner.name,
@@ -191,11 +254,12 @@ const BannersPage = () => {
                 schoolAdmins: updatedBanner.targetAudience.includes('School Admins'),
                 teachers: updatedBanner.targetAudience.includes('Teachers'),
                 students: updatedBanner.targetAudience.includes('Students'),
-                schoolIds: updatedBanner.school ? updatedBanner.school.split(', ') : [],
+                schoolIds: schoolIds,
             },
             startDate: updatedBanner.startDate,
             endDate: updatedBanner.endDate,
-            updatedBy: user?.id || ''
+            updatedBy: updatedById,
+            updatedRole: updatedRole,
           };
 
       await updateBanner(updatedBanner.id, newBanner);
@@ -203,16 +267,16 @@ const BannersPage = () => {
     } catch (error) {
       console.error("Error updating banner:", error);
     }
-  };
+  }, [schools, rawBanners, fetchData, selectedSchool]);
 
-  const handleDeleteBanner = async (bannerId: string) => {
+  const handleDeleteBanner = React.useCallback(async (bannerId: string) => {
     try {
-      await deleteBanner(bannerId, user?.id || '');
+      await deleteBanner(bannerId);
       fetchData(selectedSchool);
     } catch (error) {
       console.error("Error deleting banner:", error);
     }
-  };
+  }, [fetchData, selectedSchool]);
 
   const handleSchoolChange = (schoolId: string) => {
     setSelectedSchool(schoolId === 'all' ? null : schoolId);
@@ -234,7 +298,7 @@ const BannersPage = () => {
                     ))}
                 </SelectContent>
             </Select>
-            <AddBannerDialog onSave={addBanner} schools={schools} />
+            <AddBannerDialog onSave={addBanner} schools={schools} isDisabled={!user} />
         </div>
       </div>
 
