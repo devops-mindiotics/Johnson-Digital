@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { createStudent, createTeacher } from '@/lib/api/userApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { getClassesBySchool, getSectionsByClass } from '@/lib/api/classesApi';
 import { SUPERADMIN, TENANTADMIN } from '@/lib/utils/constants';
@@ -39,13 +38,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { StudentFields } from '@/components/add-user/student-fields';
+import { TeacherFields } from '@/components/add-user/teacher-fields';
+import { SchoolAdminFields } from '@/components/add-user/school-admin-fields';
+import { CommonFields } from '@/components/add-user/common-fields';
+import { createUser } from '@/lib/api/userCreation';
 
 const formSchema = z.object({
   school: z.string().optional(),
   type: z.enum(['Teacher', 'Student', 'School Admin']),
   firstName: z.string().min(1, 'First Name is required'),
   lastName: z.string().min(1, 'Last Name is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters long.'),
   gender: z.enum(['male', 'female']),
   mobileNumber: z.string().max(12, 'Mobile number cannot exceed 12 digits'),
   email: z.string().email(),
@@ -56,6 +59,7 @@ const formSchema = z.object({
   district: z.string(),
   state: z.string(),
   pincode: z.string(),
+  expiryDate: z.string().min(1, 'Expiry Date is required'),
   // Teacher fields
   employeeId: z.string().optional(),
   joiningDate: z.string().optional(),
@@ -70,12 +74,18 @@ const formSchema = z.object({
   section: z.string().optional(),
   academicYear: z.string().optional(),
   rollNumber: z.string().optional(),
-  // School Admin fields
-  expiryDate: z.string().optional(),
+}).refine(data => {
+    if (data.type === 'School Admin') {
+        return !!data.employeeId && !!data.joiningDate && !!data.experience;
+    }
+    return true;
+}, {
+    message: 'Employee ID, Joining Date, and Experience are required for School Admins',
+    path: ['employeeId', 'joiningDate', 'experience'],
 });
 
 function AddUserPageForm() {
-  const { user } = useAuth();
+  const { user, schoolId: userSchoolId, isLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -124,28 +134,40 @@ function AddUserPageForm() {
       district: '',
       state: '',
       pincode: '',
-      password: ''
     },
   });
 
   useEffect(() => {
     async function fetchSchools() {
-      if (!user?.tenantId) return;
-      if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
-        try {
-          const schoolData = await getAllSchools(user.tenantId);
-          if (schoolData) {
-            setSchools(schoolData);
+      if (isLoading || !user?.tenantRoles?.[0]?.tenantId) {
+        console.log("Waiting for user and tenantId to be loaded...");
+        return;
+      }
+      const tenantId = user.tenantRoles[0].tenantId;
+      console.log("Fetching schools for tenantId:", tenantId);
+      try {
+        const schoolData = await getAllSchools(tenantId);
+        console.log("Fetched school data:", schoolData);
+        if (schoolData) {
+          setSchools(schoolData);
+          if (userRole !== SUPERADMIN && userRole !== TENANTADMIN && userSchoolId) {
+            console.log("Setting school for non-admin user:", userSchoolId);
+            setSelectedSchool(userSchoolId);
+            form.setValue('school', userSchoolId, { shouldValidate: true });
           }
-        } catch (error) {
-          console.error("Failed to fetch schools:", error);
         }
-      } else if (user?.schoolId) {
-        setSelectedSchool(user.schoolId);
+      } catch (error) {
+        console.error("Failed to fetch schools:", error);
+        toast({
+          title: 'Error',
+          description: 'Could not fetch schools. Please try again later.',
+          variant: 'destructive',
+        });
       }
     }
     fetchSchools();
-  }, [userRole, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, user, userRole, userSchoolId, toast, form]);
 
   useEffect(() => {
     async function fetchClasses() {
@@ -194,112 +216,46 @@ function AddUserPageForm() {
     fetchSections();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSchool, selectedClass]);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const schoolId = selectedSchool || user.schoolId;
-    if (!schoolId) {
-      toast({
-        title: 'Error',
-        description: 'School ID is not available. Please select a school.',
-        variant: 'destructive'
-      });
-      return;
-    }
+    const schoolId = selectedSchool || userSchoolId;
     const schoolName = schools.find(s => s.id === schoolId)?.schoolName || '';
-    const className = classes.find(c => c.id === values.classId)?.name || '';
-    const sectionName = sections.find(s => s.id === values.section)?.name || '';
+    const tenantId = user?.tenantRoles?.[0]?.tenantId;
 
-    if (values.type === 'Student') {
-      try {
-        const studentPayload = {
-          data: {
-            phone: values.mobileNumber,
-            password: values.password,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            schoolName: schoolName,
-            role: ["STUDENT"],
-            student: {
-              gender: values.gender,
-              admissionNo: values.admissionNumber,
-              pen: values.pen,
-              dob: values.dob,
-              guardian: {
-                fatherName: values.fatherName,
-                motherName: values.motherName
-              },
-              status: values.status,
-              classDetails: {
-                classId: values.classId,
-                className: className,
-                sectionId: values.section,
-                sectionName: sectionName,
-                academicYear: values.academicYear,
-                rollNumber: values.rollNumber
-              }
-            },
-            address: {
-              line1: values.address,
-              city: values.city,
-              district: values.district,
-              state: values.state,
-              pincode: values.pincode
-            }
-          }
-        };
+    if (!tenantId) {
+        console.error("Could not determine tenant. Aborting user creation.");
+        setFeedbackTitle('Error');
+        setFeedbackMessage('Could not determine tenant. Please try logging in again.');
+        setShowFeedbackDialog(true);
+        return;
+    }
 
-        await createStudent(user.token, user.tenantId, schoolId, values.classId, studentPayload);
-        setFeedbackTitle('Success');
-        setFeedbackMessage('Student created successfully.');
-        setCreationSuccess(true);
-        setShowFeedbackDialog(true);
-      } catch (error: any) {
-        console.error('Failed to create student:', error);
-        const message = error.response?.data?.message || error.message || 'Failed to create student.';
-        const statusCode = error.response?.status;
+    console.log("Creating user for tenantId:", tenantId);
+
+    let token;
+    try {
+        token = localStorage.getItem('sessionJWT');
+        if (!token) {
+            throw new Error('Session token not found. Please log in again.');
+        }
+    } catch (error: any) {
+        console.error("Failed to get authentication token:", error);
         setFeedbackTitle('Error');
-        setFeedbackMessage(statusCode ? `${message} (${statusCode})` : message);
-        setCreationSuccess(false);
+        setFeedbackMessage(error.message || 'Could not retrieve authentication token. Please try logging in again.');
         setShowFeedbackDialog(true);
-      }
-    } else if (values.type === 'Teacher') {
-      try {
-        const teacherData = {
-            schoolName: schoolName,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            gender: values.gender,
-            dob: values.dob,
-            phone: values.mobileNumber,
-            email: values.email,
-            employeeId: values.employeeId,
-            joiningDate: values.joiningDate,
-            experience: values.experience,
-            address: values.address,
-            city: values.city,
-            district: values.district,
-            state: values.state,
-            pincode: values.pincode,
-            status: 'active',
-            expiryDate: values.expiryDate,
-        };
-        await createTeacher(user.token, schoolId, teacherData);
+        return;
+    }
+
+    try {
+        await createUser(values, token, tenantId, schoolId, schoolName, classes, sections);
         setFeedbackTitle('Success');
-        setFeedbackMessage('Teacher created successfully.');
+        setFeedbackMessage(`${values.type} created successfully.`);
         setCreationSuccess(true);
-        setShowFeedbackDialog(true);
-      } catch (error: any) {
-        console.error('Failed to create teacher:', error);
-        const message = error.response?.data?.message || error.message || 'Failed to create teacher.';
-        const statusCode = error.response?.status;
+    } catch (error: any) {
         setFeedbackTitle('Error');
-        setFeedbackMessage(statusCode ? `${message} (${statusCode})` : message);
+        setFeedbackMessage(error.message);
         setCreationSuccess(false);
+    } finally {
         setShowFeedbackDialog(true);
-      }
-    } else {
-      console.log(values);
     }
   }
 
@@ -313,565 +269,131 @@ function AddUserPageForm() {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New User</CardTitle>
-        </CardHeader>
-      </Card>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-bold">Select School and User Type</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <Suspense fallback={<div>Loading...</div>}>
+      <div className="container mx-auto p-4 md:p-8">
+        <h1 className="text-2xl font-bold mb-8">Add New User</h1>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <Card>
+                <CardHeader>
+                <CardTitle>Role and School</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {(userRole === SUPERADMIN || userRole === TENANTADMIN) && (
-                  <FormField
+                    <FormField
                     control={form.control}
                     name="school"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>School *</FormLabel>
-                        <Select onValueChange={(value) => {
-                          field.onChange(value)
-                          setSelectedSchool(value)
-                          setClasses([]);
-                          setSections([]);
-                          form.resetField('classId');
-                          form.resetField('section');
-                          setSelectedClass(null);
-                        }} value={field.value || ''}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a school" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {schools.map((school) => (
-                              <SelectItem key={school.id} value={school.id}>
-                                {school.schoolName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Type *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Teacher">Teacher</SelectItem>
-                          <SelectItem value="Student">Student</SelectItem>
-                          <SelectItem value="School Admin">School Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {type && (
-            <>
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-bold">General Information</h3>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., John" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password *</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="********" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Gender *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormLabel>School</FormLabel>
+                        <Select
+                            onValueChange={value => {
+                            field.onChange(value);
+                            setSelectedSchool(value);
+                            }}
+                            value={field.value || ''}
+                        >
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a gender" />
-                              </SelectTrigger>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a school" />
+                            </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
+                            {schools.map(school => (
+                                <SelectItem key={school.id} value={school.id}>
+                                {school.schoolName}
+                                </SelectItem>
+                            ))}
                             </SelectContent>
-                          </Select>
-                          <FormMessage />
+                        </Select>
+                        <FormMessage />
                         </FormItem>
-                      )}
+                    )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="mobileNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mobile Number *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., 9876543210" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>E-Mail *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., john.doe@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                )}
+                <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>User Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select a user type" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Student">Student</SelectItem>
+                            <SelectItem value="Teacher">Teacher</SelectItem>
+                            <SelectItem value="School Admin">School Admin</SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 </CardContent>
-              </Card>
+            </Card>
 
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-bold">Address Information</h3>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., 123 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Bangalore" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="district"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>District</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Bangalore Urban" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="state"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Karnataka" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="pincode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Pincode</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., 560001" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+            <div className={`grid grid-cols-1 ${type ? 'lg:grid-cols-2' : 'lg:grid-cols-1'} gap-8 items-start`}>
+                <Card>
+                    <CardHeader>
+                    <CardTitle>Personal Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <CommonFields form={form} />
+                    </CardContent>
+                </Card>
 
-              {type === 'Teacher' && (
-                <Card>
-                  <CardHeader>
-                    <h3 className="text-lg font-bold">Teacher Details</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      <FormField
-                        control={form.control}
-                        name="employeeId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Employee ID *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., T-123" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="joiningDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Joining Date *</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Experience *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 5 years" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="expiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expiry Date *</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {type === 'Student' && (
-                <Card>
-                  <CardHeader>
-                    <h3 className="text-lg font-bold">Student Details</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      <FormField
-                        control={form.control}
-                        name="fatherName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Father Name/Guardian Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Robert Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="motherName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mother Name *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Maria Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="admissionNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Admission Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., S-54321" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name="rollNumber"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Roll Number *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 23" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="dob"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Date of Birth *</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="classId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Class *</FormLabel>
-                            <Select onValueChange={(value) => {
-                              field.onChange(value)
-                              setSelectedClass(value)
-                            }} value={field.value || ''}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a class" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {classes.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="section"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Section *</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              value={field.value || ''} 
-                              disabled={sections.length === 1 && sections[0].name === 'No Sections'}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a section" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {sections.map((s) => (
-                                  <SelectItem key={s.id} value={s.id}>
-                                    {s.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="pen"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Permanent Education Number (PEN) *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="academicYear"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Academic Year *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 2024-2025" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                {type && (
+                    <Card>
+                        <CardHeader>
+                        <CardTitle>{type} Specific Information</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {type === 'Student' && (
+                            <StudentFields
+                                form={form}
+                                classes={classes}
+                                sections={sections}
+                                selectedClass={selectedClass}
+                                setSelectedClass={setSelectedClass}
+                            />
+                            )}
+                            {type === 'Teacher' && <TeacherFields form={form} />}
+                            {type === 'School Admin' && <SchoolAdminFields form={form} />}
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
 
-              {type === 'School Admin' && (
-                <Card>
-                  <CardHeader>
-                    <h3 className="text-lg font-bold">School Admin Details</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      <FormField
-                        control={form.control}
-                        name="employeeId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Employee ID *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., A-123" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="joiningDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Joining Date *</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Experience *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 5 years" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="expiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expiry Date *</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            <div className="flex justify-end pt-8">
               <Button type="submit">Create User</Button>
-            </>
-          )}
-        </form>
-      </Form>
+            </div>
+          </form>
+        </Form>
+      </div>
 
-      <AlertDialog open={showFeedbackDialog} onOpenChange={handleDialogClose}>
+      <AlertDialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{feedbackTitle}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {feedbackMessage}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{feedbackMessage}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Suspense>
   );
 }
 
 export default function AddUserPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <AddUserPageForm />
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AddUserPageForm />
+    </Suspense>
+  );
 }

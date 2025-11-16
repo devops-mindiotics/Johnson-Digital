@@ -129,6 +129,24 @@ export const createTeacher = async (token: string, tenantId: string, schoolId: s
     }
 };
 
+export const createSchoolAdmin = async (token: string, tenantId: string, schoolId: string, data: any) => {
+    if (!token) throw new Error("Authentication token not provided");
+    if (!tenantId) throw new Error("Tenant ID not provided");
+    
+    try {
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/schools/${schoolId}/users`,
+            data,
+            getHeaders(token)
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ createSchoolAdmin error:", err.response?.data || err.message);
+        throw err;
+    }
+};
+
 export const getAllStudents = async (token: string, tenantId: string, schoolId: string, params: any = {}) => {
     if (!token) throw new Error("Authentication token not provided");
     try {
