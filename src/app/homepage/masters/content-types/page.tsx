@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Edit, PlusCircle, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/use-auth';
 import { getAllContentTypes, createContentType, updateContentType, deleteContentType } from '@/lib/api/contentTypeApi';
 import {
   Dialog,
@@ -50,14 +51,15 @@ interface Pagination {
 
 export default function MasterContentTypesPage() {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [contentTypes, setContentTypes] = useState<ContentType[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedContentType, setSelectedContentType] = useState<ContentType | null>(null);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, totalItems: 0, totalPages: 1 });
 
   useEffect(() => {
-    fetchContentTypes(pagination?.page ?? 1, pagination?.limit ?? 10);
-  }, [pagination?.page, pagination?.limit]);
+    fetchContentTypes(pagination.page, pagination.limit);
+  }, [pagination.page, pagination.limit]);
 
   const fetchContentTypes = async (page: number, limit: number) => {
     try {
@@ -99,9 +101,9 @@ export default function MasterContentTypesPage() {
   const handleSave = async (contentTypeData: Omit<ContentType, 'id'>) => {
     try {
       if (selectedContentType) {
-        await updateContentType(selectedContentType.id, contentTypeData);
+        await updateContentType(selectedContentType.id, contentTypeData, user);
       } else {
-        await createContentType(contentTypeData);
+        await createContentType(contentTypeData, user);
       }
       fetchContentTypes(pagination.page, pagination.limit);
       setIsDialogOpen(false);

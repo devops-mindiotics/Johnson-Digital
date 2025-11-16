@@ -56,14 +56,11 @@ export async function getContentTypeById(contentTypeId: string): Promise<any> {
     }
 }
 
-export async function createContentType(contentTypeData: { name: string; description: string; status: string; }): Promise<any> {
+export async function createContentType(contentTypeData: { name: string; description: string; status: string; }, user: { id: string, tenantId: string }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-        const userId = parsed?.id;
+        const tenantId = user?.tenantId;
+        const userId = user?.id;
 
         if (!tenantId || !userId) throw new Error("Tenant or user details not found");
 
@@ -94,14 +91,11 @@ export async function createContentType(contentTypeData: { name: string; descrip
     }
 }
 
-export async function updateContentType(contentTypeId: string, contentTypeData: { name: string; description: string; status: string; }): Promise<any> {
+export async function updateContentType(contentTypeId: string, contentTypeData: { name: string; description: string; status: string; }, user: { id: string, tenantId: string }): Promise<any> {
     try {
-        const tenantData = localStorage.getItem("contextInfo");
-        if (!tenantData) throw new Error("Context info not found");
-        const parsed = JSON.parse(tenantData);
         const token = localStorage.getItem("contextJWT");
-        const tenantId = parsed?.tenantId;
-        const userId = parsed?.id;
+        const tenantId = user?.tenantId;
+        const userId = user?.id;
 
         if (!tenantId || !userId) throw new Error("Tenant or user details not found");
 

@@ -28,18 +28,22 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter } from 'lucide-react';
+import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages, getAllContentTypes } from '@/lib/api/masterApi';
 import { getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
-import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent } from '@/lib/api/attachmentApi';
+import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
 
 const getContentTypeIcon = (contentType) => {
     const type = contentType?.toLowerCase();
     switch (type) {
+        case 'mp4':
         case 'video': return <Video className="h-5 w-5 text-blue-500" />;
         case 'pdf': return <FileText className="h-5 w-5 text-red-500" />;
         case 'ppt': return <Presentation className="h-5 w-5 text-orange-500" />;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
         case 'image': return <ImageIcon className="h-5 w-5 text-purple-500" />;
         default: return <FileText className="h-5 w-5" />;
     }
@@ -56,7 +60,8 @@ export default function ContentManagementPage() {
     const [contentData, setContentData] = useState({});
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-    const [showFilters, setShowFilters] = useState(true); // Default to showing filters
+    const [showFilters, setShowFilters] = useState(true);
+    const [masterData, setMasterData] = useState({ classes: [], series: [], subjects: [], packages: [], lessons: [] });
 
     const searchParams = useSearchParams();
 
@@ -66,8 +71,24 @@ export default function ContentManagementPage() {
         }
     }, [searchParams, isTenantAdmin]);
 
+    useEffect(() => {
+        const fetchMasterData = async () => {
+            try {
+                const [classes, series, subjects, packages] = await Promise.all([
+                    getAllClasses(),
+                    getAllSeries(),
+                    getAllSubjects(),
+                    getAllPackages(),
+                ]);
+                setMasterData({ classes, series, subjects, packages, lessons: masterData.lessons });
+            } catch (error) {
+                console.error("Failed to fetch master data:", error);
+            }
+        };
+        fetchMasterData();
+    }, []);
+
     const handleAddContent = (newContent) => {
-        // In a real app, you would refetch the content list here
         setIsAddDialogOpen(false);
         setShowSuccessDialog(true);
     };
@@ -81,31 +102,43 @@ export default function ContentManagementPage() {
         const fetchContent = async () => {
             if (!user?.tenantId) return;
             try {
-                const content = await getSubjectContent(user.tenantId, {
-                    class: filters.classId,
-                    series: filters.seriesId,
-                    subject: filters.subjectId,
-                    package: filters.packageId || 'NA',
-                });
+                const [content, lessons] = await Promise.all([
+                    getSubjectContent(user.tenantId, {
+                        class: filters.classId,
+                        series: filters.seriesId,
+                        subject: filters.subjectId,
+                        package: filters.packageId || 'NA',
+                    }),
+                    getLessonsByClassIdAndSubjectId(filters.classId, filters.subjectId)
+                ]);
+                
+                setMasterData(prev => ({ ...prev, lessons }));
 
-                // Group content by lesson
-                const groupedByLesson = content.reduce((acc, item) => {
-                    const key = `${item.class}-${item.series}-${item.subject}-${item.lesson}`;
+                const classMap = new Map(masterData.classes.map(c => [c.id, c.name]));
+                const seriesMap = new Map(masterData.series.map(s => [s.id, s.name]));
+                const subjectMap = new Map(masterData.subjects.map(s => [s.id, s.name]));
+                const packageMap = new Map(masterData.packages.map(p => [p.id, p.name]));
+                const lessonMap = new Map(lessons.map(l => [l.id, l.name]));
+
+                const groupedByLesson = Array.isArray(content) ? content.reduce((acc, item) => {
+                    const lessonName = lessonMap.get(item.lesson) || item.lesson;
+                    const key = `${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${lessonName}`;
                     if (!acc[key]) {
                         acc[key] = [];
                     }
                     acc[key].push({ 
-                        contentType: item.filename.split('.').pop(), // Simple type extraction
+                        attachmentId: item.attachmentId,
+                        contentType: item.filename.split('.').pop(),
                         contentName: item.filename,
                         status: item.status,
-                        package: item.package
+                        package: packageMap.get(item.package) || item.package
                     });
                     return acc;
-                }, {});
+                }, {}) : {};
                 setContentData(groupedByLesson);
             } catch (error) {
                 console.error("Failed to fetch content:", error);
-                setContentData({}); // Reset on error
+                setContentData({});
             }
         };
 
@@ -134,8 +167,8 @@ export default function ContentManagementPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {showFilters && <FilterControls onSearch={handleSearch} />}
-                <ContentList contentData={contentData} />
+                {showFilters && <FilterControls onSearch={handleSearch} masterData={masterData} />}
+                <ContentList contentData={contentData} masterData={masterData}/>
               </CardContent>
             </Card>
             
@@ -150,33 +183,15 @@ export default function ContentManagementPage() {
     );
 }
 
-function FilterControls({ onSearch }) {
+function FilterControls({ onSearch, masterData }) {
     const [filters, setFilters] = useState({ classId: '', seriesId: '', subjectId: '', packageId: '' });
-    const [classes, setClasses] = useState([]);
-    const [series, setSeries] = useState([]);
     const [subjects, setSubjects] = useState([]);
-    const [packages, setPackages] = useState([]);
 
-    useEffect(() => {
-        const fetchFiltersData = async () => {
-            try {
-                const [classesData, seriesData, packagesData] = await Promise.all([
-                    getAllClasses(), getAllSeries(), getAllPackages(),
-                ]);
-                setClasses(classesData);
-                setSeries(seriesData);
-                setPackages(packagesData);
-            } catch (error) { console.error("Failed to fetch filters data:", error); }
-        };
-        fetchFiltersData();
-    }, []);
-
-    // Fetch subjects when a class is selected
     useEffect(() => {
         if (filters.classId) {
             getAllSubjects(filters.classId).then(setSubjects).catch(err => console.error(err));
         } else {
-            setSubjects([]); // Clear subjects if no class is selected
+            setSubjects([]);
         }
     }, [filters.classId]);
 
@@ -184,7 +199,7 @@ function FilterControls({ onSearch }) {
         setFilters(prev => {
             const newFilters = { ...prev, [name]: value };
             if (name === 'classId') {
-                newFilters.subjectId = ''; // Reset subject when class changes
+                newFilters.subjectId = '';
             }
             return newFilters;
         });
@@ -200,60 +215,99 @@ function FilterControls({ onSearch }) {
 
     return (
         <div className="flex flex-wrap items-center gap-4 mb-6 p-4 border rounded-lg">
-            <div className="flex-1 min-w-[150px]"><Label>Class</Label><Select name="classId" value={filters.classId} onValueChange={(v) => handleSelectChange('classId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{classes.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
-            <div className="flex-1 min-w-[150px]"><Label>Series</Label><Select name="seriesId" value={filters.seriesId} onValueChange={(v) => handleSelectChange('seriesId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{series.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Class</Label><Select name="classId" value={filters.classId} onValueChange={(v) => handleSelectChange('classId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{masterData.classes.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Series</Label><Select name="seriesId" value={filters.seriesId} onValueChange={(v) => handleSelectChange('seriesId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{masterData.series.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
             <div className="flex-1 min-w-[150px]"><Label>Subject</Label><Select name="subjectId" value={filters.subjectId} onValueChange={(v) => handleSelectChange('subjectId', v)} disabled={!filters.classId}><SelectTrigger><SelectValue placeholder={!filters.classId ? "Select Class first" : "Select..."} /></SelectTrigger><SelectContent>{subjects.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
-            <div className="flex-1 min-w-[150px]"><Label>Package (Optional)</Label><Select name="packageId" value={filters.packageId} onValueChange={(v) => handleSelectChange('packageId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{packages.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
+            <div className="flex-1 min-w-[150px]"><Label>Package (Optional)</Label><Select name="packageId" value={filters.packageId} onValueChange={(v) => handleSelectChange('packageId', v)}><SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger><SelectContent>{masterData.packages.map((o) => (<SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>))}</SelectContent></Select></div>
             <Button onClick={handleSearchClick} className="self-end">Search</Button>
         </div>
     );
 }
 
-function ContentList({ contentData }) {
+function VideoPlayer({ videoUrl, onClose }) {
+    return (
+        <Dialog open={!!videoUrl} onOpenChange={onClose}>
+            <DialogContent className="max-w-4xl">
+                <DialogHeader>
+                    <DialogTitle>Video Player</DialogTitle>
+                </DialogHeader>
+                <div className="aspect-video">
+                    <video src={videoUrl} width="100%" height="100%" controls autoPlay />
+                </div>
+                <DialogFooter>
+                    <Button onClick={onClose}>Close</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function ContentList({ contentData, masterData }) {
     const [openKey, setOpenKey] = useState(null);
+    const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
+
+    const lessonMap = useMemo(() => new Map(masterData.lessons.map(l => [l.id, l.name])), [masterData.lessons]);
 
     useEffect(() => {
-        // Automatically open the first group if contentData is available
         const keys = Object.keys(contentData);
         setOpenKey(keys.length > 0 ? keys[0] : null);
     }, [contentData]);
 
+    const handleContentClick = async (content) => {
+        const { signedUrl } = await getSignedUrlForViewing(content.attachmentId);
+        if (signedUrl) {
+            if (content.contentType.toLowerCase() === 'mp4') {
+                setSelectedVideoUrl(signedUrl);
+            } else {
+                window.open(signedUrl, '_blank');
+            }
+        }
+    };
+
+    const handleCloseVideoPlayer = () => {
+        setSelectedVideoUrl(null);
+    };
 
     return (
-        <div className="space-y-4">
-            {Object.keys(contentData).length === 0 ? (
-                <div className="text-center py-10"><p className="text-muted-foreground">No content found. Use the filters above to search for content.</p></div>
-            ) : (
-                Object.entries(contentData).map(([key, contents]) => {
-                    const [classValue, seriesValue, subjectValue, lesson] = key.split('-');
-                    const isRowOpen = openKey === key;
-                    return (
-                        <Card key={key}>
-                            <CardHeader className="flex flex-row justify-between items-center p-4 cursor-pointer" onClick={() => setOpenKey(isRowOpen ? null : key)}>
-                                <div>
-                                    <CardTitle className="text-lg">{lesson}</CardTitle>
-                                    <CardDescription>{`${classValue} • ${seriesValue} • ${subjectValue}`}</CardDescription>
-                                </div>
-                                <ChevronDown className={`transform transition-transform ${isRowOpen ? 'rotate-180' : ''}`} />
-                            </CardHeader>
-                            {isRowOpen && (
-                                <CardContent className="p-4 border-t">
-                                    {contents.map((content, index) => (
-                                        <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50">
-                                            <div className="flex items-center gap-3">
-                                                {getContentTypeIcon(content.contentType)}
-                                                <p className="font-medium">{content.contentName}</p>
+        <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {Object.keys(contentData).length === 0 ? (
+                    <div className="text-center py-10 lg:col-span-2"><p className="text-muted-foreground">No content found. Use the filters above to search for content.</p></div>
+                ) : (
+                    Object.entries(contentData).map(([key, contents]) => {
+                        const [classValue, subjectValue, lessonName] = key.split('-');
+                        const isRowOpen = openKey === key;
+                        return (
+                            <Card key={key}>
+                                <CardHeader className="flex flex-row justify-between items-center p-4 cursor-pointer" onClick={() => setOpenKey(isRowOpen ? null : key)}>
+                                    <div>
+                                        <CardTitle className="text-lg font-bold">{lessonName}</CardTitle>
+                                        <CardDescription className="text-sm">{`${classValue} • ${subjectValue}`}</CardDescription>
+                                    </div>
+                                    <ChevronDown className={`transform transition-transform ${isRowOpen ? 'rotate-180' : ''}`} />
+                                </CardHeader>
+                                {isRowOpen && (
+                                    <CardContent className="p-4 border-t">
+                                        {contents.map((content, index) => (
+                                            <div key={index} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 cursor-pointer" onClick={() => handleContentClick(content)}>
+                                                <div className="flex items-center gap-3">
+                                                    {getContentTypeIcon(content.contentType)}
+                                                    <p className="font-medium">{content.contentName}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <StatusBadge status={content.status} />
+                                                </div>
                                             </div>
-                                            <StatusBadge status={content.status} />
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            )}
-                        </Card>
-                    );
-                })
-            )}
-        </div>
+                                        ))}
+                                    </CardContent>
+                                )}
+                            </Card>
+                        );
+                    })
+                )}
+            </div>
+            <VideoPlayer videoUrl={selectedVideoUrl} onClose={handleCloseVideoPlayer} />
+        </>
     );
 }
 
@@ -263,7 +317,8 @@ function ContentTypeBox({ icon, label, isSelected, onSelect }) {
             onClick={onSelect}
             className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                 isSelected ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50'
-            }`}>
+            }`}
+        >
             {icon}
             <span className="mt-2 text-sm font-medium">{label}</span>
         </div>
@@ -312,10 +367,10 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                     setLessons(lessonsData);
                 } catch (error) {
                     console.error("Failed to fetch lessons:", error);
-                    setLessons([]); // Clear on error
+                    setLessons([]);
                 }
             } else {
-                setLessons([]); // Clear if class/subject is not selected
+                setLessons([]);
             }
         }
         fetchLessons();
@@ -362,21 +417,31 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 expiresIn: 3600
             };
             const signedUrlData = await getSignedUrl(signedUrlPayload);
+
             await uploadFileToSignedUrl(signedUrlData.uploadUrl, selectedFile);
 
-            await createAttachment({
-                attachmentId: signedUrlData.attachmentId,
-                name: formValues.contentName,
-                type: selectedVisualContentType.toLowerCase(),
-                mimeType: selectedFile.type,
-                packageId: formValues.packageId || "NA",
-            }, user.id);
+            const attachmentPayload = {
+                tenantName: "Beta Education",
+                bucketType: "content",
+                series: formValues.seriesId,
+                subject: formValues.subjectId,
+                lesson: formValues.lessonId,
+                package: formValues.packageId || "NA",
+                class: formValues.classId,
+                contentType: selectedFile.type,
+                filename: selectedFile.name,
+                filePath: signedUrlData.filePath,
+                uploadedBy: user.id,
+            };
+
+            await createAttachment(attachmentPayload);
 
             onAddContent({ ...formValues, contentType: selectedVisualContentType, attachmentId: signedUrlData.attachmentId });
             resetForm();
         } catch (error) {
             console.error("Content creation failed:", error);
-            alert("Failed to upload content. Please try again.");
+            const errorMessage = error.response?.data?.message || "Failed to upload content. Please try again.";
+            alert(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -387,6 +452,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>Add New Content</DialogTitle>
+
                     <DialogDescription>Fill in the details below to add new content.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>

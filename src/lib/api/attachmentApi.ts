@@ -15,21 +15,13 @@ export async function createAttachment(attachmentData: any): Promise<any> {
   try {
     const user = getUserFromStorage();
     const tenantId = user?.tenantId;
-    const userId = user?.id;
 
     if (!tenantId) throw new Error("Tenant ID not found in user data");
-    if (!userId) throw new Error("User ID (id) not found in user data");
-
-    const payload = {
-      ...attachmentData,
-      createdBy: userId,
-      tenantName: "Beta Education", // This may need to be dynamic in the future
-    };
 
     // The authorization header is now handled automatically by the apiClient interceptor
     const response = await apiClient.post(
       `/tenants/${tenantId}/attachments`,
-      { data: payload }
+      { data: attachmentData } // Pass the attachmentData directly
     );
 
     return response.data.data;
@@ -112,7 +104,7 @@ export async function getSubjectContent(tenantId: string, payload: any): Promise
         { data: modifiedPayload }
       );
   
-      return response.data.data;
+      return response.data.data.records;
     } catch (err: any) {
       console.error("❌ getSubjectContent error:", err.response?.data || err.message);
       throw err;

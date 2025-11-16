@@ -81,7 +81,7 @@ async function handleSchoolAdminCreation(values, token, tenantId, schoolId, scho
     const adminData = {
         data: {
             schoolName: schoolName,
-            role: ['SCHOOLADMIN'],
+            role: ['SCHOOL_ADMIN'],
             firstName: values.firstName,
             lastName: values.lastName,
             gender: values.gender,
