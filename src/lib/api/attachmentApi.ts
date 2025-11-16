@@ -72,14 +72,18 @@ export async function getSignedUrl(uploadData: any): Promise<any> {
     }
 }
 
-export async function uploadFileToSignedUrl(signedUrl: string, file: File) {
+export async function uploadFileToSignedUrl(signedUrl: string, file: File, name: string) {
     try {
+      const headers: { [key: string]: string } = {
+        'Content-Type': file.type,
+      };
+      if (name) {
+        headers['x-goog-meta-name'] = name;
+      }
       const response = await fetch(signedUrl, {
         method: 'PUT',
         body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+        headers: headers,
       });
       if (!response.ok) {
         const errorText = await response.text();

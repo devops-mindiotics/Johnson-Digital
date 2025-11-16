@@ -122,14 +122,14 @@ export default function ContentManagementPage() {
 
                 const groupedByLesson = Array.isArray(content) ? content.reduce((acc, item) => {
                     const lessonName = lessonMap.get(item.lesson) || item.lesson;
-                    const key = `${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${seriesMap.get(item.series) || item.series}-${lessonName}`;
+                    const key = `${lessonName}-${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${seriesMap.get(item.series) || item.series}`;
                     if (!acc[key]) {
                         acc[key] = [];
                     }
                     acc[key].push({ 
                         attachmentId: item.attachmentId,
                         contentType: item.filename.split('.').pop(),
-                        contentName: item.filename,
+                        contentName: item.name,
                         status: item.status,
                         package: packageMap.get(item.package) || item.package
                     });
@@ -275,7 +275,7 @@ function ContentList({ contentData, masterData }) {
                     <div className="text-center py-10 lg:col-span-2"><p className="text-muted-foreground">No content found. Use the filters above to search for content.</p></div>
                 ) : (
                     Object.entries(contentData).map(([key, contents]) => {
-                        const [classValue, subjectValue, seriesValue, lessonName] = key.split('-');
+                        const [lessonName, classValue, subjectValue, seriesValue] = key.split('-');
                         const isRowOpen = openKey === key;
                         return (
                             <Card key={key}>
@@ -414,11 +414,12 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 class: formValues.classId,
                 contentType: selectedFile.type,
                 filename: selectedFile.name,
+                name: formValues.contentName, 
                 expiresIn: 3600
             };
             const signedUrlData = await getSignedUrl(signedUrlPayload);
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, selectedFile);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, selectedFile, formValues.contentName);
 
             const attachmentPayload = {
                 tenantName: "Beta Education",
@@ -430,6 +431,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
                 class: formValues.classId,
                 contentType: selectedFile.type,
                 filename: selectedFile.name,
+                name: formValues.contentName,
                 filePath: signedUrlData.filePath,
                 uploadedBy: user.id,
             };

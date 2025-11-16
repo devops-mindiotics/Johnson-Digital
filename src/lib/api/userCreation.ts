@@ -17,7 +17,7 @@ async function handleStudentCreation(values, token, tenantId, schoolId, schoolNa
             lastName: values.lastName,
             email: values.email,
             schoolName: schoolName,
-            role: ["STUDENT"],
+            roles: ["STUDENT"],
             student: {
                 gender: values.gender,
                 admissionNo: values.admissionNumber,
@@ -53,7 +53,7 @@ async function handleTeacherCreation(values, token, tenantId, schoolId, schoolNa
     const teacherData = {
         data: {
             schoolName: schoolName,
-            role: ['Teacher'],
+            roles: ['TEACHER'],
             firstName: values.firstName,
             lastName: values.lastName,
             gender: values.gender,
@@ -81,7 +81,7 @@ async function handleSchoolAdminCreation(values, token, tenantId, schoolId, scho
     const adminData = {
         data: {
             schoolName: schoolName,
-            role: ['SCHOOL_ADMIN'],
+            roles: ['SCHOOL_ADMIN'],
             firstName: values.firstName,
             lastName: values.lastName,
             gender: values.gender,

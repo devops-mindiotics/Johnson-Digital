@@ -120,11 +120,12 @@ const BannersPage = () => {
                 class: 'All',
                 contentType: file.type,
                 filename: file.name,
+                name: banner.name,
                 expiresIn: 3600,
               };
             const signedUrlData = await getSignedUrl(signedUrlPayload);
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file, banner.name);
 
             const attachmentPayload = {
                 tenantName: 'Beta Education',
@@ -136,6 +137,7 @@ const BannersPage = () => {
                 class: 'All',
                 contentType: file.type,
                 filename: file.name,
+                name: banner.name,
                 filePath: signedUrlData.filePath,
                 uploadedBy: currentUser.id,
             };
@@ -209,11 +211,12 @@ const BannersPage = () => {
                 class: 'All',
                 contentType: file.type,
                 filename: file.name,
+                name: updatedBanner.name,
                 expiresIn: 3600,
               };
             const signedUrlData = await getSignedUrl(signedUrlPayload);
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file, updatedBanner.name);
 
             const attachmentPayload = {
                 tenantName: 'Beta Education',
@@ -225,6 +228,7 @@ const BannersPage = () => {
                 class: 'All',
                 contentType: file.type,
                 filename: file.name,
+                name: updatedBanner.name,
                 filePath: signedUrlData.filePath,
                 uploadedBy: currentUser.id,
             };
