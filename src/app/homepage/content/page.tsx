@@ -122,7 +122,7 @@ export default function ContentManagementPage() {
 
                 const groupedByLesson = Array.isArray(content) ? content.reduce((acc, item) => {
                     const lessonName = lessonMap.get(item.lesson) || item.lesson;
-                    const key = `${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${lessonName}`;
+                    const key = `${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${seriesMap.get(item.series) || item.series}-${lessonName}`;
                     if (!acc[key]) {
                         acc[key] = [];
                     }
@@ -275,14 +275,14 @@ function ContentList({ contentData, masterData }) {
                     <div className="text-center py-10 lg:col-span-2"><p className="text-muted-foreground">No content found. Use the filters above to search for content.</p></div>
                 ) : (
                     Object.entries(contentData).map(([key, contents]) => {
-                        const [classValue, subjectValue, lessonName] = key.split('-');
+                        const [classValue, subjectValue, seriesValue, lessonName] = key.split('-');
                         const isRowOpen = openKey === key;
                         return (
                             <Card key={key}>
                                 <CardHeader className="flex flex-row justify-between items-center p-4 cursor-pointer" onClick={() => setOpenKey(isRowOpen ? null : key)}>
                                     <div>
-                                        <CardTitle className="text-lg font-bold">{lessonName}</CardTitle>
-                                        <CardDescription className="text-sm">{`${classValue} • ${subjectValue}`}</CardDescription>
+                                        <CardTitle className="text-xl font-bold">{lessonName}</CardTitle>
+                                        <CardDescription>{`${classValue} • ${subjectValue} • ${seriesValue}`}</CardDescription>
                                     </div>
                                     <ChevronDown className={`transform transition-transform ${isRowOpen ? 'rotate-180' : ''}`} />
                                 </CardHeader>
