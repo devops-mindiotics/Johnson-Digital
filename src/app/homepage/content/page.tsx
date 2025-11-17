@@ -254,10 +254,10 @@ function ContentList({ contentData, masterData }) {
     }, [contentData]);
 
     const handleContentClick = async (content) => {
-        const { signedUrl } = await getSignedUrlForViewing(content.attachmentId);
+        const signedUrl  = await getSignedUrlForViewing(content.attachmentId);
         if (signedUrl) {
             if (content.contentType.toLowerCase() === 'mp4') {
-                setSelectedVideoUrl(signedUrl);
+                setSelectedVideoUrl(signedUrl.viewUrl);
             } else {
                 window.open(signedUrl, '_blank');
             }
