@@ -31,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages, getAllContentTypes } from '@/lib/api/masterApi';
-import { getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
+import { getAllLessons, getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
 import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
 
 const getContentTypeIcon = (contentType) => {
@@ -189,7 +189,19 @@ function FilterControls({ onSearch, masterData }) {
 
     useEffect(() => {
         if (filters.classId) {
-            getAllSubjects(filters.classId).then(setSubjects).catch(err => console.error(err));
+            getAllLessons({ classId: filters.classId })
+                .then(lessons => {
+                    if (lessons && lessons.length > 0) {
+                        const uniqueSubjects = [...new Map(lessons.filter(l => l.subject).map(item => [item.subject.id, item.subject])).values()];
+                        setSubjects(uniqueSubjects);
+                    } else {
+                        setSubjects([]);
+                    }
+                })
+                .catch(err => {
+                    console.error("Failed to fetch subjects for class:", err);
+                    setSubjects([]);
+                });
         } else {
             setSubjects([]);
         }
@@ -259,7 +271,7 @@ function ContentList({ contentData, masterData }) {
             if (content.contentType.toLowerCase() === 'mp4') {
                 setSelectedVideoUrl(signedUrl.viewUrl);
             } else {
-                window.open(signedUrl, '_blank');
+                window.open(signedUrl.viewUrl, '_blank');
             }
         }
     };
@@ -394,7 +406,7 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
         setSelectedFile(null);
         setLessons([]);
         if (document.getElementById('upload')) {
-          document.getElementById('upload').value = '';
+          (document.getElementById('upload') as HTMLInputElement).value = '';
         }
     };
 

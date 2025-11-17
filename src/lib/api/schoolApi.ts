@@ -132,8 +132,8 @@ export async function getClassesByUserId(
     const response = await apiClient.get(
       `/tenants/${tenantId}/schools/${schoolId}/users/${userId}/classes`
     );
-    if (response.data && Array.isArray(response.data.data)) {
-      return response.data.data;
+    if (response.data && response.data.data && Array.isArray(response.data.data.classes)) {
+      return response.data.data.classes;
     }
     return [];
   } catch (err: any) {

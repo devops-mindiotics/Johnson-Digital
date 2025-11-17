@@ -341,7 +341,10 @@ export default function ClassesPage() {
         const teacher = teachers.find(t => t.id === values.teacherId);
         if (!teacher) return;
 
-        const newSubject = { subjectId: values.subjectId, subjectTeacherId: values.teacherId, subjectTeacherName: teacher.name };
+        const masterSubject = masterSubjects.find(ms => ms.id === values.subjectId);
+        const subjectName = masterSubject ? masterSubject.name : '';
+
+        const newSubject = { subjectId: values.subjectId, subjectName, subjectTeacherId: values.teacherId, subjectTeacherName: teacher.name };
         let updatedClass;
     
         if (currentSection) {
