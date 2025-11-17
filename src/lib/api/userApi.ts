@@ -134,10 +134,9 @@ export const createSchoolAdmin = async (token: string, tenantId: string, schoolI
     if (!tenantId) throw new Error("Tenant ID not provided");
     
     try {
-        const { password, ...restOfData } = data.data;
         const response = await apiClient.post(
             `/tenants/${tenantId}/schools/${schoolId}/users`,
-            { data: restOfData },
+            data,
             getHeaders(token)
         );
 

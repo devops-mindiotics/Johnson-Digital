@@ -9,39 +9,43 @@ import {
 async function handleStudentCreation(values, token, tenantId, schoolId, schoolName, classes, sections) {
     const className = classes.find(c => c.id === values.classId)?.name || '';
     const sectionName = sections.find(s => s.id === values.section)?.name || '';
+    const {
+        password,
+        ...studentData
+    } = values;
     const studentPayload = {
         data: {
-            phone: values.mobileNumber,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
+            phone: studentData.mobileNumber,
+            firstName: studentData.firstName,
+            lastName: studentData.lastName,
+            email: studentData.email,
             schoolName: schoolName,
             roles: ["STUDENT"],
             student: {
-                gender: values.gender,
-                admissionNo: values.admissionNumber,
-                pen: values.pen,
-                dob: values.dob,
+                gender: studentData.gender,
+                admissionNo: studentData.admissionNumber,
+                pen: studentData.pen,
+                dob: studentData.dob,
                 guardian: {
-                    fatherName: values.fatherName,
-                    motherName: values.motherName
+                    fatherName: studentData.fatherName,
+                    motherName: studentData.motherName
                 },
-                status: values.status,
+                status: studentData.status,
                 classDetails: {
-                    classId: values.classId,
+                    classId: studentData.classId,
                     className: className,
-                    sectionId: values.section,
+                    sectionId: studentData.section,
                     sectionName: sectionName,
-                    academicYear: values.academicYear,
-                    rollNumber: values.rollNumber
+                    academicYear: studentData.academicYear,
+                    rollNumber: studentData.rollNumber
                 }
             },
             address: {
-                line1: values.address,
-                city: values.city,
-                district: values.district,
-                state: values.state,
-                pincode: values.pincode
+                line1: studentData.address,
+                city: studentData.city,
+                district: studentData.district,
+                state: studentData.state,
+                pincode: studentData.pincode
             }
         }
     };
@@ -71,7 +75,8 @@ async function handleTeacherCreation(values, token, tenantId, schoolId, schoolNa
             },
             status: 'active',
             expiryDate: values.expiryDate,
-    }};
+        }
+    };
     await createTeacher(token, tenantId, schoolId, teacherData);
 }
 
@@ -97,7 +102,8 @@ async function handleSchoolAdminCreation(values, token, tenantId, schoolId, scho
             },
             status: 'active',
             expiryDate: values.expiryDate,
-    }};
+        }
+    };
     await createSchoolAdmin(token, tenantId, schoolId, adminData);
 }
 

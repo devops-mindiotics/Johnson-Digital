@@ -4,14 +4,21 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Eye, EyeOff } from 'lucide-react';
-import { handleApiError } from '@/lib/utils/error-handler';
 import { loginUser } from '@/lib/api/auth';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { usePdfViewer } from '@/hooks/use-pdf-viewer'; // Import the hook
+import { usePdfViewer } from '@/hooks/use-pdf-viewer';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const FormSchema = z.object({
   mobile: z.string().regex(/^[0-9]{10}$/, 'Mobile number must be 10 digits.'),
@@ -20,9 +27,11 @@ const FormSchema = z.object({
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [errorTitle, setErrorTitle] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const { login } = useAuth();
-  const { toast } = useToast();
-  const { openPdf } = usePdfViewer(); // Use the hook
+  const { openPdf } = usePdfViewer();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     mode: 'onBlur',
@@ -33,22 +42,24 @@ export function LoginForm() {
     },
   });
 
+  const showErrorDialog = (title: string, message: string) => {
+    setErrorTitle(title);
+    setErrorMessage(message);
+    setIsErrorDialogOpen(true);
+  };
+
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
       const response = await loginUser(values.mobile, values.password);
-      console.log('🚀 Unable to login. response', { response });
       if (response.success) {
         login(response.data);
       } else {
-        toast({
-          variant: 'destructive',
-          title: 'Login Failed',
-          description: response.message,
-        });
+        showErrorDialog('Login Failed', response.message);
       }
-    } catch (error) {
-      console.log('🚀 Unable to login. Please check your credentials.', { error });
-      handleApiError(error, 'Unable to login. Please check your credentials.');
+    } catch (error: any) {
+        console.log('🚀 Unable to login. Please check your credentials.', { error });
+        const description = error.response?.data?.message || 'Unable to login. Please check your credentials.';
+        showErrorDialog('Login Failed', description);
     }
   };
 
@@ -129,6 +140,19 @@ export function LoginForm() {
           .
         </p>
       </div>
+      <AlertDialog open={isErrorDialogOpen} onOpenChange={setIsErrorDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{errorTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {errorMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsErrorDialogOpen(false)}>Ok</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

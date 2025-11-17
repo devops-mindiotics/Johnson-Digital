@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
-import { getAllLessons, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
+import { getAllLessons, getLessonsByClassIdAndSubjectId, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
 import {
   Dialog,
   DialogContent,
@@ -61,32 +61,65 @@ export default function MasterLessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
-    fetchLessons();
     fetchClasses();
-    fetchSubjects();
-  }, [selectedClass, selectedSubject]);
+    fetchAllSubjects();
+  }, []);
 
-  const fetchLessons = async () => {
+  useEffect(() => {
+    if (selectedClass === 'all') {
+      fetchAllLessons();
+    } else {
+      fetchLessonsForClass(selectedClass);
+    }
+  }, [selectedClass]);
+
+  useEffect(() => {
+    if (selectedClass !== 'all' && selectedSubject !== 'all') {
+      fetchLessonsForClassAndSubject(selectedClass, selectedSubject);
+    } else if (selectedClass !== 'all') {
+      fetchLessonsForClass(selectedClass);
+    }
+  }, [selectedSubject]);
+
+  const fetchAllLessons = async () => {
     try {
-      const filters = {
-        page: 1,
-        limit: 10,
-        classId: selectedClass === 'all' ? '' : selectedClass,
-        subjectId: selectedSubject === 'all' ? '' : selectedSubject,
-        status: 'active',
-      };
-      const response = await getAllLessons(filters);
+      const response = await getAllLessons();
       setLessons(response);
+      setSubjects(allSubjects);
     } catch (error) {
       console.error('Failed to fetch lessons', error);
     }
   };
+
+  const fetchLessonsForClass = async (classId: string) => {
+    try {
+      const response = await getAllLessons({ classId });
+      setLessons(response);
+      const subjectIds = [...new Set(response.map(lesson => lesson.subjectId))];
+      const uniqueSubjects = allSubjects.filter(subject => subjectIds.includes(subject.id));
+      setSubjects(uniqueSubjects);
+      setSelectedSubject('all');
+    } catch (error) {
+      console.error('Failed to fetch lessons for class', error);
+    }
+  };
+
+  const fetchLessonsForClassAndSubject = async (classId: string, subjectId: string) => {
+    try {
+      const response = await getLessonsByClassIdAndSubjectId(classId, subjectId);
+      setLessons(response);
+    } catch (error) {
+      console.error('Failed to fetch lessons for class and subject', error);
+    }
+  };
+
 
   const fetchClasses = async () => {
     try {
@@ -97,10 +130,10 @@ export default function MasterLessonsPage() {
     }
   };
 
-  const fetchSubjects = async () => {
+  const fetchAllSubjects = async () => {
     try {
       const response = await getAllSubjects();
-      setSubjects(response);
+      setAllSubjects(response);
     } catch (error) {
       console.error('Failed to fetch subjects', error);
     }
@@ -119,7 +152,11 @@ export default function MasterLessonsPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteLesson(id);
-      fetchLessons();
+      if (selectedClass === 'all') {
+        fetchAllLessons();
+      } else {
+        fetchLessonsForClass(selectedClass);
+      }
     } catch (error) {
       console.error('Failed to delete lesson', error);
     }
@@ -127,15 +164,19 @@ export default function MasterLessonsPage() {
 
   const handleSave = async (lessonData:  Omit<Lesson, 'id'>) => {
     try {
+        const meta = { modifiedBy: user?.id || '', role: user?.role || '' };
       if (selectedLesson) {
         const { name, description, classId, subjectId, status } = lessonData;
         const data = { name, description, classId, subjectId, status };
-        const meta = { modifiedBy: user?.id || '', role: user?.role || '' };
-        await updateLesson(selectedLesson.id, data, meta);
+        await updateLesson(selectedLesson.id, {data, meta});
       } else {
-        await createLesson(lessonData);
+        await createLesson({data: lessonData, meta});
       }
-      fetchLessons();
+      if (selectedClass === 'all') {
+        fetchAllLessons();
+      } else {
+        fetchLessonsForClass(selectedClass);
+      }
       setIsDialogOpen(false);
       setSelectedLesson(null);
     } catch (error) {
@@ -186,7 +227,7 @@ export default function MasterLessonsPage() {
               <CardContent className="flex-grow">
                 <p>{l.description}</p>
                 <p className="text-sm text-gray-500 mt-2">Class: {classes.find(c => c.id === l.classId)?.name}</p>
-                <p className="text-sm text-gray-500">Subject: {subjects.find(s => s.id === l.subjectId)?.name}</p>
+                <p className="text-sm text-gray-500">Subject: {allSubjects.find(s => s.id === l.subjectId)?.name}</p>
                 <p className="text-sm text-gray-500">Status: {l.status}</p>
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
@@ -226,7 +267,7 @@ export default function MasterLessonsPage() {
         onSave={handleSave}
         initialData={selectedLesson}
         classes={classes}
-        subjects={subjects}
+        subjects={allSubjects}
       />
     </Card>
   );

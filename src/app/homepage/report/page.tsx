@@ -143,7 +143,7 @@ export default function ReportPage() {
                     <li>Be specific about the problem</li>
                     <li>Include steps to reproduce the issue</li>
                     <li>Screenshots help us understand better</li>
-                    <li>Mention which device/browser you re using</li>
+                    <li>Mention which device/browser you're using</li>
                   </ul>
                 </AlertDescription>
               </Alert>

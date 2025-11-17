@@ -81,10 +81,13 @@ export function HomepageHeader() {
   const salutation = getSalutation();
   const displayName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}`: '';
   const finalDisplayName = `Hi ${salutation ? `${salutation} ` : ''}${displayName}`;
-  const displayClass = userRole === STUDENT ? "Class-10" : "Class-V";
+  const classDetails = user?.schools?.[0]?.classDetails;
+  const displayClass = classDetails
+    ? `${classDetails.className}${classDetails.sectionName && classDetails.sectionName !== 'No Sections' ? `, ${classDetails.sectionName}` : ''}`
+    : '';
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b px-4 md:px-6">
+    <header className="flex h-auto shrink-0 items-center justify-between border-b px-4 md:px-6 py-4">
       <div className="flex items-center gap-2">
         {showBackButton && (
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
@@ -93,22 +96,22 @@ export function HomepageHeader() {
             </Button>
         )}
         <SidebarTrigger />
-        <div className="flex flex-col pt-2">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
             <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
-            <div className="flex items-center gap-2">
-                <p className="text-sm">{finalDisplayName}</p>
-                {userRole === STUDENT && (
-                <p className="hidden text-sm text-muted-foreground sm:block">
-                    ({displayClass})
-                </p>
-                )}
-            </div>
             {userRole === STUDENT && (
-                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full w-fit mt-1">
+                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full w-fit">
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
                 </span>
             )}
+          </div>
+          <p className="text-sm">{finalDisplayName}</p>
+          {userRole === STUDENT && displayClass && (
+            <p className="text-sm text-muted-foreground">
+                {displayClass}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-4">

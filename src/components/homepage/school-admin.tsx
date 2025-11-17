@@ -86,6 +86,9 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
       )
     const [showAllNotices, setShowAllNotices] = useState(false);
 
+    const school = user.schools.find(s => s.id === user.schoolId);
+    const schoolName = school ? school.schoolName : '';
+
   return (
     <div className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -98,13 +101,14 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
                             onMouseEnter={plugin.current.stop}
                             onMouseLeave={plugin.current.reset}>
                             <CarouselContent>
-                                {banners.map((banner, index) => (
+                                {Array.isArray(banners) && banners.map((banner, index) => (
                                 <CarouselItem key={index}>
                                     <a href={banner.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                    <div className="h-48 md:h-64 relative">
-                                    <img src={banner.attachmentUrl} alt={banner.title} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
-                                        <h2 className="text-white text-2xl font-bold">{banner.title}</h2>
+                                    <div className="relative h-80">
+                                    <img src={banner.attachmentUrl} alt={banner.title} className="w-full h-full object-contain" />
+                                    <div className="absolute inset-0 bg-black bg-opacity-20 flex flex-col justify-between p-4">
+                                        <h2 className="text-white text-lg font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>{banner.title}</h2>
+                                        <p className="text-white text-xs text-right" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>{schoolName}</p>
                                     </div>
                                     </div>
                                     </a>

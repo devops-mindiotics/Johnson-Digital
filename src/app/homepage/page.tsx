@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { getRoles } from '@/lib/utils/getRole';
 import { getBanners } from '@/lib/api/bannerApi';
+import { getSignedUrlForViewing } from '@/lib/api/attachmentApi';
 import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
 
 import SuperAdminDashboard from '@/components/homepage/super-admin';
@@ -32,9 +33,29 @@ export default function Homepage() {
             schoolId: user.schoolId,
             role: getRoles(),
           });
-          setBanners(bannerData.data);
+          
+          if (bannerData && bannerData.data && Array.isArray(bannerData.data.records)) {
+            const bannersWithUrls = await Promise.all(
+              bannerData.data.records.map(async (banner) => {
+                if (banner.attachmentId) {
+                  try {
+                    const signedUrlData = await getSignedUrlForViewing(banner.attachmentId);
+                    return { ...banner, attachmentUrl: signedUrlData.viewUrl }; 
+                  } catch (error) {
+                    console.error('Failed to get signed URL for banner:', banner.id, error);
+                    return { ...banner, attachmentUrl: '' };
+                  }
+                }
+                return { ...banner, attachmentUrl: '' };
+              })
+            );
+            setBanners(bannersWithUrls);
+          } else {
+             setBanners([]);
+          }
         } catch (error) {
           console.error("Failed to fetch banners:", error);
+          setBanners([]);
         }
       }
     };
@@ -48,7 +69,6 @@ export default function Homepage() {
   const userRole = getRoles() || STUDENT;
 
   const renderDashboard = () => {
-    console.log('🚀 renderDashboard called', userRole);
     switch (userRole) {
       case SUPERADMIN:
         return <SuperAdminDashboard user={user} />;
@@ -61,7 +81,6 @@ export default function Homepage() {
       case TENANTADMIN:
         return <SuperAdminDashboard user={user} />;
       default:
-        console.log('🚀 Invalid user role', userRole);
         return <div>Invalid user role.</div>;
     }
   };
