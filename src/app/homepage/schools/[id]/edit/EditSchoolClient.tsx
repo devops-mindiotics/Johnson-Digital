@@ -1,9 +1,10 @@
 'use client';
 import { useRouter } from "next/navigation";
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldErrors } from 'react-hook-form';
 import { z } from 'zod';
+import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -13,10 +14,14 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Link from "next/link";
 import { updateSchool } from "@/lib/api/schoolApi";
+import { useAuth } from "@/hooks/use-auth";
+import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSignedUrlForViewing } from "@/lib/api/attachmentApi";
+import { Upload } from 'lucide-react';
+import './EditSchool.css';
 
 const formSchema = z.object({
   schoolName: z.string().min(1, 'School Name is required'),
-  trustName: z.string(),
+  trustName: z.string().optional(),
   board: z.enum(['State Board', 'CBSE', 'ICSE']),
   type: z.enum(['co-education', 'girls', 'boys']),
   affiliationNo: z.string(),
@@ -26,7 +31,7 @@ const formSchema = z.object({
   expiryDate: z.string().min(1, 'Expiry Date is required'),
   email: z.string().email(),
   contacts: z.array(z.object({
-      role: z.string(),
+      role: z.string().optional(),
       name: z.string(),
       mobile: z.string(),
   })),
@@ -47,7 +52,7 @@ const formSchema = z.object({
       instagram: z.string().url().optional(),
       linkedin: z.string().url().optional(),
   }).optional(),
-  schoolCode: z.string(),
+  schoolCode: z.string().optional(),
   totalTeachers: z.preprocess((val) => Number(val), z.number().min(0)),
   totalStudents: z.preprocess((val) => Number(val), z.number().min(0))
 });
@@ -73,6 +78,10 @@ export default function EditSchoolClient({
   schoolList: SchoolItem[];
 }) {
   const router = useRouter();
+  const { user } = useAuth();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -86,21 +95,87 @@ export default function EditSchoolClient({
         expiryDate: formatDate(initialSchool.expiryDate),
       };
       form.reset(formattedSchool);
+
+      if (initialSchool.logoUrl) {
+        getSignedUrlForViewing(initialSchool.logoUrl)
+          .then(url => setLogoPreview(url))
+          .catch(err => console.error("Error fetching logo preview:", err));
+      }
     }
   }, [initialSchool, form]);
 
   async function onSubmit(values: FormValues) {
+    console.log("Form submitted with values:", values);
+    console.log("User object:", user);
+
+    const tenantId = user?.tenant?.id ?? user?.tenantId;
+
+    if (!tenantId) {
+      console.error("Tenant ID is missing from user object:", user);
+      return;
+    }
+
+    console.log("Tenant ID found:", tenantId);
+
+    let logoUrl = initialSchool.logoUrl;
+
+    if (selectedFile) {
+      try {
+        const signedUrlData = await getSignedUrl({
+          fileName: selectedFile.name,
+          contentType: selectedFile.type,
+          bucketType: 'profile',
+        });
+
+        await uploadFileToSignedUrl(signedUrlData.signedUrl, selectedFile, selectedFile.name);
+
+        const attachmentData = await createAttachment({
+          fileName: selectedFile.name,
+          contentType: selectedFile.type,
+          fileSize: selectedFile.size,
+          gcsUrl: signedUrlData.gcsUrl,
+          bucketType: 'profile',
+        });
+
+        logoUrl = attachmentData.id;
+      } catch (error) {
+        console.error("Failed to upload logo:", error);
+        return; 
+      }
+    }
+
+    const updatedValues = { 
+      ...values, 
+      logoUrl, 
+      contacts: [
+        { ...values.contacts[0], role: 'principal' },
+        { ...values.contacts[1], role: 'incharge' },
+      ],
+      schoolCode: initialSchool.schoolCode
+    }; 
+
     try {
-      await updateSchool(initialSchool.id, values);
+      await updateSchool(tenantId, initialSchool.id, updatedValues);
       router.push('/homepage/schools');
     } catch (error) {
         console.error("Failed to update school:", error);
     }
   }
 
+  const onInvalid = (errors: FieldErrors<FormValues>) => {
+    console.error("Form validation errors:", errors);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setLogoPreview(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Edit School</h1>
           <Link href="/homepage/schools">
@@ -152,9 +227,41 @@ export default function EditSchoolClient({
               <FormField control={form.control} name="affiliationNo" render={({ field }) => (
                 <FormItem><FormLabel>Affiliation No./School Code</FormLabel><FormControl><Input placeholder="e.g., CBSE/AFF/12345" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-              <FormField control={form.control} name="logoUrl" render={() => (
-                <FormItem><FormLabel>School Logo</FormLabel><FormControl><Input type="file" /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <FormField
+                control={form.control}
+                name="logoUrl"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>School Logo</FormLabel>
+                    <div
+                      className="file-upload-area"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FormControl>
+                        <Input
+                          type="file"
+                          className="hidden"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                          accept="image/*"
+                        />
+                      </FormControl>
+                      {logoPreview ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <Image src={logoPreview} alt="Logo Preview" width={100} height={100} className="logo-preview" />
+                          <span>{selectedFile ? selectedFile.name : 'Click to change logo'}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                           <Upload className="w-8 h-8 text-muted-foreground" />
+                          <span>Click to upload a logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField control={form.control} name="website" render={({ field }) => (
                 <FormItem><FormLabel>School Website</FormLabel><FormControl><Input placeholder="https://www.school.com" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>

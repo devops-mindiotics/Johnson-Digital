@@ -31,7 +31,6 @@ import {
   } from "@/components/ui/carousel"
 import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User } from '@/contexts/auth-context';
-import banners from '@/banners.json';
 
 const stats = [
     { 
@@ -81,7 +80,7 @@ const recentActivities = [
     { text: 'Annual fee circular was sent to all students.', time: '2 days ago', icon: MessageSquare },
 ];
 
-export default function SchoolAdminDashboard({ user }: { user: User }) {
+export default function SchoolAdminDashboard({ user, banners }: { user: User; banners: any[] }) {
     const plugin = React.useRef(
         Autoplay({ delay: 3000, stopOnInteraction: true })
       )
@@ -101,13 +100,14 @@ export default function SchoolAdminDashboard({ user }: { user: User }) {
                             <CarouselContent>
                                 {banners.map((banner, index) => (
                                 <CarouselItem key={index}>
+                                    <a href={banner.attachmentUrl} target="_blank" rel="noopener noreferrer">
                                     <div className="h-48 md:h-64 relative">
-                                    <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
+                                    <img src={banner.attachmentUrl} alt={banner.title} className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col justify-end p-6">
                                         <h2 className="text-white text-2xl font-bold">{banner.title}</h2>
-                                        <p className="text-white text-sm">{banner.description}</p>
                                     </div>
                                     </div>
+                                    </a>
                                 </CarouselItem>
                                 ))}
                             </CarouselContent>

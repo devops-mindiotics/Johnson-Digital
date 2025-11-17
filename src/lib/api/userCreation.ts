@@ -12,7 +12,6 @@ async function handleStudentCreation(values, token, tenantId, schoolId, schoolNa
     const studentPayload = {
         data: {
             phone: values.mobileNumber,
-            password: "",
             firstName: values.firstName,
             lastName: values.lastName,
             email: values.email,
@@ -60,7 +59,6 @@ async function handleTeacherCreation(values, token, tenantId, schoolId, schoolNa
             dob: values.dob,
             phone: values.mobileNumber,
             email: values.email,
-            password: "",
             employeeId: values.employeeId,
             joiningDate: values.joiningDate,
             experience: values.experience,
@@ -87,7 +85,6 @@ async function handleSchoolAdminCreation(values, token, tenantId, schoolId, scho
             gender: values.gender,
             phone: values.mobileNumber,
             email: values.email,
-            password: "",
             employeeId: values.employeeId,
             joiningDate: values.joiningDate,
             experience: values.experience,

@@ -1,0 +1,21 @@
+.file-upload-area {
+  border: 2px dashed hsl(var(--primary));
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+.file-upload-area:hover {
+  background-color: hsl(var(--accent));
+}
+
+.logo-preview {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+}
