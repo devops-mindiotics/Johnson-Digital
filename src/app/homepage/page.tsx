@@ -7,7 +7,7 @@ import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { getRoles } from '@/lib/utils/getRole';
 import { getBanners } from '@/lib/api/bannerApi';
 import { getSignedUrlForViewing } from '@/lib/api/attachmentApi';
-import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TEACHER , STUDENT, TENANTADMIN } from '@/lib/utils/constants';
 
 import SuperAdminDashboard from '@/components/homepage/super-admin';
 import SchoolAdminDashboard from '@/components/homepage/school-admin';
@@ -70,7 +70,7 @@ export default function Homepage() {
 
   const renderDashboard = () => {
     switch (userRole) {
-      case SUPERADMIN:
+      case TENANTADMIN:
         return <SuperAdminDashboard user={user} />;
       case SCHOOLADMIN:
         return <SchoolAdminDashboard user={user} banners={banners} />;
@@ -78,8 +78,6 @@ export default function Homepage() {
         return <TeacherDashboard user={user} banners={banners} />;
       case STUDENT:
         return <StudentDashboard user={user} banners={banners} />;
-      case TENANTADMIN:
-        return <SuperAdminDashboard user={user} />;
       default:
         return <div>Invalid user role.</div>;
     }

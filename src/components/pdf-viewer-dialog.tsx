@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogClose,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
@@ -20,17 +21,20 @@ export const PdfViewerDialog: React.FC<PdfViewerDialogProps> = ({ isOpen, onOpen
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 border-0 w-screen h-screen max-w-none">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogClose asChild className="absolute top-2 right-2 z-10">
             <Button variant="ghost" size="icon">
               <X className="h-6 w-6 text-white bg-black rounded-full" />
             </Button>
         </DialogClose>
-        <iframe
-          src={pdfUrl}
-          className="w-full h-full"
-          style={{ border: 'none' }}
-          title={title}
-        />
+        {pdfUrl && (
+          <iframe
+            src={pdfUrl}
+            className="w-full h-full"
+            style={{ border: 'none' }}
+            title={title}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -39,20 +39,24 @@ const DiaryPage = () => {
 
   useEffect(() => {
     const fetchDiaries = async () => {
+      if (!user?.tenantId || !user?.schoolId) return;
       try {
         const diaryData = await getDiaryEntries(user.tenantId, user.schoolId, {});
-        setDiaries(diaryData.data);
+        setDiaries(diaryData?.data || []);
       } catch (error) {
         console.error("Failed to fetch diaries:", error);
+        setDiaries([]);
       }
     };
     
     const fetchStudents = async () => {
+      if (!user?.tenantId || !user?.schoolId) return;
       try {
         const studentData = await getAllStudents(user.tenantId, user.schoolId);
-        setStudents(studentData.data);
+        setStudents(studentData?.data || []);
       } catch (error) {
         console.error("Failed to fetch students:", error);
+        setStudents([]);
       }
     };
 
@@ -62,7 +66,7 @@ const DiaryPage = () => {
 
   const classSectionMap = useMemo(() => {
     const map = {};
-    diaries.forEach(d => {
+    (diaries || []).forEach(d => {
         if (!d.classId || !d.sectionId) return;
         if (!map[d.classId]) {
             map[d.classId] = new Set();
@@ -79,7 +83,7 @@ const DiaryPage = () => {
   const sectionsForSelectedClass = selectedClass !== 'all' ? classSectionMap[selectedClass] || [] : [];
 
   useEffect(() => {
-    let filtered = diaries;
+    let filtered = diaries || [];
 
     if (isStudent && user?.classId && user?.sectionId) {
       filtered = filtered.filter(d => 
@@ -260,7 +264,7 @@ const DiaryPage = () => {
                     <p className="text-sm text-gray-700 mb-3">{diary.description}</p>
                     {diary.assignedTo === 'student' && diary.studentIds.length > 0 && (
                         <p className="text-xs font-semibold mt-2 bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        Assigned to: {diary.studentIds.map(id => students.find(s => s.id === id)?.name || id).join(', ')}
+                        Assigned to: {diary.studentIds.map(id => (students || []).find(s => s.id === id)?.name || id).join(', ')}
                         </p>
                     )}
                     {diary.attachments && diary.attachments.length > 0 && (
@@ -494,7 +498,7 @@ const DiaryForm = ({ onSubmit, initialData, onClose, classSectionMap, students }
                                         <CommandInput placeholder="Search students..." />
                                         <CommandEmpty>No students found.</CommandEmpty>
                                         <CommandGroup>
-                                            {students.map((student) => (
+                                            {(students || []).map((student) => (
                                                 <CommandItem
                                                     value={student.id}
                                                     key={student.id}

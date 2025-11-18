@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { usePdfViewer } from '@/hooks/use-pdf-viewer';
 import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages, getAllContentTypes } from '@/lib/api/masterApi';
 import { getAllLessons, getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
 import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
@@ -188,12 +189,13 @@ function FilterControls({ onSearch, masterData }) {
     const [subjects, setSubjects] = useState([]);
 
     useEffect(() => {
-        if (filters.classId) {
+        if (filters.classId && masterData.subjects.length > 0) {
             getAllLessons({ classId: filters.classId })
                 .then(lessons => {
                     if (lessons && lessons.length > 0) {
-                        const uniqueSubjects = [...new Map(lessons.filter(l => l.subject).map(item => [item.subject.id, item.subject])).values()];
-                        setSubjects(uniqueSubjects);
+                        const subjectIds = [...new Set(lessons.map(l => l.subjectId))];
+                        const filteredSubjects = masterData.subjects.filter(s => subjectIds.includes(s.id));
+                        setSubjects(filteredSubjects);
                     } else {
                         setSubjects([]);
                     }
@@ -205,7 +207,7 @@ function FilterControls({ onSearch, masterData }) {
         } else {
             setSubjects([]);
         }
-    }, [filters.classId]);
+    }, [filters.classId, masterData.subjects]);
 
     const handleSelectChange = (name, value) => {
         setFilters(prev => {
@@ -257,6 +259,7 @@ function VideoPlayer({ videoUrl, onClose }) {
 function ContentList({ contentData, masterData }) {
     const [openKey, setOpenKey] = useState(null);
     const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
+    const { viewPdf } = usePdfViewer();
 
     const lessonMap = useMemo(() => new Map(masterData.lessons.map(l => [l.id, l.name])), [masterData.lessons]);
 
@@ -268,9 +271,13 @@ function ContentList({ contentData, masterData }) {
     const handleContentClick = async (content) => {
         const signedUrl  = await getSignedUrlForViewing(content.attachmentId);
         if (signedUrl) {
-            if (content.contentType.toLowerCase() === 'mp4') {
+            const contentType = content.contentType.toLowerCase();
+            if (contentType === 'mp4' || contentType === 'video') {
                 setSelectedVideoUrl(signedUrl.viewUrl);
-            } else {
+            } else if (contentType === 'pdf') {
+                viewPdf(signedUrl.viewUrl);
+            }
+            else {
                 window.open(signedUrl.viewUrl, '_blank');
             }
         }

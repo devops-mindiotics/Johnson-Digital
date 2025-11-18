@@ -34,7 +34,7 @@ import { CardContent } from '@/components/ui/card';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { School, ClipboardList } from 'lucide-react';
 import { getRoles } from '@/lib/utils/getRole';
-import { SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+import { SUPERADMIN, SCHOOLADMIN, TEACHER, STUDENT, TENANTADMIN } from '@/lib/utils/constants';
 
 const getAvatarUrl = (user: any) => {
   if (user.avatarUrl) {

@@ -52,7 +52,7 @@ apiClient.interceptors.response.use(
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("hide-loader"));
         }
-      }, 500);
+      },800);
     } else {
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("hide-loader"));

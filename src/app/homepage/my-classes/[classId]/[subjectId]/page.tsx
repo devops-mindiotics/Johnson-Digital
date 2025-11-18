@@ -24,7 +24,7 @@ export function generateStaticParams() {
 }
 
 // This is the Page component, a server component.
-export default function LessonContentPage({ params }: { params: { classId: string, subjectId: string } }) {
+export default async function LessonContentPage({ params }: { params: { classId: string, subjectId: string } }) {
   const { classId, subjectId } = params;
   // Directly use the imported subjectLessons object
   const subject = subjectLessons[subjectId as keyof typeof subjectLessons] || { name: 'Unknown Subject', chapters: [] };

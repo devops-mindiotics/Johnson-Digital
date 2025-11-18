@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, useMemo } from "react";
-import { getClassesByUserId } from "@/lib/api/schoolApi";
-import { getAllSubjects } from "@/lib/api/masterApi"; // Import getAllSubjects
+import { getClassById, getClassesByUserId } from "@/lib/api/schoolApi";
+import { getAllSubjects } from "@/lib/api/masterApi";
 import { STUDENT } from '@/lib/utils/constants';
 
 // Helper to process data for the teacher view
@@ -26,7 +26,7 @@ const processTeacherData = (classes, masterSubjects) => {
             section.subjects.forEach(subject => {
                 if (!classSubjects.has(subject.subjectId)) {
                     classSubjects.set(subject.subjectId, {
-                        id: subject.subjectId,
+                        ...subject,
                         name: subjectMap.get(subject.subjectId) || 'Unnamed Subject'
                     });
                 }
@@ -37,6 +37,8 @@ const processTeacherData = (classes, masterSubjects) => {
             teacherClasses.set(cls.id, {
                 id: cls.id,
                 name: cls.name,
+                seriesId: cls.seriesId, // Propagate seriesId from the class
+                packageId: cls.packageId, // Propagate packageId from the class
                 subjects: Array.from(classSubjects.values())
             });
         }
@@ -49,55 +51,90 @@ const processTeacherData = (classes, masterSubjects) => {
 export default function MyClassesPage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const isStudent = user?.roles.includes(STUDENT);
+  const isStudent = user?.roles?.includes(STUDENT);
   const [myClasses, setMyClasses] = useState<any[]>([]);
-  const [masterSubjects, setMasterSubjects] = useState<any[]>([]); // State for master subjects
+  const [masterSubjects, setMasterSubjects] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log("[Debug] MyClassesPage useEffect triggered.", { isLoading, user: !!user, isStudent });
+
     async function fetchData() {
-      if (user?.tenantId && user?.schoolId && user?.id) {
-        try {
-          // Fetch classes and subjects in parallel
-          const [classes, subjects] = await Promise.all([
+      if (!user || !user.tenantId || !user.schoolId || !user.id) {
+        console.log("[Debug] Pre-flight check failed. User or critical IDs are missing.", { user });
+        return;
+      }
+      
+      const classDetails = user?.schools?.[0]?.classDetails;
+
+      console.log("[Debug] User object:", user);
+      console.log("[Debug] Is Student:", isStudent);
+      if (isStudent) {
+          console.log("[Debug] User is a student. Class details:", classDetails);
+      }
+
+      try {
+        const [classesResponse, subjects] = await Promise.all([
+          isStudent && classDetails?.classId ?
+            (async () => {
+              console.log(`[Debug] Calling getClassById with tenantId: ${user.tenantId}, schoolId: ${user.schoolId}, classId: ${classDetails.classId}`);
+              const classData = await getClassById(user.tenantId, user.schoolId, classDetails.classId);
+              console.log("[Debug] getClassById response:", classData);
+              return classData;
+            })() :
             getClassesByUserId(user.tenantId, user.schoolId, user.id),
-            getAllSubjects()
-          ]);
-          setMyClasses(classes);
-          setMasterSubjects(subjects);
-        } catch (error) {
-          console.error("Failed to fetch data:", error);
-        }
+          getAllSubjects()
+        ]);
+        
+        console.log("[Debug] Fetched classes data response:", classesResponse);
+        const updatedClasses = isStudent ? (classesResponse ? [classesResponse] : []) : (classesResponse || []);
+        setMyClasses(updatedClasses);
+        console.log("[Debug] myClasses state has been set:", updatedClasses);
+
+        setMasterSubjects(subjects || []);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
       }
     }
 
-    if (user && !isLoading) { // Ensure user object is available and not loading
+    if (!isLoading && user) {
+      console.log("[Debug] Conditions met. Calling fetchData()...");
       fetchData();
+    } else {
+      console.log("[Debug] Conditions not met for fetching data.", { isLoading, user: !!user });
     }
-  }, [user, isLoading]); // Rerun when user or loading state changes
+  }, [user, isLoading, isStudent]);
 
   const handleNavigation = (path: string) => {
+    console.log(`[Debug] Navigating to: ${path}`);
     router.push(path);
   };
 
-  // Memoize processed data for performance
   const teacherClassesAndSubjects = useMemo(
     () => processTeacherData(myClasses, masterSubjects),
     [myClasses, masterSubjects]
   );
   
   const studentSubjects = useMemo(() => {
-      if (!isStudent || myClasses.length === 0 || !myClasses[0].sections?.[0]?.subjects) return [];
-      const subjectMap = new Map(masterSubjects.map(s => [s.id, s.name]));
-      return myClasses[0].sections[0].subjects.map(sub => ({
-          ...sub,
-          subjectName: subjectMap.get(sub.subjectId) || 'Unnamed Subject'
-      }));
+    console.log("[Debug] studentSubjects useMemo running.", { isStudent, myClassesLength: myClasses.length });
+    if (!isStudent || !myClasses || myClasses.length === 0 || !myClasses[0]?.sections?.[0]?.subjects) {
+      console.log("[Debug] Conditions for student subjects not met.");
+      return [];
+    }
+    const subjectMap = new Map(masterSubjects.map(s => [s.id, s.name]));
+    const subjects = myClasses[0].sections[0].subjects.map(sub => ({
+        ...sub,
+        subjectName: subjectMap.get(sub.subjectId) || 'Unnamed Subject'
+    }));
+    console.log("[Debug] Processed student subjects:", subjects);
+    return subjects;
   }, [isStudent, myClasses, masterSubjects]);
 
-
   if (isLoading) {
+    console.log("[Debug] Render: isLoading is true. Showing loading indicator.");
     return <p>Loading...</p>;
   }
+  
+  console.log("[Debug] Render: main content.", { isStudent, studentSubjectsCount: studentSubjects.length, teacherClassesCount: teacherClassesAndSubjects.length });
 
   return (
     <div className="space-y-6">
@@ -110,16 +147,18 @@ export default function MyClassesPage() {
                 <CardContent>
                     {studentSubjects.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {studentSubjects.map(subject => (
+                            {studentSubjects.map(subject => {
+                                const studentClass = myClasses[0];
+                                return (
                                 <Card key={subject.id} className="bg-gradient-to-r from-blue-400 to-purple-400 text-white flex flex-col justify-between">
                                     <CardHeader className="text-center">
                                         <CardTitle>{subject.subjectName}</CardTitle>
                                     </CardHeader>
                                     <CardFooter>
-                                        <Button variant='secondary' className="w-full" onClick={() => handleNavigation(`/homepage/content?classId=${myClasses[0].id}&subjectId=${subject.subjectId}`)}>Start Learning</Button>
+                                        <Button variant='secondary' className="w-full" onClick={() => handleNavigation(`/homepage/my-classes/${studentClass.id}/${subject.subjectId}?seriesId=${studentClass.seriesId}&packageId=${studentClass.packageId}&subjectName=${subject.subjectName}`)}>Start Learning</Button>
                                     </CardFooter>
                                 </Card>
-                            ))}
+                            )})}
                         </div>
                     ) : (
                         <div className="text-center py-12">
@@ -150,7 +189,7 @@ export default function MyClassesPage() {
                                                     <CardTitle className="text-lg">{subject.name}</CardTitle>
                                                 </CardHeader>
                                                 <CardFooter>
-                                                    <Button className="w-full" onClick={() => handleNavigation(`/homepage/content?classId=${c.id}&subjectId=${subject.id}`)}>Start Teaching</Button>
+                                                    <Button className="w-full" onClick={() => handleNavigation(`/homepage/my-classes/${c.id}/${subject.subjectId}?seriesId=${c.seriesId}&packageId=${c.packageId}&subjectName=${subject.name}`)}>View Content</Button>
                                                 </CardFooter>
                                             </Card>
                                         ))}

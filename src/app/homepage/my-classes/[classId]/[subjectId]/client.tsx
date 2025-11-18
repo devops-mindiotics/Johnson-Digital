@@ -1,17 +1,22 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { PlayCircle, BookOpen, FileText, ArrowLeft } from "lucide-react";
+import { PlayCircle, BookOpen, FileText, ArrowLeft, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { usePdfViewer } from "@/hooks/use-pdf-viewer"; // Import the hook
+import { usePdfViewer } from "@/hooks/use-pdf-viewer";
+import { getSubjectContent } from "@/lib/api/contentApi";
+import { getSignedUrlForViewing } from "@/lib/api/attachmentApi";
+import { getAllLessons } from "@/lib/api/masterApi"; // Corrected import path
+import { useAuth } from "@/hooks/use-auth";
 
 interface LessonContentClientPageProps {
   classId: string;
@@ -19,12 +24,43 @@ interface LessonContentClientPageProps {
   subject: any;
 }
 
-// Mapping of resource types to icons
 const iconComponents = {
   "video/mp4": PlayCircle,
   "application/pdf": BookOpen,
-  pubhtml5: BookOpen, // Or another suitable icon
+  pubhtml5: BookOpen,
   default: FileText,
+};
+
+const processApiDataToChapters = (records, allLessons) => {
+  if (!records || records.length === 0) return [];
+
+  const lessonTitleMap = new Map(allLessons.map(l => [l.id, l.name]));
+  const chaptersMap = new Map();
+
+  records.forEach(record => {
+    const { lesson, attachmentId, name, filename } = record;
+
+    if (!chaptersMap.has(lesson)) {
+      const title = lessonTitleMap.get(lesson) || 'Unknown Lesson';
+      chaptersMap.set(lesson, { id: lesson, title: title, resources: [] });
+    }
+
+    let type = 'default';
+    const lowerFilename = filename.toLowerCase();
+    if (lowerFilename.endsWith('.mp4')) {
+      type = 'video/mp4';
+    } else if (lowerFilename.endsWith('.pdf')) {
+      type = 'application/pdf';
+    }
+
+    chaptersMap.get(lesson).resources.push({
+      id: attachmentId,
+      title: name,
+      type: type,
+    });
+  });
+
+  return Array.from(chaptersMap.values());
 };
 
 export default function LessonContentClientPage({
@@ -33,28 +69,83 @@ export default function LessonContentClientPage({
   subject,
 }: LessonContentClientPageProps) {
   const [selectedResource, setSelectedResource] = useState<any | null>(null);
-  const { openPdf } = usePdfViewer(); // Use the hook
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
+  const [content, setContent] = useState<any>(subject);
+  const { openPdf } = usePdfViewer();
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
 
-  // Function to get the correct icon for a resource
+  const subjectName = searchParams.get('subjectName') || subject.name;
+
+  useEffect(() => {
+    const fetchContentAndLessons = async () => {
+      const seriesId = searchParams.get('seriesId');
+      let packageId = searchParams.get('packageId');
+
+      if (packageId === '') {
+        packageId = 'NA';
+      }
+
+      if (user?.tenantName && seriesId && packageId) {
+        try {
+          const [contentResponse, lessonsResponse] = await Promise.all([
+            getSubjectContent(
+              user.tenantName,
+              seriesId,
+              packageId,
+              classId,
+              subjectId
+            ),
+            getAllLessons({ tenantId: user.tenantName }), // Corrected API call
+          ]);
+          
+          if (contentResponse.data && contentResponse.data.records) {
+            const allLessons = lessonsResponse || [];
+            const newChapters = processApiDataToChapters(contentResponse.data.records, allLessons);
+            setContent({ name: subjectName, chapters: newChapters });
+          } else {
+            setContent({ ...subject, name: subjectName });
+          }
+        } catch (error) {
+          console.error("Failed to fetch content and lessons:", error);
+          setContent({ ...subject, name: subjectName, chapters: [] });
+        }
+      }
+    };
+
+    fetchContentAndLessons();
+  }, [classId, subjectId, user?.tenantName, searchParams, subjectName, subject]);
+
   const getIcon = (type: string) => {
-    return (
-      iconComponents[type as keyof typeof iconComponents] || iconComponents.default
-    );
+    return iconComponents[type as keyof typeof iconComponents] || iconComponents.default;
   };
 
-  const handleResourceClick = (resource: any) => {
-    if (resource.type === "application/pdf" && resource.url) {
-      // Open PDF in the viewer dialog
-      openPdf(resource.url, resource.title);
+  const handleResourceClick = async (resource: any) => {
+    setSelectedResource(null);
+    setSelectedVideoUrl(null);
+
+    const { id: attachmentId, type } = resource;
+    const signedUrlResponse = await getSignedUrlForViewing(attachmentId);
+
+    if (signedUrlResponse && signedUrlResponse.viewUrl) {
+        const { viewUrl } = signedUrlResponse;
+
+        if (type === 'video/mp4') {
+            setSelectedVideoUrl(viewUrl);
+        } else if (type === 'application/pdf') {
+            openPdf(viewUrl, resource.title);
+        } else if (type === 'pubhtml5') {
+            setSelectedResource({ ...resource, url: viewUrl });
+        } else {
+            window.open(viewUrl, '_blank');
+        }
     } else {
-      // Set other resources to be displayed inline
-      setSelectedResource(resource);
+        console.error("Failed to get signed URL for", attachmentId);
     }
   };
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* 🔹 Header */}
       <div className="flex items-center gap-4 bg-background p-4 rounded-lg shadow-sm border">
         <Link href={`/homepage/my-classes`}>
           <Button variant="outline" size="icon">
@@ -63,7 +154,7 @@ export default function LessonContentClientPage({
           </Button>
         </Link>
         <div className="flex-grow text-center">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{subject.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{content.name}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Select a chapter to explore resources
           </p>
@@ -71,19 +162,28 @@ export default function LessonContentClientPage({
         <div className="w-10" />
       </div>
 
-      {/* 🔹 Display Selected Resource */}
-      {selectedResource && (
-        <Card className="w-full flex justify-center p-4 shadow-lg border-2 border-primary"> 
-          {selectedResource.type === "video/mp4" && selectedResource.url ? (
-            // 🎬 VIDEO
-            <div className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden aspect-video">
+      {selectedVideoUrl && (
+        <Card className="w-full relative p-4 shadow-lg border-2 border-primary">
+          <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 z-10 bg-white/50 hover:bg-white rounded-full"
+              onClick={() => setSelectedVideoUrl(null)}
+          >
+              <X className="h-5 w-5" />
+          </Button>
+          <div className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden aspect-video">
               <video controls autoPlay className="w-full h-full rounded-lg bg-black">
-                <source src={selectedResource.url} type="video/mp4" />
-                Your browser does not support the video tag.
+                  <source src={selectedVideoUrl} type="video/mp4" />
+                  Your browser does not support the video tag.
               </video>
-            </div>
-          ) : selectedResource.type === "pubhtml5" && selectedResource.url ? (
-            // 📘 PUBHTML5 IFRAME VIEWER
+          </div>
+        </Card>
+      )}
+
+      {selectedResource && (
+        <Card className="w-full flex justify-center p-4 shadow-lg border-2 border-primary">
+          {selectedResource.type === "pubhtml5" && selectedResource.url ? (
             <div
               className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden aspect-video"
               dangerouslySetInnerHTML={{
@@ -99,7 +199,6 @@ export default function LessonContentClientPage({
               }}
             />
           ) : (
-            // Fallback for other types if any are added
             <p className="text-center text-muted-foreground p-8">
               No preview available for this resource type.
             </p>
@@ -107,9 +206,8 @@ export default function LessonContentClientPage({
         </Card>
       )}
 
-      {/* 🔹 Accordion */}
       <Accordion type="single" collapsible className="w-full space-y-4">
-        {subject.chapters?.map((chapter: any, index: number) => (
+        {content.chapters?.map((chapter: any, index: number) => (
           <AccordionItem
             key={chapter.id}
             value={`item-${index}`}

@@ -18,6 +18,11 @@ export default function SubjectsPage() {
     const currentClass = classes.find(c => c.id === classId);
     const subjects = classId ? classSubjects[classId as keyof typeof classSubjects] || [] : [];
 
+    console.log("User:", user);
+    console.log("Class ID:", classId);
+    console.log("Current Class:", currentClass);
+    console.log("Subjects:", subjects);
+
     const handleNavigation = (path: string) => {
         router.push(path);
     };

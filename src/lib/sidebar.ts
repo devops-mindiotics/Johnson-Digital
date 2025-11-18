@@ -18,7 +18,7 @@ import {
   Box
 } from 'lucide-react';
 
-import {  SUPERADMIN , SCHOOLADMIN , TENANTADMIN , TEACHER , STUDENT } from '@/lib/utils/constants';
+import {  SUPERADMIN , SCHOOLADMIN , TEACHER , STUDENT, TENANTADMIN } from '@/lib/utils/constants';
 
 const superAdminSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
