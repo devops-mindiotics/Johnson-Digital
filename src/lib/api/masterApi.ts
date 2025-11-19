@@ -18,6 +18,8 @@ const getContext = () => {
     const parsed = JSON.parse(tenantData);
     const tenantId = parsed?.tenantId;
     const userId = parsed?.id;
+   // const tenantName = parsed?.id;
+
     if (!tenantId) {
         throw new Error("Tenant ID not found in context info");
     }
@@ -527,5 +529,27 @@ export async function updateLesson(lessonId: string, lesson: { name: string, des
     } catch (err: any) {
         console.error("❌ updateLesson error:", err.response?.data || err.message);
         throw err;
+    }
+}
+export async function getSubjectContent(series: string, pkg: string, className: string, subject: string): Promise<any> {
+    const { tenantId, token, userId } = getContext();
+
+    if (!tenantId) {
+        throw new Error("Tenant ID not found");
+    }
+    try {
+        const response = await apiClient.post(`/tenants/${tenantId}/attachments/subject-content`, {
+            data: {
+                "tenantName": "Beta Education",
+                series,
+                "package": "NA",
+                "class": className,
+                subject,
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Failed to fetch subject content:", error);
+        throw error;
     }
 }

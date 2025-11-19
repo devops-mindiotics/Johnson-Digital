@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { usePdfViewer } from "@/hooks/use-pdf-viewer";
 import { getSubjectContent } from "@/lib/api/contentApi";
 import { getSignedUrlForViewing } from "@/lib/api/attachmentApi";
-import { getAllLessons } from "@/lib/api/masterApi"; // Corrected import path
+import { getAllLessons } from "@/lib/api/masterApi";
 import { useAuth } from "@/hooks/use-auth";
 
 interface LessonContentClientPageProps {
@@ -68,6 +68,7 @@ export default function LessonContentClientPage({
   subjectId,
   subject,
 }: LessonContentClientPageProps) {
+
   const [selectedResource, setSelectedResource] = useState<any | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
   const [content, setContent] = useState<any>(subject);
@@ -76,45 +77,69 @@ export default function LessonContentClientPage({
   const searchParams = useSearchParams();
 
   const subjectName = searchParams.get('subjectName') || subject.name;
+  const className = searchParams.get('className');
+  const seriesId = searchParams.get('seriesId');
+  const packageId = searchParams.get('packageId');
 
   useEffect(() => {
     const fetchContentAndLessons = async () => {
-      const seriesId = searchParams.get('seriesId');
-      let packageId = searchParams.get('packageId');
+      const tenantId = user?.tenantId;
+      const currentTenant = user?.tenantRoles?.find(role => role.tenantId === tenantId);
+      const tenantName =   "Beta Education" ; //currentTenant?.tenantName;
 
-      if (packageId === '') {
-        packageId = 'NA';
+      if (!tenantId || !tenantName ||!className || !subjectName) {
+          console.error("[Debug] LessonContentClientPage: Pre-flight check failed. One or more parameters are missing.", {
+            tenantId,
+            tenantName,
+            className,
+            subjectName,
+          });
+        return;
       }
-
-      if (user?.tenantName && seriesId && packageId) {
-        try {
-          const [contentResponse, lessonsResponse] = await Promise.all([
-            getSubjectContent(
-              user.tenantName,
-              seriesId,
-              packageId,
-              classId,
-              subjectId
-            ),
-            getAllLessons({ tenantId: user.tenantName }), // Corrected API call
-          ]);
-          
-          if (contentResponse.data && contentResponse.data.records) {
-            const allLessons = lessonsResponse || [];
-            const newChapters = processApiDataToChapters(contentResponse.data.records, allLessons);
-            setContent({ name: subjectName, chapters: newChapters });
-          } else {
-            setContent({ ...subject, name: subjectName });
-          }
-        } catch (error) {
-          console.error("Failed to fetch content and lessons:", error);
-          setContent({ ...subject, name: subjectName, chapters: [] });
+      
+      const requestBody = {
+        data: {
+          tenantName: tenantName,
+          series: seriesId,
+          package: packageId,
+          class: className,
+          subject: subjectName,
         }
+      };
+
+      console.log("[Debug] LessonContentClientPage: Calling APIs with parameters:", { tenantId, requestBody });
+
+      try {
+        const [contentResponse, lessonsResponse] = await Promise.all([
+          getSubjectContent(  seriesId,
+            packageId,
+            className,
+            subjectName,),
+          getAllLessons(),
+        ]);
+        
+        console.log("[Debug] LessonContentClientPage: API responses received.", { contentResponse, lessonsResponse });
+
+        if (contentResponse.data && contentResponse.data.records) {
+          const allLessons = lessonsResponse || [];
+          const newChapters = processApiDataToChapters(contentResponse.data.records, allLessons);
+          setContent({ name: subjectName, chapters: newChapters });
+          console.log("[Debug] LessonContentClientPage: Content state updated with new chapters.");
+        } else {
+          console.log("[Debug] LessonContentClientPage: No records found in contentResponse. Using initial subject data.");
+          setContent({ ...subject, name: subjectName });
+        }
+      } catch (error) {
+        console.error("❌ LessonContentClientPage: Failed to fetch content and lessons:", error);
+        setContent({ ...subject, name: subjectName, chapters: [] }); // Set empty chapters on error
       }
     };
 
-    fetchContentAndLessons();
-  }, [classId, subjectId, user?.tenantName, searchParams, subjectName, subject]);
+    if(user) {
+        fetchContentAndLessons();
+    }
+
+  }, [classId, subjectId, user, searchParams, className, seriesId, packageId, subjectName]);
 
   const getIcon = (type: string) => {
     return iconComponents[type as keyof typeof iconComponents] || iconComponents.default;
@@ -140,7 +165,7 @@ export default function LessonContentClientPage({
             window.open(viewUrl, '_blank');
         }
     } else {
-        console.error("Failed to get signed URL for", attachmentId);
+        console.error("❌ handleResourceClick: Failed to get signed URL for attachment:", attachmentId);
     }
   };
 

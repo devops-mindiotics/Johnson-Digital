@@ -70,7 +70,7 @@ const teacherSidebar = [
 
 const studentSidebar = [
   { href: '/homepage', icon: LayoutDashboard, title: 'Dashboard' },
-  { href: '/homepage/subjects', icon: BookOpen, title: 'Start Learning' },
+  { href: '/homepage/my-classes', icon: BookOpen, title: 'Start Learning' },
   { href: '/homepage/diary', icon: PenSquare, title: 'Diary', tag: 'Upcoming' },
   { href: '/homepage/assignments', icon: PenSquare, title: 'Assignments', tag: 'Upcoming' },
   { href: '/homepage/notice-board', icon: ClipboardList, title: 'Notice Board', tag: 'Upcoming' },

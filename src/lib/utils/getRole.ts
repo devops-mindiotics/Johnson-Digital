@@ -113,3 +113,8 @@ export function getTenantId(): string | null {
     const contextInfo = getContextInfo();
     return contextInfo?.tenantId || null;
 }
+
+export function getTenantName(): string | null {
+    const contextInfo = getContextInfo();
+    return contextInfo?.tenantName || null;
+}

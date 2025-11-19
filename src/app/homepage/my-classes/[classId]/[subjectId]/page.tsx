@@ -1,34 +1,46 @@
-import LessonContentClientPage from './client';
-import { classSubjects, subjectLessons } from '@/lib/data';
+"use client";
 
-interface Subject {
-  id: string;
-  name: string;
-}
+import { use, useEffect, useState } from "react";
+import LessonContentClientPage from "./client";
+import { getSubjectContent } from "@/lib/api/masterApi";
 
-interface ClassSubjects {
-  [key: string]: Subject[];
-}
+export default function LessonContentPage(props: {
+  params: Promise<{ classId: string; subjectId: string }>;
+  searchParams: Promise<{ seriesId?: string; packageId?: string }>;
+}) {
+  const { classId, subjectId } = use(props.params);
+  const { seriesId, packageId } = use(props.searchParams);
 
-export function generateStaticParams() {
-    const paths = [];
-    // Directly use the imported classSubjects object
-    const subjectsData: ClassSubjects = classSubjects;
-    for (const classId in subjectsData) {
-        const subjects = subjectsData[classId];
-        for (const subject of subjects) {
-            paths.push({ classId: classId, subjectId: subject.id });
-        }
+  const [subjectContent, setSubjectContent] = useState<any>({
+    name: "Loading...",
+    chapters: [],
+  });
+
+  useEffect(() => {
+    async function loadContent() {
+      try {
+        const data = await getSubjectContent(
+          seriesId || "",
+          packageId || "NA",
+          classId,
+          subjectId
+        );
+
+        setSubjectContent(data.records);
+      } catch (error) {
+        console.error("Failed to fetch subject content:", error);
+        setSubjectContent({ name: "Error loading content", chapters: [] });
+      }
     }
-    return paths;
-}
 
-// This is the Page component, a server component.
-export default async function LessonContentPage({ params }: { params: { classId: string, subjectId: string } }) {
-  const { classId, subjectId } = params;
-  // Directly use the imported subjectLessons object
-  const subject = subjectLessons[subjectId as keyof typeof subjectLessons] || { name: 'Unknown Subject', chapters: [] };
-  
-  // We pass classId and subjectId as direct, explicit props to the client component.
-  return <LessonContentClientPage classId={classId} subjectId={subjectId} subject={subject} />
+    loadContent();
+  }, [seriesId, packageId, classId, subjectId]);
+
+  return (
+    <LessonContentClientPage
+      classId={classId}
+      subjectId={subjectId}
+      subject={subjectContent}
+    />
+  );
 }

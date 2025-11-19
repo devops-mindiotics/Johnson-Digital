@@ -227,13 +227,16 @@ export default function ClassesPage() {
         const teacher = teachers.find(t => t.id === teacherId);
         if (!teacher) return;
         
+        const masterSubject = masterSubjects.find(ms => ms.id === subjectId);
+        const subjectName = masterSubject ? masterSubject.name : '';
+
         let updatedClass;
 
         if (sectionId) {
             const updatedSections = classToUpdate.sections.map((section: any) => {
                 if (section.sectionId === sectionId) {
                     const updatedSubjects = (section.subjects || []).map((sub: any) =>
-                        sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name } : sub
+                        sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name, subjectName: subjectName } : sub
                     );
                     return { ...section, subjects: updatedSubjects };
                 }
@@ -242,7 +245,7 @@ export default function ClassesPage() {
             updatedClass = { ...classToUpdate, sections: updatedSections };
         } else {
             const updatedSubjects = (classToUpdate.subjects || []).map((sub: any) =>
-                sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name } : sub
+                sub.subjectId === subjectId ? { ...sub, subjectTeacherId: teacherId, subjectTeacherName: teacher.name, subjectName: subjectName } : sub
             );
             updatedClass = { ...classToUpdate, subjects: updatedSubjects };
         }
