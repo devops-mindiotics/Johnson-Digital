@@ -1,8 +1,11 @@
 [
   {
-    "origin": ["https://9000-firebase-johnson-digital-1762837633475.cluster-sumfw3zmzzhzkx4mpvz3ogth4y.cloudworkstations.dev"],
-    "method": ["PUT"],
-    "responseHeader": ["Content-Type", "x-goog-meta-name"],
+    "origin": [
+      "https://dev.johnsonpublications.in",
+      "https://johnsonpublications.in"
+    ],
+    "method": ["GET"],
+    "responseHeader": ["Content-Type"],
     "maxAgeSeconds": 3600
   }
 ]

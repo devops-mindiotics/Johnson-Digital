@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Banner } from '@/types/banner';
 import { AddBannerDialog } from '@/components/add-banner-dialog';
 import { getBanners, createBanner, updateBanner, deleteBanner } from '@/lib/api/bannerApi';
-import { createAttachment, getSignedUrl, uploadFileToSignedUrl } from '@/lib/api/attachmentApi';
+import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BannerCard } from '@/components/banner-card';
@@ -23,17 +23,19 @@ const BannersPage = () => {
 
     try {
       setLoading(true);
-      const schoolRecords = await getAllSchools(user.tenantId);
-      const fetchedSchools = schoolRecords && Array.isArray(schoolRecords)
+      const schoolData = await getAllSchools(user.tenantId);
+      const schoolRecords = schoolData?.data?.records || schoolData?.records || schoolData || [];
+      const fetchedSchools = Array.isArray(schoolRecords)
         ? schoolRecords.map((school: any) => ({ id: school.id, name: school.schoolName }))
         : [];
       setSchools(fetchedSchools);
 
       const userRole = Array.isArray(user.role) ? user.role[0] : user.role;
-      const { records: bannerRecords } = await getBanners(1, 10, schoolId, userRole);
+      const bannerData = await getBanners(user.tenantId, { schoolId, userRole, page: 1, limit: 10 });
+      const bannerRecords = bannerData?.data?.records || [];
       setRawBanners(bannerRecords);
 
-      const mappedData = bannerRecords.map((banner: any) => {
+      const mappedData = await Promise.all(bannerRecords.map(async (banner: any) => {
         const targetAudience = banner.targetAudience || {};
         const schoolIds = Array.isArray(targetAudience.schoolIds) ? targetAudience.schoolIds : [];
         
@@ -48,6 +50,18 @@ const BannersPage = () => {
           .filter(key => targetAudience[key] === true && !['all', 'schoolIds'].includes(key))
           .join(', ');
 
+        let mediaUrl = '';
+        if (banner.attachmentId) {
+          try {
+            const signedUrlData = await getSignedUrlForViewing(banner.attachmentId);
+            if (signedUrlData && signedUrlData.viewUrl) {
+              mediaUrl = signedUrlData.viewUrl;
+            }
+          } catch (error) {
+            console.error('Error fetching signed URL for banner:', banner.id, error);
+          }
+        }
+
         return {
           id: banner.id.toString(),
           name: banner.title || '',
@@ -55,9 +69,9 @@ const BannersPage = () => {
           targetAudience: audienceKeys,
           startDate: new Date(banner.startDate).toISOString().split('T')[0],
           endDate: new Date(banner.endDate).toISOString().split('T')[0],
-          media: banner.attachmentUrl || '',
+          media: mediaUrl,
         };
-      });
+      }));
 
       setData(mappedData);
 
@@ -80,8 +94,6 @@ const BannersPage = () => {
 
     try {
         let attachmentId = '';
-        let attachmentUrl = '';
-
         if (file) {
             const signedUrlPayload = {
                 tenantName: user.tenantName,
@@ -117,7 +129,6 @@ const BannersPage = () => {
 
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
-            attachmentUrl = newAttachment.url;
         }
 
         const schoolNames = banner.school ? banner.school.split(', ') : [];
@@ -129,7 +140,6 @@ const BannersPage = () => {
       const newBanner = {
         title: banner.name,
         attachmentId: attachmentId,
-        attachmentUrl: attachmentUrl,
         targetAudience: {
             all: banner.targetAudience.includes('All'),
             schoolAdmins: banner.targetAudience.includes('School Admins'),
@@ -143,7 +153,7 @@ const BannersPage = () => {
         createdRole: user.role,
       };
 
-      await createBanner(newBanner);
+      await createBanner(user.tenantId, { data: newBanner });
       fetchData(selectedSchool);
     } catch (error) {
       console.error("Error creating banner:", error);
@@ -159,7 +169,6 @@ const BannersPage = () => {
     try {
         const originalBanner = rawBanners.find(b => b.id === updatedBanner.id);
         let attachmentId = originalBanner?.attachmentId || '';
-        let attachmentUrl = updatedBanner.media;
 
         if (file) {
             const signedUrlPayload = {
@@ -196,7 +205,6 @@ const BannersPage = () => {
             
             const newAttachment = await createAttachment(attachmentPayload);
             attachmentId = newAttachment.id;
-            attachmentUrl = newAttachment.url;
         }
 
         const schoolNames = updatedBanner.school ? updatedBanner.school.split(', ') : [];
@@ -208,7 +216,6 @@ const BannersPage = () => {
         const newBanner = {
             title: updatedBanner.name,
             attachmentId: attachmentId,
-            attachmentUrl: attachmentUrl,
             targetAudience: {
                 all: updatedBanner.targetAudience.includes('All'),
                 schoolAdmins: updatedBanner.targetAudience.includes('School Admins'),
@@ -222,7 +229,7 @@ const BannersPage = () => {
             updatedRole: user.role,
           };
 
-      await updateBanner(updatedBanner.id, newBanner);
+      await updateBanner(user.tenantId, updatedBanner.id, { data: newBanner });
       fetchData(selectedSchool);
     } catch (error) {
       console.error("Error updating banner:", error);
@@ -230,13 +237,14 @@ const BannersPage = () => {
   }, [user, schools, rawBanners, fetchData, selectedSchool]);
 
   const handleDeleteBanner = React.useCallback(async (bannerId: string) => {
+    if (!user) return;
     try {
-      await deleteBanner(bannerId);
+      await deleteBanner(user.tenantId, bannerId);
       fetchData(selectedSchool);
     } catch (error) {
       console.error("Error deleting banner:", error);
     }
-  }, [fetchData, selectedSchool]);
+  }, [user, fetchData, selectedSchool]);
 
   const handleSchoolChange = (schoolId: string) => {
     setSelectedSchool(schoolId === 'all' ? null : schoolId);

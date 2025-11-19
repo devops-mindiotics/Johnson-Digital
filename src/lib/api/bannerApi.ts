@@ -5,7 +5,7 @@ export const getBanners = async (tenantId, params) => {
   try {
     const response = await apiClient.get(
       `${BANNER_API_ROUTES.getBanners(tenantId)}`,
-      { params }
+      { params: params && typeof params === 'object' ? params : {} }
     );
     return response.data;
   } catch (error) {

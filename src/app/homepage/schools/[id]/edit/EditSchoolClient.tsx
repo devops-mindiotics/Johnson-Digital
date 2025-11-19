@@ -186,7 +186,7 @@ export default function EditSchoolClient({
   }
 
   const onInvalid = (errors: FieldErrors<FormValues>) => {
-    console.error("Form validation errors:", errors);
+    console.error("Form validation errors:", JSON.stringify(errors));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
