@@ -191,7 +191,8 @@ export default function ClassesPage() {
         const classToUpdate = allClasses.find(c => c.classId === classId);
         if (!classToUpdate) return;
 
-        const teacher = teachers.find(t => t.id === teacherId);
+        const teacher = teachers.find(t => t.uid === teacherId);
+
         if (!teacher) return;
         
         let updatedClass;
@@ -224,7 +225,7 @@ export default function ClassesPage() {
         const classToUpdate = allClasses.find(c => c.classId === classId);
         if (!classToUpdate) return;
 
-        const teacher = teachers.find(t => t.id === teacherId);
+        const teacher = teachers.find(t => t.uid === teacherId);
         if (!teacher) return;
         
         const masterSubject = masterSubjects.find(ms => ms.id === subjectId);
@@ -341,7 +342,7 @@ export default function ClassesPage() {
         const classToUpdate = allClasses.find(c => c.classId === currentClass.classId);
         if (!classToUpdate) return;
 
-        const teacher = teachers.find(t => t.id === values.teacherId);
+        const teacher = teachers.find(t => t.uid === values.teacherId);
         if (!teacher) return;
 
         const masterSubject = masterSubjects.find(ms => ms.id === values.subjectId);
@@ -405,7 +406,7 @@ export default function ClassesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {teachers.map(teacher => (
-                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                    <SelectItem key={teacher.uid} value={teacher.uid}>{teacher.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -432,7 +433,7 @@ export default function ClassesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 {teachers.map(teacher => (
-                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                    <SelectItem key={teacher.uid} value={teacher.id}>{teacher.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -529,7 +530,7 @@ export default function ClassesPage() {
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {teachers.map(teacher => (
-                                                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                                    <SelectItem key={teacher.uid} value={teacher.uid}>{teacher.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>
@@ -565,7 +566,7 @@ export default function ClassesPage() {
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {teachers.map(teacher => (
-                                                                    <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>
+                                                                    <SelectItem key={teacher.id} value={teacher.uid}>{teacher.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
                                                         </Select>

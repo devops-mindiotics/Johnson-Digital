@@ -35,8 +35,10 @@ const processTeacherData = (classes) => {
             teacherClasses.set(cls.id, {
                 id: cls.id,
                 name: cls.name,
-                seriesName: cls.seriesName, // Pass through seriesName
-                packageName: cls.packageName, // Pass through packageName
+                seriesId: cls.seriesId,
+                packageId: cls.packageId,
+                seriesName: cls.seriesName,
+                packageName: cls.packageName,
                 subjects: Array.from(classSubjects.values())
             });
         }
@@ -163,12 +165,12 @@ export default function MyClassesPage() {
                                         {c.subjects.map(subject => {
                                           const url = `/homepage/my-classes/${c.id}/${subject.subjectId}?subjectName=${encodeURIComponent(subject.name)}&className=${encodeURIComponent(c.name)}&seriesId=${encodeURIComponent(c.seriesId)}&packageId=${encodeURIComponent(c.packageId)}`;
                                           return (
-                                            <Card key={subject.subjectId} className="flex flex-col justify-between">
+                                            <Card key={subject.subjectId} className="bg-gradient-to-r from-blue-400 to-purple-400 text-white flex flex-col justify-between">
                                                 <CardHeader>
-                                                    <CardTitle className="text-lg">{subject.name}</CardTitle>
+                                                    <CardTitle className="text-lg text-center">{subject.name}</CardTitle>
                                                 </CardHeader>
                                                 <CardFooter>
-                                                    <Button className="w-full" onClick={() => handleNavigation(url)}>View Content</Button>
+                                                    <Button variant='secondary' className="w-full" onClick={() => handleNavigation(url)}>View Content</Button>
                                                 </CardFooter>
                                             </Card>
                                         )})}

@@ -13,15 +13,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePdfViewer } from "@/hooks/use-pdf-viewer";
-import { getSubjectContent } from "@/lib/api/contentApi";
 import { getSignedUrlForViewing } from "@/lib/api/attachmentApi";
 import { getAllLessons } from "@/lib/api/masterApi";
-import { useAuth } from "@/hooks/use-auth";
 
 interface LessonContentClientPageProps {
   classId: string;
   subjectId: string;
-  subject: any;
+  subject: any[]; // Expecting the records array
 }
 
 const iconComponents = {
@@ -31,8 +29,13 @@ const iconComponents = {
   default: FileText,
 };
 
-const processApiDataToChapters = (records, allLessons) => {
-  if (!records || records.length === 0) return [];
+// This function processes the raw records and all lessons to create a structured chapter list.
+const processApiDataToChapters = (records: any[], allLessons: any[]) => {
+  if (!records || records.length === 0) {
+    console.log("[Debug] processApiDataToChapters: No records to process.");
+    return [];
+  }
+  console.log("[Debug] processApiDataToChapters: Processing records:", { records, allLessons });
 
   const lessonTitleMap = new Map(allLessons.map(l => [l.id, l.name]));
   const chaptersMap = new Map();
@@ -46,126 +49,103 @@ const processApiDataToChapters = (records, allLessons) => {
     }
 
     let type = 'default';
-    const lowerFilename = filename.toLowerCase();
-    if (lowerFilename.endsWith('.mp4')) {
-      type = 'video/mp4';
-    } else if (lowerFilename.endsWith('.pdf')) {
-      type = 'application/pdf';
+    if (filename) { // Ensure filename is not null
+        const lowerFilename = filename.toLowerCase();
+        if (lowerFilename.endsWith('.mp4')) {
+          type = 'video/mp4';
+        } else if (lowerFilename.endsWith('.pdf')) {
+          type = 'application/pdf';
+        }
     }
 
     chaptersMap.get(lesson).resources.push({
       id: attachmentId,
       title: name,
       type: type,
+      filename: filename // Pass filename for debugging if needed
     });
   });
 
-  return Array.from(chaptersMap.values());
+  const processedChapters = Array.from(chaptersMap.values());
+  console.log("[Debug] processApiDataToChapters: Processed chapters:", processedChapters);
+  return processedChapters;
 };
 
 export default function LessonContentClientPage({
   classId,
   subjectId,
-  subject,
+  subject, // This prop now contains the records from the API
 }: LessonContentClientPageProps) {
 
-  const [selectedResource, setSelectedResource] = useState<any | null>(null);
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
-  const [content, setContent] = useState<any>(subject);
+  const [chapters, setChapters] = useState<any[]>([]);
   const { openPdf } = usePdfViewer();
-  const { user } = useAuth();
   const searchParams = useSearchParams();
 
-  const subjectName = searchParams.get('subjectName') || subject.name;
-  const className = searchParams.get('className');
-  const seriesId = searchParams.get('seriesId');
-  const packageId = searchParams.get('packageId');
+  const subjectName = searchParams.get('subjectName') || 'Subject Content';
 
+  // This useEffect will now only run when the `subject` prop changes.
+  // It handles processing the data, not fetching it.
   useEffect(() => {
-    const fetchContentAndLessons = async () => {
-      const tenantId = user?.tenantId;
-      const currentTenant = user?.tenantRoles?.find(role => role.tenantId === tenantId);
-      const tenantName =   "Beta Education" ; //currentTenant?.tenantName;
-
-      if (!tenantId || !tenantName ||!className || !subjectName) {
-          console.error("[Debug] LessonContentClientPage: Pre-flight check failed. One or more parameters are missing.", {
-            tenantId,
-            tenantName,
-            className,
-            subjectName,
-          });
+    const processContent = async () => {
+      console.log("[Debug] Client Component: Received `subject` prop with records:", subject);
+      if (!subject || subject.length === 0) {
+        console.log("[Debug] Client Component: No records to process. Setting chapters to empty array.");
+        setChapters([]);
         return;
       }
-      
-      const requestBody = {
-        data: {
-          tenantName: tenantName,
-          series: seriesId,
-          package: packageId,
-          class: className,
-          subject: subjectName,
-        }
-      };
-
-      console.log("[Debug] LessonContentClientPage: Calling APIs with parameters:", { tenantId, requestBody });
 
       try {
-        const [contentResponse, lessonsResponse] = await Promise.all([
-          getSubjectContent(  seriesId,
-            packageId,
-            className,
-            subjectName,),
-          getAllLessons(),
-        ]);
+        // We still need to fetch all lessons to map lesson IDs to lesson names.
+        console.log("[Debug] Client Component: Fetching all lessons to map titles.");
+        const allLessons = await getAllLessons();
+        console.log("[Debug] Client Component: Fetched lessons:", allLessons);
         
-        console.log("[Debug] LessonContentClientPage: API responses received.", { contentResponse, lessonsResponse });
+        // The `subject` prop (which is `subjectContent.data.records`) is passed for processing.
+        const newChapters = processApiDataToChapters(subject, allLessons);
+        setChapters(newChapters);
+        console.log("[Debug] Client Component: Chapters state updated.", newChapters);
 
-        if (contentResponse.data && contentResponse.data.records) {
-          const allLessons = lessonsResponse || [];
-          const newChapters = processApiDataToChapters(contentResponse.data.records, allLessons);
-          setContent({ name: subjectName, chapters: newChapters });
-          console.log("[Debug] LessonContentClientPage: Content state updated with new chapters.");
-        } else {
-          console.log("[Debug] LessonContentClientPage: No records found in contentResponse. Using initial subject data.");
-          setContent({ ...subject, name: subjectName });
-        }
       } catch (error) {
-        console.error("❌ LessonContentClientPage: Failed to fetch content and lessons:", error);
-        setContent({ ...subject, name: subjectName, chapters: [] }); // Set empty chapters on error
+        console.error("❌ LessonContentClientPage: Failed to fetch lessons or process content:", error);
+        setChapters([]); // Set to empty on error
       }
     };
 
-    if(user) {
-        fetchContentAndLessons();
-    }
-
-  }, [classId, subjectId, user, searchParams, className, seriesId, packageId, subjectName]);
+    processContent();
+    
+  }, [subject]); // Dependency array only contains `subject`
 
   const getIcon = (type: string) => {
     return iconComponents[type as keyof typeof iconComponents] || iconComponents.default;
   };
 
   const handleResourceClick = async (resource: any) => {
-    setSelectedResource(null);
-    setSelectedVideoUrl(null);
+    setSelectedVideoUrl(null); // Reset video URL
 
-    const { id: attachmentId, type } = resource;
-    const signedUrlResponse = await getSignedUrlForViewing(attachmentId);
+    const { id: attachmentId, type, title } = resource;
+    console.log(`[Debug] Resource clicked: ${title} (ID: ${attachmentId}, Type: ${type})`);
 
-    if (signedUrlResponse && signedUrlResponse.viewUrl) {
-        const { viewUrl } = signedUrlResponse;
+    try {
+        const signedUrlResponse = await getSignedUrlForViewing(attachmentId);
 
-        if (type === 'video/mp4') {
-            setSelectedVideoUrl(viewUrl);
-        } else if (type === 'application/pdf') {
-            openPdf(viewUrl, resource.title);
-        } else if (type === 'pubhtml5') {
-            setSelectedResource({ ...resource, url: viewUrl });
+        if (signedUrlResponse && signedUrlResponse.viewUrl) {
+            const { viewUrl } = signedUrlResponse;
+            console.log(`[Debug] Obtained signed URL: ${viewUrl}`);
+
+            if (type === 'video/mp4') {
+                setSelectedVideoUrl(viewUrl);
+            } else if (type === 'application/pdf') {
+                openPdf(viewUrl, title);
+            } else {
+                // Default action for other resource types
+                window.open(viewUrl, '_blank');
+            }
         } else {
-            window.open(viewUrl, '_blank');
+            console.error(`❌ handleResourceClick: Failed to get signed URL for attachment: ${attachmentId}`);
         }
-    } else {
-        console.error("❌ handleResourceClick: Failed to get signed URL for attachment:", attachmentId);
+    } catch (error) {
+        console.error(`❌ handleResourceClick: Error getting signed URL for ${attachmentId}:`, error);
     }
   };
 
@@ -179,7 +159,7 @@ export default function LessonContentClientPage({
           </Button>
         </Link>
         <div className="flex-grow text-center">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{content.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{subjectName}</h1>
           <p className="text-sm md:text-base text-muted-foreground">
             Select a chapter to explore resources
           </p>
@@ -206,33 +186,8 @@ export default function LessonContentClientPage({
         </Card>
       )}
 
-      {selectedResource && (
-        <Card className="w-full flex justify-center p-4 shadow-lg border-2 border-primary">
-          {selectedResource.type === "pubhtml5" && selectedResource.url ? (
-            <div
-              className="w-full max-w-4xl mx-auto rounded-lg overflow-hidden aspect-video"
-              dangerouslySetInnerHTML={{
-                __html: `<iframe
-                          style='width:100%;height:100%;border:none;'
-                          src='${selectedResource.url}'
-                          seamless='seamless'
-                          scrolling='no'
-                          frameborder='0'
-                          allowtransparency='true'
-                          allowfullscreen='true'>
-                         </iframe>`,
-              }}
-            />
-          ) : (
-            <p className="text-center text-muted-foreground p-8">
-              No preview available for this resource type.
-            </p>
-          )}
-        </Card>
-      )}
-
       <Accordion type="single" collapsible className="w-full space-y-4">
-        {content.chapters?.map((chapter: any, index: number) => (
+        {chapters?.map((chapter: any, index: number) => (
           <AccordionItem
             key={chapter.id}
             value={`item-${index}`}
@@ -275,6 +230,13 @@ export default function LessonContentClientPage({
           </AccordionItem>
         ))}
       </Accordion>
+
+      {chapters.length === 0 && (
+          <Card className="text-center py-12">
+              <p>No content is available for this subject yet.</p>
+              <p className="text-sm text-muted-foreground">Please check back later.</p>
+          </Card>
+      )}
     </div>
   );
 }
