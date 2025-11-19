@@ -73,6 +73,7 @@ const SelectContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & { hideSearch?: boolean }
 >(({ className, children, position = "popper", hideSearch = false, ...props }, ref) => {
   const [search, setSearch] = React.useState("")
+  const childrenArray = React.Children.toArray(children);
 
   const filterNodes = (nodes: React.ReactNode) => {
     if (hideSearch) return nodes;
@@ -116,6 +117,8 @@ const SelectContent = React.forwardRef<
     return text;
   };
 
+  const shouldShowSearch = !hideSearch && childrenArray.length > 5;
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -129,7 +132,7 @@ const SelectContent = React.forwardRef<
         position={position}
         {...props}
       >
-        {!hideSearch && <div className="p-2">
+        {shouldShowSearch && <div className="p-2">
           <Input
             placeholder="Search..."
             value={search}

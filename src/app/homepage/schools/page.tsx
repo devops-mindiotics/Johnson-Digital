@@ -86,7 +86,7 @@ export default function SchoolsPage() {
     if (schoolToProcess && user?.tenantId) {
       const newStatus =
         schoolToProcess.status === "active" || schoolToProcess.status === "Trial"
-          ? "Inactive"
+          ? "inactive"
           : "active";
       const updatedSchool = { ...schoolToProcess, status: newStatus };
 
@@ -94,7 +94,7 @@ export default function SchoolsPage() {
         await updateSchool(user.tenantId, schoolToProcess.id, updatedSchool);
         await fetchSchools(user.tenantId); // Refetch schools after update
         setProcessedSchoolName(schoolToProcess.schoolName);
-        if (newStatus === "Inactive") setSuccessDialogOpen(true);
+        if (newStatus === "inactive") setSuccessDialogOpen(true);
       } catch (error) {
         console.error("Failed to update school:", error);
       } finally {
@@ -314,11 +314,11 @@ export default function SchoolsPage() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action will change the status of{" "}
-              <span className="font-semibold">{schoolToProcess?.schoolName}</span> to{" "}
+              <span className="font-semibold">"{schoolToProcess?.schoolName}"</span> to{" "}
               <span className="font-semibold">
-                {schoolToProcess?.status === "Active" ||
+                {schoolToProcess?.status === "active" ||
                 schoolToProcess?.status === "Trial"
-                  ? "Inactive"
+                  ? "InActive"
                   : "Active"}
               </span>
               .

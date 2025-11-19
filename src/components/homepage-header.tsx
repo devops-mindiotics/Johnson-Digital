@@ -63,7 +63,7 @@ export function HomepageHeader() {
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
-    if (hour < 18) return 'Good Afternoon';
+    if (hour < 16) return 'Good Afternoon';
     return 'Good Evening';
   };
 
@@ -80,7 +80,7 @@ export function HomepageHeader() {
 
   const salutation = getSalutation();
   const displayName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}`: '';
-  const finalDisplayName = `Hi ${salutation ? `${salutation} ` : ''}${displayName}`;
+  const finalDisplayName = `${salutation ? `${salutation} ` : ''}${displayName}`;
   const classDetails = user?.schools?.[0]?.classDetails;
   const displayClass = classDetails
     ? `${classDetails.className}${classDetails.sectionName && classDetails.sectionName !== 'No Sections' ? `, ${classDetails.sectionName}` : ''}`

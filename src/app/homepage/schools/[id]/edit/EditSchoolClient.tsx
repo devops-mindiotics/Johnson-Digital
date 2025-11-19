@@ -44,9 +44,9 @@ const formSchema = z.object({
   }),
   isBranch: z.boolean().default(false),
   parentSchool: z.object({
-      schoolId: z.string(),
-      schoolName: z.string(),
-      schoolCode: z.string(),
+    schoolId: z.string(),
+    schoolName: z.string().optional(),
+    schoolCode: z.string().optional(),
   }).optional(),
   socialLinks: z.object({
       instagram: z.string().url().optional(),
@@ -55,6 +55,16 @@ const formSchema = z.object({
   schoolCode: z.string().optional(),
   totalTeachers: z.preprocess((val) => Number(val), z.number().min(0)),
   totalStudents: z.preprocess((val) => Number(val), z.number().min(0))
+}).superRefine((data, ctx) => {
+  if (data.isBranch) {
+    if (!data.parentSchool?.schoolId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['parentSchool.schoolId'],
+        message: 'Parent School is required when it is a branch.',
+      });
+    }
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -144,6 +154,18 @@ export default function EditSchoolClient({
       }
     }
 
+    let parentSchoolData;
+    if (values.isBranch && values.parentSchool?.schoolId) {
+        const selectedParentSchool = schoolList.find(s => s.id === values.parentSchool?.schoolId);
+        if (selectedParentSchool) {
+            parentSchoolData = {
+                schoolId: selectedParentSchool.id,
+                schoolName: selectedParentSchool.schoolName,
+                schoolCode: selectedParentSchool.schoolCode,
+            };
+        }
+    }
+
     const updatedValues = { 
       ...values, 
       logoUrl, 
@@ -151,7 +173,8 @@ export default function EditSchoolClient({
         { ...values.contacts[0], role: 'principal' },
         { ...values.contacts[1], role: 'incharge' },
       ],
-      schoolCode: initialSchool.schoolCode
+      schoolCode: initialSchool.schoolCode,
+      parentSchool: values.isBranch ? parentSchoolData : undefined,
     }; 
 
     try {
