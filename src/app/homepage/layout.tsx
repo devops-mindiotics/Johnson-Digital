@@ -10,6 +10,7 @@ import { SidebarHeader } from '@/components/sidebar-header';
 import { SidebarFooterNav } from '@/components/sidebar-footer-nav';
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { getSidebarNav } from '@/lib/sidebar';
+import { ExitConfirmation } from '@/components/exit-confirmation';
 
 function Layout({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -45,6 +46,7 @@ function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
+      <ExitConfirmation />
       <Sidebar collapsible="icon">
         <SidebarContent>
           <SidebarHeader />

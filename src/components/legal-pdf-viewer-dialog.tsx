@@ -8,28 +8,24 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useLegalPdfViewer } from '@/hooks/use-legal-pdf-viewer';
 
-interface LegalPdfViewerDialogProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  pdfUrl: string;
-  title: string;
-}
+export const LegalPdfViewerDialog: React.FC = () => {
+  const { isLegalPdfOpen, legalPdfUrl, legalPdfTitle, closeLegalPdf } = useLegalPdfViewer();
 
-export const LegalPdfViewerDialog: React.FC<LegalPdfViewerDialogProps> = ({ isOpen, onOpenChange, pdfUrl, title }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isLegalPdfOpen} onOpenChange={(isOpen) => !isOpen && closeLegalPdf()}>
       <DialogContent className="p-0 border-0 w-screen h-screen max-w-none">
         <DialogClose asChild className="absolute top-2 right-2 z-10">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" onClick={closeLegalPdf}>
               <X className="h-6 w-6 text-white bg-black rounded-full" />
             </Button>
         </DialogClose>
         <iframe
-          src={`${pdfUrl}#view=FitH&pagemode=none`}
+          src={legalPdfUrl ? `${legalPdfUrl}#view=FitH&pagemode=none` : undefined}
           className="w-full h-full"
           style={{ border: 'none' }}
-          title={title}
+          title={legalPdfTitle}
         />
       </DialogContent>
     </Dialog>

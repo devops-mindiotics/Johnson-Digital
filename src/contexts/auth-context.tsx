@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('contextJWT', contextJwt);
 
     console.log("AuthProvider: Login successful. User and tokens stored.");
-    router.push('/homepage');
+    router.replace('/homepage');
   }, [router]);
 
   const logout = useCallback(() => {
