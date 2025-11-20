@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +30,12 @@ import {
     CarouselNext,
     CarouselPrevious,
   } from "@/components/ui/carousel"
+import { 
+    Accordion, 
+    AccordionContent, 
+    AccordionItem, 
+    AccordionTrigger 
+} from "@/components/ui/accordion";
 import { Users, GraduationCap, UserCheck, BookUser, Activity, MessageSquare, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { User } from '@/contexts/auth-context';
 
@@ -84,7 +91,7 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
     const plugin = React.useRef(
         Autoplay({ delay: 3000, stopOnInteraction: true })
       )
-    const [showAllNotices, setShowAllNotices] = useState(false);
+    const [isNoticeBoardOpen, setIsNoticeBoardOpen] = useState(false);
 
     const school = user.schools.find(s => s.id === user.schoolId);
     const schoolName = school ? school.schoolName : '';
@@ -104,10 +111,10 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
                                 {Array.isArray(banners) && banners.map((banner, index) => (
                                 <CarouselItem key={index}>
                                     <a href={banner.attachmentUrl} target="_blank" rel="noopener noreferrer">
-                                    <div className="relative h-80">
+                                    <div className="relative h-48 sm:h-64 lg:h-80">
                                     <img src={banner.attachmentUrl} alt={banner.title} className="w-full h-full object-contain" />
-                                    <div className="absolute inset-0 bg-black bg-opacity-20 flex flex-col justify-between p-4">
-                                        <h2 className="text-white text-lg font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>{banner.title}</h2>
+                                    <div className="absolute inset-0 bg-black bg-opacity-20 flex flex-col justify-end p-4">
+                                        {/* <h2 className="text-white text-lg font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>{banner.title}</h2> */}
                                         <p className="text-white text-xs text-right" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)' }}>{schoolName}</p>
                                     </div>
                                     </div>
@@ -125,7 +132,46 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
                     </CardContent>
                 </Card>
             </div>
-            <Card className="relative">
+            <div className="lg:hidden relative">
+                <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg z-10">
+                    Upcoming
+                </div>
+                <Accordion type="single" collapsible className="w-full" onValueChange={(value) => setIsNoticeBoardOpen(!!value)}>
+                    <AccordionItem value="item-1" className="border rounded-lg overflow-hidden">
+                        <AccordionTrigger className="px-4 py-3 data-[state=open]:pb-2">
+                            <div className="flex flex-col items-start text-left w-full">
+                                <h3 className="text-lg font-semibold">Notice Board</h3>
+                                {!isNoticeBoardOpen && recentActivities.length > 0 && (
+                                    <p className="text-sm text-muted-foreground truncate pr-2 mt-1">
+                                        {recentActivities[0].text}
+                                    </p>
+                                )}
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4">
+                            <div className="space-y-4 pt-2 border-t">
+                                {recentActivities.slice(0, 2).map(activity => (
+                                    <div key={activity.text} className="flex items-start gap-4">
+                                        <div className="bg-muted p-2 rounded-full">
+                                            <activity.icon className="h-5 w-5 text-muted-foreground" />
+                                        </div>
+                                        <div className="flex-grow">
+                                            <p className="text-sm">{activity.text}</p>
+                                            <p className="text-xs text-muted-foreground">{activity.time}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="text-right">
+                                <Link href="/homepage/notice-board" className="text-sm font-medium text-primary hover:underline">
+                                    Read more...
+                                </Link>
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+            <Card className="hidden lg:flex lg:flex-col relative">
                 <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg">
                     Upcoming
                 </div>
@@ -133,9 +179,9 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
                     <CardTitle>Notice Board</CardTitle>
                     <CardDescription>Recent activities in the school.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-grow">
                     <div className="space-y-4">
-                        {(showAllNotices ? recentActivities : recentActivities.slice(0, 2)).map(activity => (
+                        {recentActivities.slice(0, 2).map(activity => (
                             <div key={activity.text} className="flex items-start gap-4">
                                 <div className="bg-muted p-2 rounded-full">
                                     <activity.icon className="h-5 w-5 text-muted-foreground" />
@@ -147,16 +193,12 @@ export default function SchoolAdminDashboard({ user, banners }: { user: User; ba
                             </div>
                         ))}
                     </div>
-                    {recentActivities.length > 2 && (
-                        <Button
-                            variant="link"
-                            className="w-full mt-4 lg:hidden"
-                            onClick={() => setShowAllNotices(!showAllNotices)}
-                        >
-                            {showAllNotices ? 'Show Less' : 'View All'}
-                        </Button>
-                    )}
                 </CardContent>
+                <CardFooter className="py-2 px-4 sm:py-3 sm:px-6">
+                    <Link href="/homepage/notice-board" className="text-sm font-medium text-primary hover:underline w-full text-right">
+                        Read more...
+                    </Link>
+                </CardFooter>
             </Card>
         </div>
 

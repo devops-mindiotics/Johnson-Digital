@@ -33,7 +33,7 @@ export function HomeBanner() {
         {banners.map((banner, index) => (
           <div
             key={index}
-            className="embla__slide flex-shrink-0 w-full h-48 sm:h-64 md:h-80 lg:h-96"
+            className="embla__slide flex-shrink-0 w-full aspect-video"
           >
             <img
               alt={banner.title}
