@@ -91,7 +91,7 @@ export default function SchoolsPage() {
       const updatedSchool = { ...schoolToProcess, status: newStatus };
 
       try {
-        await updateSchool(user.tenantId, schoolToProcess.id, updatedSchool);
+        await updateSchool(user.tenantId, schoolToProcess.id, { data: updatedSchool });
         await fetchSchools(user.tenantId); // Refetch schools after update
         setProcessedSchoolName(schoolToProcess.schoolName);
         if (newStatus === "inactive") setSuccessDialogOpen(true);

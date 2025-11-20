@@ -22,7 +22,7 @@ export function ExitConfirmation() {
         const confirmed = window.confirm('Do you want to exit?');
         if (confirmed) {
           if (window.flutter_inappwebview) {
-            window.flutter_inappwebview.callHandler('close_app');
+            window.flutter_inappwebview.callHandler('minimize_app');
           } else {
             window.location.replace('about:blank');
           }

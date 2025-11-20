@@ -24,6 +24,7 @@ export function Logo({ className, iconOnly = false, variant = 'blue' }: LogoProp
         width={200}
         height={200}
         priority
+        style={{ height: 'auto' }}
       />
     </div>
   );

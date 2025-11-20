@@ -178,7 +178,7 @@ export default function EditSchoolClient({
     }; 
 
     try {
-      await updateSchool(tenantId, initialSchool.id, updatedValues);
+      await updateSchool(tenantId, initialSchool.id, { data: updatedValues });
       router.push('/homepage/schools');
     } catch (error) {
         console.error("Failed to update school:", error);
