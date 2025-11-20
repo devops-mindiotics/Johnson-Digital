@@ -44,7 +44,7 @@ const formSchema = z.object({
   }),
   isBranch: z.boolean().default(false),
   parentSchool: z.object({
-    schoolId: z.string(),
+    schoolId: z.string().optional(),
     schoolName: z.string().optional(),
     schoolCode: z.string().optional(),
   }).optional(),
@@ -56,14 +56,12 @@ const formSchema = z.object({
   totalTeachers: z.preprocess((val) => Number(val), z.number().min(0)),
   totalStudents: z.preprocess((val) => Number(val), z.number().min(0))
 }).superRefine((data, ctx) => {
-  if (data.isBranch) {
-    if (!data.parentSchool?.schoolId) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['parentSchool.schoolId'],
-        message: 'Parent School is required when it is a branch.',
-      });
-    }
+  if (data.isBranch && !data.parentSchool?.schoolId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['parentSchool.schoolId'],
+      message: 'Parent School is required when it is a branch.',
+    });
   }
 });
 

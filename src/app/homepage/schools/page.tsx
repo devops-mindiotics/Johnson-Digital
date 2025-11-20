@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from "next/link";
 import { SetStateAction, useEffect, useState } from "react";
@@ -85,7 +85,7 @@ export default function SchoolsPage() {
   const handleStatusChange = async () => {
     if (schoolToProcess && user?.tenantId) {
       const newStatus =
-        schoolToProcess.status === "active" || schoolToProcess.status === "Trial"
+        schoolToProcess.status.toLowerCase() === "active" || schoolToProcess.status.toLowerCase() === "trial"
           ? "inactive"
           : "active";
       const updatedSchool = { ...schoolToProcess, status: newStatus };
@@ -193,9 +193,9 @@ export default function SchoolsPage() {
                     <TableCell className="text-center">
                       <Badge
                         variant={
-                          school.status === "Active"
+                          school.status.toLowerCase() === "active"
                             ? "default"
-                            : school.status === "Inactive"
+                            : school.status.toLowerCase() === "inactive"
                               ? "destructive"
                               : "secondary"
                         }
@@ -223,13 +223,13 @@ export default function SchoolsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className={
-                              school.status === "Inactive"
+                              school.status.toLowerCase() === "inactive"
                                 ? ""
                                 : "text-destructive"
                             }
                             onClick={() => openDialog(school)}
                           >
-                            {school.status === "Inactive"
+                            {school.status.toLowerCase() === "inactive"
                               ? "Activate"
                               : "Deactivate"}
                           </DropdownMenuItem>
@@ -266,7 +266,7 @@ export default function SchoolsPage() {
                         size="icon"
                         variant="ghost"
                         className={
-                          school.status === "Inactive" ? "" : "text-destructive"
+                          school.status.toLowerCase() === "inactive" ? "" : "text-destructive"
                         }
                         onClick={() => openDialog(school)}
                       >
@@ -279,9 +279,9 @@ export default function SchoolsPage() {
                   <div className="flex items-center justify-between text-sm">
                     <Badge
                       variant={
-                        school.status === "Active"
+                        school.status.toLowerCase() === "active"
                           ? "default"
-                          : school.status === "Inactive"
+                          : school.status.toLowerCase() === "inactive"
                             ? "destructive"
                             : "secondary"
                       }
@@ -316,9 +316,9 @@ export default function SchoolsPage() {
               This action will change the status of{" "}
               <span className="font-semibold">"{schoolToProcess?.schoolName}"</span> to{" "}
               <span className="font-semibold">
-                {schoolToProcess?.status === "active" ||
-                schoolToProcess?.status === "Trial"
-                  ? "InActive"
+                {schoolToProcess?.status.toLowerCase() === "active" ||
+                schoolToProcess?.status.toLowerCase() === "trial"
+                  ? "Inactive"
                   : "Active"}
               </span>
               .
@@ -329,10 +329,10 @@ export default function SchoolsPage() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleStatusChange}>
-              {schoolToProcess?.status === "active" ||
-              schoolToProcess?.status === "Trial"
-                ? "Inactive"
-                : "active"}
+              {schoolToProcess?.status.toLowerCase() === "active" ||
+              schoolToProcess?.status.toLowerCase() === "trial"
+                ? "Deactivate"
+                : "Activate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
