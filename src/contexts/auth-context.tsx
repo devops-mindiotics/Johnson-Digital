@@ -147,7 +147,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set the token in the API client FIRST to ensure all subsequent calls are authenticated.
     setAccessToken(contextJwt);
-
+    const contextInfo = {
+      tenantId: userForContext.tenantId,
+      id: userForContext.id,
+      name: userForContext.name,
+      role: userForContext.role,
+  };
+  localStorage.setItem('contextInfo', JSON.stringify(contextInfo));
     setUser(userForContext);
     localStorage.setItem('educentral-user', JSON.stringify(userForContext));
     localStorage.setItem('sessionJWT', sessionJwt);

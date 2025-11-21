@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Link from "next/link";
 import { updateSchool } from "@/lib/api/schoolApi";
 import { useAuth } from "@/hooks/use-auth";
-import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSignedUrlForViewing } from "@/lib/api/attachmentApi";
+import { createAttachment, getSignedUploadUrl, getSignedViewUrl } from "@/lib/api/attachmentApi";
 import { Upload } from 'lucide-react';
 import './EditSchool.css';
 
@@ -105,8 +105,8 @@ export default function EditSchoolClient({
       form.reset(formattedSchool);
 
       if (initialSchool.logoUrl) {
-        getSignedUrlForViewing(initialSchool.logoUrl)
-          .then(url => setLogoPreview(url))
+        getSignedViewUrl(initialSchool.logoUrl)
+          .then(response => setLogoPreview(response.data.attributes.signedUrl))
           .catch(err => console.error("Error fetching logo preview:", err));
       }
     }
@@ -129,23 +129,26 @@ export default function EditSchoolClient({
 
     if (selectedFile) {
       try {
-        const signedUrlData = await getSignedUrl({
-          fileName: selectedFile.name,
-          contentType: selectedFile.type,
-          bucketType: 'profile',
+        const signedUrlResponse = await getSignedUploadUrl(selectedFile, "schools");
+        const { signedUrl, attachmentId, path } = signedUrlResponse.data.attributes;
+
+        await fetch(signedUrl, {
+            method: 'PUT',
+            body: selectedFile,
+            headers: {
+                'Content-Type': selectedFile.type,
+            },
         });
 
-        await uploadFileToSignedUrl(signedUrlData.signedUrl, selectedFile, selectedFile.name);
-
-        const attachmentData = await createAttachment({
-          fileName: selectedFile.name,
-          contentType: selectedFile.type,
-          fileSize: selectedFile.size,
-          gcsUrl: signedUrlData.gcsUrl,
-          bucketType: 'profile',
+        await createAttachment({
+            id: attachmentId,
+            path: path,
+            filename: selectedFile.name,
+            contentType: selectedFile.type,
+            name: selectedFile.name
         });
 
-        logoUrl = attachmentData.id;
+        logoUrl = attachmentId;
       } catch (error) {
         console.error("Failed to upload logo:", error);
         return; 

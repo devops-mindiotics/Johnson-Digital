@@ -212,7 +212,7 @@ export async function getAllClasses(): Promise<any[]> {
         }
   
       const response = await apiClient.get(
-        `/tenants/${tenantId}/masters/subjects?status=active`,
+        `/tenants/${tenantId}/masters/subjects`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -287,7 +287,6 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function createPackage(packagePayload: {
     name: string;
-    code: string;
     description: string;
     status: string;
   }): Promise<any> {
@@ -299,7 +298,7 @@ export async function getAllClasses(): Promise<any[]> {
   
       const response = await apiClient.post(
         `/tenants/${tenantId}/masters/packages`,
-        { data: { ...packagePayload, createdBy: userId } },
+        { data: { ...packagePayload, code: packagePayload.name, createdBy: userId } },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -316,7 +315,6 @@ export async function getAllClasses(): Promise<any[]> {
 
   export async function updatePackage(packageId: string, packagePayload: {
     name: string;
-    code: string;
     description: string;
     status: string;
   }): Promise<any> {
@@ -328,7 +326,7 @@ export async function getAllClasses(): Promise<any[]> {
   
       const response = await apiClient.patch(
         `/tenants/${tenantId}/masters/packages/${packageId}`,
-        { data: { ...packagePayload, updatedBy: userId } },
+        { data: { ...packagePayload, code: packagePayload.name, updatedBy: userId } },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -371,7 +369,7 @@ export async function getAllClasses(): Promise<any[]> {
     }
   }
 
-  export async function createClass(classData: { name: string; description: string; }): Promise<any> {
+  export async function createClass(classData: { name: string; description: string; status: string; }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
         if (!userId || !tenantId || !token) {
@@ -382,6 +380,7 @@ export async function getAllClasses(): Promise<any[]> {
             name: classData.name,
             description: classData.description,
             code: classData.name,
+            status: classData.status,
             createdBy: userId
         };
 
@@ -402,7 +401,7 @@ export async function getAllClasses(): Promise<any[]> {
     }
 }
 
-export async function updateClass(classId: string, classData: { name: string; description: string; }): Promise<any> {
+export async function updateClass(classId: string, classData: { name: string; description: string; status: string; }): Promise<any> {
     try {
         const { tenantId, token, userId } = getContext();
         if (!userId || !tenantId || !token) {
@@ -413,6 +412,7 @@ export async function updateClass(classId: string, classData: { name: string; de
             name: classData.name,
             description: classData.description,
             code: classData.name,
+            status: classData.status,
             updatedBy: userId
         };
 

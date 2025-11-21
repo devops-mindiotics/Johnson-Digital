@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/use-auth';
-import { usePdfViewer } from '@/hooks/use-pdf-viewer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +30,6 @@ export function LoginForm() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
   const { login } = useAuth();
-  const { openPdf } = usePdfViewer();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     mode: 'onBlur',
@@ -129,17 +127,6 @@ export function LoginForm() {
           </Button>
         </form>
       </Form>
-      <div className="pt-4 text-center text-xs text-muted-foreground">
-        <p>
-          By signing in, you agree to our{" "}
-          <button type="button" onClick={() => openPdf('https://storage.googleapis.com/johnson-documents/EULA-JohnsonDigital.pdf', 'End User License Agreement')} className="text-primary hover:underline">EULA</button>
-          {", "}
-          <button type="button" onClick={() => openPdf('https://storage.googleapis.com/johnson-documents/PrivacyPolicy-JohnsonDigital.pdf', 'Privacy Policy')} className="text-primary hover:underline">Privacy Policy</button>
-          {" and "}
-          <button type="button" onClick={() => openPdf('https://storage.googleapis.com/johnson-documents/TnC-JohnsonDigital.pdf', 'Terms & Conditions')} className="text-primary hover:underline">Terms & Conditions</button>
-          .
-        </p>
-      </div>
       <AlertDialog open={isErrorDialogOpen} onOpenChange={setIsErrorDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

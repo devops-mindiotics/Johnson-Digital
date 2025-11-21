@@ -25,10 +25,13 @@ export default function LoginPage() {
                             </p>
                         </div>
                         <LoginForm />
-                        <div className="text-center text-sm pt-4 flex justify-center space-x-4">
-                            <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/EULA-JohnsonDigital.pdf', 'End User License Agreement')} className="hover:underline">EULA</button>
-                            <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/PrivacyPolicy-JohnsonDigital.pdf', 'Privacy Policy')} className="hover:underline">Privacy Policy</button>
-                            <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/TnC-JohnsonDigital.pdf', 'Terms & Conditions')} className="hover:underline">T&C</button>
+                        <div className="text-center text-sm pt-4">
+                            <p className="text-muted-foreground mb-2">By signing in, you agree to our</p>
+                            <div className="flex justify-center space-x-4">
+                                <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/EULA-JohnsonDigital.pdf', 'End User License Agreement')} className="hover:underline">EULA</button>
+                                <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/PrivacyPolicy-JohnsonDigital.pdf', 'Privacy Policy')} className="hover:underline">Privacy Policy</button>
+                                <button onClick={() => handleOpenPdf('https://storage.googleapis.com/johnson-documents/TnC-JohnsonDigital.pdf', 'Terms & Conditions')} className="hover:underline">T&C</button>
+                            </div>
                         </div>
                     </div>
                 </CardContent>

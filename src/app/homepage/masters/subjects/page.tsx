@@ -61,7 +61,7 @@ const SubjectsPage = () => {
     }
   };
 
-  const handleAdd = async (newSubject: Omit<Subject, 'id'>) => {
+  const handleAdd = async (newSubject: Omit<Subject, 'id' | 'code'>) => {
     try {
       await createSubject(newSubject);
       fetchSubjects();
@@ -71,12 +71,14 @@ const SubjectsPage = () => {
     }
   };
 
-  const handleUpdate = async (updatedSubject: Subject) => {
+  const handleUpdate = async (updatedSubject: Omit<Subject, 'id' | 'code'>) => {
     try {
-      await updateSubject(updatedSubject.id, updatedSubject);
-      fetchSubjects();
-      setIsEditDialogOpen(false);
-      setSelectedSubject(null);
+      if(selectedSubject) {
+        await updateSubject(selectedSubject.id, updatedSubject);
+        fetchSubjects();
+        setIsEditDialogOpen(false);
+        setSelectedSubject(null);
+      }
     } catch (error) {
       console.error("Error updating subject:", error);
     }
@@ -113,7 +115,6 @@ const SubjectsPage = () => {
               </CardHeader>
               <CardContent className="flex-grow">
                 <p>{subject.description}</p>
-                <p className="text-sm text-gray-500 mt-2">Code: {subject.code}</p>
                 <p className="text-sm text-gray-500 mt-2">Status: {subject.status}</p>
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
@@ -183,7 +184,6 @@ interface SubjectDialogProps {
 const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subject, onSave, title }) => {
     const [name, setName] = useState(subject?.name || '');
     const [description, setDescription] = useState(subject?.description || '');
-    const [code, setCode] = useState(subject?.code || '');
     const [status, setStatus] = useState(subject?.status || 'active');
 
     React.useEffect(() => {
@@ -191,19 +191,17 @@ const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subjec
             if (subject) {
                 setName(subject.name);
                 setDescription(subject.description);
-                setCode(subject.code);
                 setStatus(subject.status);
             } else {
                 setName('');
                 setDescription('');
-                setCode('');
                 setStatus('active');
             }
         }
     }, [subject, isOpen]);
 
     const handleSave = () => {
-        onSave({ ...subject, name, description, code, status });
+        onSave({ ...subject, name, description, status });
     };
 
     return (
@@ -220,10 +218,6 @@ const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subjec
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="description" className="text-right">Description</Label>
                         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="code" className="text-right">Code</Label>
-                        <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="status" className="text-right">Status</Label>

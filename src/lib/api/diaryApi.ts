@@ -1,7 +1,7 @@
 'use client';
 import apiClient from "./client";
 import { DIARY_ENDPOINT } from "./endpoint";
-import { getSignedUrlForViewing as getAttachmentSignedUrl } from "./attachmentApi";
+import { getSignedViewUrl as getAttachmentSignedUrl } from "./attachmentApi";
 
 export interface DiaryAttachment {
   fileName: string;

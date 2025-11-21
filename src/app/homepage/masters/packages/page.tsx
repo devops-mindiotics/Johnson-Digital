@@ -61,7 +61,7 @@ const PackagesPage = () => {
     }
   };
 
-  const handleAdd = async (newPackage: Omit<Package, 'id'>) => {
+  const handleAdd = async (newPackage: Omit<Package, 'id' | 'code'>) => {
     try {
       await createPackage(newPackage);
       fetchPackages();
@@ -71,7 +71,7 @@ const PackagesPage = () => {
     }
   };
 
-  const handleUpdate = async (updatedPackage: Package) => {
+  const handleUpdate = async (updatedPackage: Omit<Package, 'code'>) => {
     try {
       await updatePackage(updatedPackage.id, updatedPackage);
       fetchPackages();
@@ -114,7 +114,6 @@ const PackagesPage = () => {
               </CardHeader>
               <CardContent className="flex-grow">
                 <p>{pkg.description}</p>
-                <p className="text-sm text-gray-500 mt-2">Code: {pkg.code}</p>
                 <p className="text-sm text-gray-500 mt-2">Status: {pkg.status}</p>
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
@@ -184,7 +183,6 @@ interface PackageDialogProps {
 const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, onSave, title }) => {
     const [name, setName] = useState(pkg?.name || '');
     const [description, setDescription] = useState(pkg?.description || '');
-    const [code, setCode] = useState(pkg?.code || '');
     const [status, setStatus] = useState(pkg?.status || 'active');
 
     React.useEffect(() => {
@@ -192,19 +190,17 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
             if (pkg) {
                 setName(pkg.name);
                 setDescription(pkg.description);
-                setCode(pkg.code);
                 setStatus(pkg.status);
             } else {
                 setName('');
                 setDescription('');
-                setCode('');
                 setStatus('active');
             }
         }
     }, [pkg, isOpen]);
 
     const handleSave = () => {
-        onSave({ ...pkg, name, description, code, status });
+        onSave({ ...pkg, name, description, status });
     };
 
     return (
@@ -221,10 +217,6 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="description" className="text-right">Description</Label>
                         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="code" className="text-right">Code</Label>
-                        <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="status" className="text-right">Status</Label>

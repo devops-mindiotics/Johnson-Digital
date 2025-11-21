@@ -1,116 +1,112 @@
 'use client';
 
 import apiClient from "./client";
-import { ATTACHMENT_SUBJECT_CONTENT_ENDPOINT } from "./endpoint";
 
-// A helper function to get the current user from localStorage
-const getUserFromStorage = () => {
-  if (typeof window === 'undefined') return null;
-  const userData = localStorage.getItem("educentral-user");
-  if (!userData) throw new Error("User data (educentral-user) not found in localStorage");
-  return JSON.parse(userData);
-};
+const getContext = () => {
+    if (typeof window === 'undefined') {
+        return { tenantId: null, token: null, userId: null };
+    }
+    const tenantData = localStorage.getItem("contextInfo");
+    const token = localStorage.getItem("contextJWT");
+    if (!tenantData || !token) {
+        // Return nulls and let the consuming function decide if it is an error
+        return { tenantId: null, token: null, userId: null };
+    }
+    const parsed = JSON.parse(tenantData);
+    const tenantId = parsed?.tenantId;
+    const userId = parsed?.id;
+
+    if (!tenantId) {
+        throw new Error("Tenant ID not found in context info");
+    }
+    return { tenantId, token, userId };
+}
+
+export async function getSignedUploadUrl(file: File, bucketType: string): Promise<any> {
+    try {
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot get signed URL.");
+        }
+
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/attachments/signed-upload-url`,
+            {
+                data: {
+                    tenantName: "Johnson",
+                    bucketType: bucketType,
+                    series: "NA",
+                    subject: "NA",
+                    lesson: "NA",
+                    package: "NA",
+                    class: "NA",
+                    filename: file.name,
+                    contentType: file.type,
+                    name: file.name
+                }
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (err: any) {
+        console.error("❌ getSignedUploadUrl error:", err.response?.data || err.message);
+        throw err;
+    }
+}
 
 export async function createAttachment(attachmentData: any): Promise<any> {
-  try {
-    const user = getUserFromStorage();
-    const tenantId = user?.tenantId;
-
-    if (!tenantId) throw new Error("Tenant ID not found in user data");
-
-    // The authorization header is now handled automatically by the apiClient interceptor
-    const response = await apiClient.post(
-      `/tenants/${tenantId}/attachments`,
-      { data: attachmentData } // Pass the attachmentData directly
-    );
-
-    return response.data.data;
-  } catch (err: any) {
-    console.error("❌ createAttachment error:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
-export async function getSignedUrlForViewing(attachmentId: string): Promise<any> {
-  try {
-    const user = getUserFromStorage();
-    const tenantId = user?.tenantId;
-
-    if (!tenantId) throw new Error("Tenant ID not found in user data");
-
-    // The authorization header is handled by the interceptor
-    const response = await apiClient.get(
-      `/tenants/${tenantId}/attachments/${attachmentId}/signed-view-url`
-    );
-    return response.data.data;
-  } catch (err: any) {
-    console.error("❌ getSignedUrlForViewing error:", err.response?.data || err.message);
-    throw err;
-  }
-}
-
-export async function getSignedUrl(uploadData: any): Promise<any> {
     try {
-      const user = getUserFromStorage();
-      const tenantId = user?.tenantId;
-      if (!tenantId) throw new Error("Tenant ID not found in user data");
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot create attachment.");
+        }
 
-      const modifiedUploadData = {
-        ...uploadData,
-        tenantName: "Beta Education",
-      };
-      
-      // The authorization header is handled by the interceptor
-      const response = await apiClient.post(
-        `/tenants/${tenantId}/attachments/signed-upload-url`,
-        { data: modifiedUploadData }
-      );
-      return response.data.data;
+        const response = await apiClient.post(
+            `/tenants/${tenantId}/attachments`,
+            { data: attachmentData },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
     } catch (err: any) {
-      console.error('❌ getSignedUrl error:', err.response?.data || err.message);
-      throw err;
+        console.error("❌ createAttachment error:", err.response?.data || err.message);
+        throw err;
     }
 }
 
-export async function uploadFileToSignedUrl(signedUrl: string, file: File, name: string) {
+export async function getSignedViewUrl(attachmentId: string): Promise<any> {
     try {
-      const headers: { [key: string]: string } = {
-        'Content-Type': file.type,
-      };
-      if (name) {
-        headers['x-goog-meta-name'] = name;
-      }
-      const response = await fetch(signedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: headers,
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`File upload failed with status: ${response.status}. Response: ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Error uploading file to signed URL:', error);
-      throw error;
-    }
-}
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot get signed URL.");
+        }
 
-export async function getSubjectContent(tenantId: string, payload: any): Promise<any[]> {
-    try {
-      const modifiedPayload = {
-        ...payload,
-        tenantName: "Beta Education",
-      };
-
-      // The authorization header is handled by the interceptor
-      const response = await apiClient.post(
-        ATTACHMENT_SUBJECT_CONTENT_ENDPOINT(tenantId),
-        { data: modifiedPayload }
-      );
-  
-      return response.data.data.records;
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/attachments/${attachmentId}/signed-view-url`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+        
+        if (response && response.data && response.data.data) {
+            return response.data.data;
+        } else {
+            console.error("Unexpected response structure from getSignedViewUrl:", response.data);
+            throw new Error("Could not extract view URL from API response.");
+        }
     } catch (err: any) {
-      console.error("❌ getSubjectContent error:", err.response?.data || err.message);
-      throw err;
+        console.error("❌ getSignedViewUrl error:", err.response?.data || err.message);
+        throw err;
     }
 }

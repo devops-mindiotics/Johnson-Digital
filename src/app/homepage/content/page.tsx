@@ -30,10 +30,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { MonitorPlay, ChevronDown, FileText, Video, Presentation, Image as ImageIcon, Filter, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { usePdfViewer } from '@/hooks/use-pdf-viewer';
+import { useLegalPdfViewer } from '@/hooks/use-legal-pdf-viewer';
 import { getAllSeries, getAllClasses, getAllSubjects, getAllPackages, getAllContentTypes } from '@/lib/api/masterApi';
 import { getAllLessons, getLessonsByClassIdAndSubjectId } from '@/lib/api/lessonApi';
-import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSubjectContent, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
+import { createAttachment, getSignedUploadUrl, getSignedViewUrl } from '@/lib/api/attachmentApi';
+import { getSubjectContent } from '@/lib/api/contentApi';
 
 const getContentTypeIcon = (contentType) => {
     const type = contentType?.toLowerCase();
@@ -104,12 +105,7 @@ export default function ContentManagementPage() {
             if (!user?.tenantId) return;
             try {
                 const [content, lessons] = await Promise.all([
-                    getSubjectContent(user.tenantId, {
-                        class: filters.classId,
-                        series: filters.seriesId,
-                        subject: filters.subjectId,
-                        package: filters.packageId || 'NA',
-                    }),
+                    getSubjectContent(filters.seriesId, filters.packageId || 'NA', filters.classId, filters.subjectId),
                     getLessonsByClassIdAndSubjectId(filters.classId, filters.subjectId)
                 ]);
                 
@@ -121,7 +117,7 @@ export default function ContentManagementPage() {
                 const packageMap = new Map(masterData.packages.map(p => [p.id, p.name]));
                 const lessonMap = new Map(lessons.map(l => [l.id, l.name]));
 
-                const groupedByLesson = Array.isArray(content) ? content.reduce((acc, item) => {
+                const groupedByLesson = Array.isArray(content.data.records) ? content.data.records.reduce((acc, item) => {
                     const lessonName = lessonMap.get(item.lesson) || item.lesson;
                     const key = `${lessonName}-${classMap.get(item.class) || item.class}-${subjectMap.get(item.subject) || item.subject}-${seriesMap.get(item.series) || item.series}`;
                     if (!acc[key]) {
@@ -259,7 +255,7 @@ function VideoPlayer({ videoUrl, onClose }) {
 function ContentList({ contentData, masterData }) {
     const [openKey, setOpenKey] = useState(null);
     const [selectedVideoUrl, setSelectedVideoUrl] = useState(null);
-    const { viewPdf } = usePdfViewer();
+    const { openLegalPdf } = useLegalPdfViewer();
 
     const lessonMap = useMemo(() => new Map(masterData.lessons.map(l => [l.id, l.name])), [masterData.lessons]);
 
@@ -269,17 +265,26 @@ function ContentList({ contentData, masterData }) {
     }, [contentData]);
 
     const handleContentClick = async (content) => {
-        const signedUrl  = await getSignedUrlForViewing(content.attachmentId);
-        if (signedUrl) {
-            const contentType = content.contentType.toLowerCase();
-            if (contentType === 'mp4' || contentType === 'video') {
-                setSelectedVideoUrl(signedUrl.viewUrl);
-            } else if (contentType === 'pdf') {
-                viewPdf(signedUrl.viewUrl);
+        try {
+            const attachmentData = await getSignedViewUrl(content.attachmentId);
+            const viewUrl = attachmentData?.viewUrl; 
+
+            if (viewUrl) {
+                const contentType = content.contentType.toLowerCase();
+                if (contentType === 'mp4' || contentType === 'video') {
+                    setSelectedVideoUrl(viewUrl);
+                } else if (contentType === 'pdf') {
+                    openLegalPdf(viewUrl, content.contentName);
+                } else {
+                    window.open(viewUrl, '_blank');
+                }
+            } else {
+                console.error("Could not retrieve viewUrl from attachment data:", attachmentData, "for content:", content);
+                alert("Sorry, there was an issue accessing this content. The view URL could not be generated.");
             }
-            else {
-                window.open(signedUrl.viewUrl, '_blank');
-            }
+        } catch (error) {
+            console.error("Error in handleContentClick:", error);
+            alert("An unexpected error occurred while trying to view the content.");
         }
     };
 
@@ -424,40 +429,33 @@ function AddContentDialog({ isOpen, onOpenChange, onAddContent }) {
 
         setIsSubmitting(true);
         try {
-            const signedUrlPayload = {
-                bucketType: "content",
-                series: formValues.seriesId,
-                subject: formValues.subjectId,
-                lesson: formValues.lessonId,
-                package: formValues.packageId || "NA",
-                class: formValues.classId,
-                contentType: selectedFile.type,
-                filename: selectedFile.name,
-                name: formValues.contentName, 
-                expiresIn: 3600
-            };
-            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            const signedUrlResponse = await getSignedUploadUrl(selectedFile, 'content');
+            const { signedUrl, attachmentId, path } = signedUrlResponse.data.attributes;
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, selectedFile, formValues.contentName);
+            await fetch(signedUrl, {
+                method: 'PUT',
+                body: selectedFile,
+                headers: {
+                    'Content-Type': selectedFile.type,
+                },
+            });
 
             const attachmentPayload = {
-                tenantName: "Beta Education",
-                bucketType: "content",
+                id: attachmentId,
+                path: path,
+                filename: selectedFile.name,
+                contentType: selectedFile.type,
+                name: formValues.contentName,
                 series: formValues.seriesId,
                 subject: formValues.subjectId,
                 lesson: formValues.lessonId,
                 package: formValues.packageId || "NA",
                 class: formValues.classId,
-                contentType: selectedFile.type,
-                filename: selectedFile.name,
-                name: formValues.contentName,
-                filePath: signedUrlData.filePath,
-                uploadedBy: user.id,
             };
 
             await createAttachment(attachmentPayload);
 
-            onAddContent({ ...formValues, contentType: selectedVisualContentType, attachmentId: signedUrlData.attachmentId });
+            onAddContent({ ...formValues, contentType: selectedVisualContentType, attachmentId });
             resetForm();
         } catch (error) {
             console.error("Content creation failed:", error);

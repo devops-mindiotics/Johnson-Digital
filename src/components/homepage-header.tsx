@@ -55,8 +55,6 @@ const getAvatarUrl = (user: any) => {
 export function HomepageHeader() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const showBackButton = pathname !== '/homepage';
 
   if (!user) return null;
 
@@ -89,18 +87,12 @@ export function HomepageHeader() {
   return (
     <header className="flex h-auto shrink-0 items-center justify-between border-b px-4 md:px-6 py-4">
       <div className="flex items-center gap-2">
-        {showBackButton && (
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => router.back()}>
-                <ChevronLeft className="h-5 w-5" />
-                <span className="sr-only">Back</span>
-            </Button>
-        )}
         <SidebarTrigger />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <p className="text-lg font-semibold md:text-xl">{getGreeting()}!</p>
+          <p className="text-base font-semibold md:text-xl">{getGreeting()}!</p>
             {userRole === STUDENT && (
-                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-2 py-1 rounded-full w-fit">
+                <span className="flex items-center text-xs font-semibold text-black bg-yellow-400 px-1.5 py-0.5 rounded-full w-fit">
                     <Crown className="w-3 h-3 mr-1" />
                     Premium
                 </span>

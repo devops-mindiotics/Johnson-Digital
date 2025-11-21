@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePdfViewer } from "@/hooks/use-pdf-viewer";
-import { getSignedUrlForViewing } from "@/lib/api/attachmentApi";
+import { getSignedViewUrl } from "@/lib/api/attachmentApi";
 import { getAllLessons } from "@/lib/api/masterApi";
 
 interface LessonContentClientPageProps {
@@ -120,26 +120,26 @@ export default function LessonContentClientPage({
     return iconComponents[type as keyof typeof iconComponents] || iconComponents.default;
   };
 
-  const handleResourceClick = async (resource: any) => {
+ const handleResourceClick = async (resource: any) => {
     setSelectedVideoUrl(null); // Reset video URL
 
     const { id: attachmentId, type, title } = resource;
     console.log(`[Debug] Resource clicked: ${title} (ID: ${attachmentId}, Type: ${type})`);
 
     try {
-        const signedUrlResponse = await getSignedUrlForViewing(attachmentId);
+        const signedUrlResponse = await getSignedViewUrl(attachmentId);
 
         if (signedUrlResponse && signedUrlResponse.viewUrl) {
-            const { viewUrl } = signedUrlResponse;
-            console.log(`[Debug] Obtained signed URL: ${viewUrl}`);
+            const signedUrl = signedUrlResponse.viewUrl;
+            console.log(`[Debug] Obtained signed URL: ${signedUrl}`);
 
             if (type === 'video/mp4') {
-                setSelectedVideoUrl(viewUrl);
+                setSelectedVideoUrl(signedUrl);
             } else if (type === 'application/pdf') {
-                openPdf(viewUrl, title);
+                openPdf(signedUrl, title);
             } else {
                 // Default action for other resource types
-                window.open(viewUrl, '_blank');
+                window.open(signedUrl, '_blank');
             }
         } else {
             console.error(`❌ handleResourceClick: Failed to get signed URL for attachment: ${attachmentId}`);
@@ -147,22 +147,19 @@ export default function LessonContentClientPage({
     } catch (error) {
         console.error(`❌ handleResourceClick: Error getting signed URL for ${attachmentId}:`, error);
     }
-  };
+ };
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="flex items-center gap-4 bg-background p-4 rounded-lg shadow-sm border">
+    <div className="space-y-4 p-2 md:p-4">
+      <div className="flex items-center gap-4 bg-background p-2 rounded-lg shadow-sm border">
         <Link href={`/homepage/my-classes`}>
           <Button variant="outline" size="icon">
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-3 w-5" />
             <span className="sr-only">Back</span>
           </Button>
         </Link>
         <div className="flex-grow text-center">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{subjectName}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">
-            Select a chapter to explore resources
-          </p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">{subjectName}</h1>
         </div>
         <div className="w-10" />
       </div>

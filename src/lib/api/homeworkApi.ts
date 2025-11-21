@@ -3,7 +3,7 @@
 
 import apiClient from "./client";
 import { HOMEWORK_ENDPOINT } from "./endpoint";
-import { getSignedUrlForViewing as getAttachmentSignedUrl } from "./attachmentApi";
+import { getSignedViewUrl as getAttachmentSignedUrl } from "./attachmentApi";
 
 const getUserId = () => {
     if (typeof window === 'undefined') {

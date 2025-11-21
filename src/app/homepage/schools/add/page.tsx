@@ -42,6 +42,7 @@ import {
 import { Trash2 } from "lucide-react";
 import { createSchool, getAllSchools, createClass } from "@/lib/api/schoolApi";
 import { getAllSeries, getAllClasses, getAllPackages } from "@/lib/api/masterApi";
+import { getSignedUploadUrl, createAttachment } from "@/lib/api/attachmentApi";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -175,7 +176,7 @@ export default function AddSchoolPage() {
         board: formData.schoolBoard,
         type: formData.schoolType,
         affiliationNo: formData.affiliationNo,
-        logoUrl: formData.schoolLogo ? await handleFileUpload(formData.schoolLogo) : "",
+        logoUrl: formData.schoolLogo ? await handleFileUpload(formData.schoolLogo[0]) : "",
         website: formData.schoolWebsite,
         status: formData.status.toLowerCase(),
         expiryDate: new Date(formData.expiryDate).toISOString(),
@@ -244,10 +245,32 @@ export default function AddSchoolPage() {
     }
   }
 
-  async function handleFileUpload(file: any): Promise<string> {
-    // Replace this with your actual file upload logic
-    console.log("Uploading file:", file);
-    return new Promise((resolve) => setTimeout(() => resolve("https://cdn.schools.com/logos/springfield.png"), 1000));
+  async function handleFileUpload(file: File): Promise<string> {
+    try {
+      const signedUrlResponse = await getSignedUploadUrl(file);
+      const { signedUrl, attachmentId, path } = signedUrlResponse.data.attributes;
+
+      await fetch(signedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+              'Content-Type': file.type,
+          },
+      });
+
+      await createAttachment({
+          id: attachmentId,
+          path: path,
+          filename: file.name,
+          contentType: file.type,
+          name: file.name
+      });
+
+      return attachmentId;
+  } catch (error) {
+      console.error("File upload failed:", error);
+      return "";
+  }
   }
 
 
@@ -379,7 +402,7 @@ export default function AddSchoolPage() {
                   <FormItem>
                     <FormLabel>School Logo</FormLabel>
                     <FormControl>
-                      <Input type="file" {...field} />
+                      <Input type="file" {...form.register("schoolLogo")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

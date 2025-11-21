@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import {
   BookOpen, Award, ShieldCheck, Calendar, ChevronsRight, Pencil, GitBranch, Home, Globe
 } from 'lucide-react';
 import Image from 'next/image';
+import { getSignedViewUrl } from '@/lib/api/attachmentApi';
 
 // Reusable component for displaying a piece of information
 function DetailItem({ icon, label, value }) {
@@ -44,6 +45,21 @@ function ContactPersonCard({ contact }) {
 
 export default function ViewSchoolClient({ school }) {
   const router = useRouter();
+  const [logo, setLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchLogo() {
+      if (school?.logoUrl) {
+        try {
+          const response = await getSignedViewUrl(school.logoUrl);
+          setLogo(response.data.attributes.signedUrl);
+        } catch (error) {
+          console.error("Error fetching logo:", error);
+        }
+      }
+    }
+    fetchLogo();
+  }, [school]);
 
   if (!school) {
     return (
@@ -62,7 +78,6 @@ export default function ViewSchoolClient({ school }) {
     board,
     type,
     affiliationNo,
-    logoUrl,
     website,
     email,
     address,
@@ -97,9 +112,9 @@ export default function ViewSchoolClient({ school }) {
                 <div className="flex flex-col md:flex-row items-start justify-between gap-4">
                     {/* --- School Info (Logo and Name) --- */}
                     <div className="flex items-center pr-12 md:pr-0"> {/* Add padding to the right on mobile to avoid overlap */}
-                        {logoUrl && (
+                        {logo && (
                             <div className="mr-4 flex-shrink-0">
-                                <Image src={logoUrl} alt={`${name} Logo`} width={80} height={80} className="rounded-lg border-2 border-gray-200 object-cover"/>
+                                <Image src={logo} alt={`${name} Logo`} width={80} height={80} className="rounded-lg border-2 border-gray-200 object-cover"/>
                             </div>
                         )}
                         <div>

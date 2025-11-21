@@ -12,9 +12,11 @@ export async function createSubject(subjectData: any): Promise<any> {
 
     if (!tenantId) throw new Error("Tenant ID not found");
 
+    const payload = { ...subjectData, code: subjectData.name };
+
     const response = await apiClient.post(
       `/tenants/${tenantId}/masters/subjects`,
-      { data: subjectData },
+      { data: payload },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -32,7 +34,6 @@ export async function createSubject(subjectData: any): Promise<any> {
 export async function getAllSubjects(
   page = 1,
   limit = 10,
-  status = "active",
   search = ""
 ): Promise<any> {
   try {
@@ -46,7 +47,7 @@ export async function getAllSubjects(
     if (!tenantId) return { records: [], pagination: {} };
 
     const response = await apiClient.get(
-      `/tenants/${tenantId}/masters/subjects?page=${page}&limit=${limit}&status=${status}&search=${search}`,
+      `/tenants/${tenantId}/masters/subjects?page=${page}&limit=${limit}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -112,9 +113,11 @@ export async function updateSubject(
 
     if (!tenantId) throw new Error("Tenant ID not found");
 
+    const payload = { ...subjectData, code: subjectData.name };
+
     const response = await apiClient.put(
       `/tenants/${tenantId}/masters/subjects/${subjectId}`,
-      { data: subjectData },
+      { data: payload },
       {
         headers: {
           Authorization: `Bearer ${token}`,

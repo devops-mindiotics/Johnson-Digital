@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { DashboardSkeleton } from '@/components/ui/dashboard-skeleton';
 import { getRoles } from '@/lib/utils/getRole';
 import { getBanners } from '@/lib/api/bannerApi';
-import { getSignedUrlForViewing } from '@/lib/api/attachmentApi';
+import { getSignedViewUrl } from '@/lib/api/attachmentApi';
 import { API_BASE_URL, SUPERADMIN , SCHOOLADMIN , TEACHER , STUDENT, TENANTADMIN } from '@/lib/utils/constants';
 
 import SuperAdminDashboard from '@/components/homepage/super-admin';
@@ -39,7 +39,7 @@ export default function Homepage() {
               bannerData.data.records.map(async (banner) => {
                 if (banner.attachmentId) {
                   try {
-                    const signedUrlData = await getSignedUrlForViewing(banner.attachmentId);
+                    const signedUrlData = await getSignedViewUrl(banner.attachmentId);
                     return { ...banner, attachmentUrl: signedUrlData.viewUrl }; 
                   } catch (error) {
                     console.error('Failed to get signed URL for banner:', banner.id, error);

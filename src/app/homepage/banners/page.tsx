@@ -4,11 +4,25 @@ import * as React from 'react';
 import { Banner } from '@/types/banner';
 import { AddBannerDialog } from '@/components/add-banner-dialog';
 import { getBanners, createBanner, updateBanner, deleteBanner } from '@/lib/api/bannerApi';
-import { createAttachment, getSignedUrl, uploadFileToSignedUrl, getSignedUrlForViewing } from '@/lib/api/attachmentApi';
+import { createAttachment, getSignedUploadUrl, getSignedViewUrl } from '@/lib/api/attachmentApi';
 import { getAllSchools } from '@/lib/api/schoolApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BannerCard } from '@/components/banner-card';
 import { useAuth } from '@/hooks/use-auth';
+
+const uploadFileToSignedUrl = async (uploadUrl: string, file: File) => {
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    body: file,
+    headers: {
+      'Content-Type': file.type,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to upload file: ${response.statusText}`);
+  }
+};
 
 const BannersPage = () => {
   const { user } = useAuth();
@@ -53,7 +67,7 @@ const BannersPage = () => {
         let mediaUrl = '';
         if (banner.attachmentId) {
           try {
-            const signedUrlData = await getSignedUrlForViewing(banner.attachmentId);
+            const signedUrlData = await getSignedViewUrl(banner.attachmentId);
             if (signedUrlData && signedUrlData.viewUrl) {
               mediaUrl = signedUrlData.viewUrl;
             }
@@ -108,9 +122,9 @@ const BannersPage = () => {
                 name: banner.name,
                 expiresIn: 3600,
               };
-            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            const signedUrlData = await getSignedUploadUrl(signedUrlPayload);
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file, banner.name);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
 
             const attachmentPayload = {
                 tenantName: user.tenantName,
@@ -184,9 +198,9 @@ const BannersPage = () => {
                 name: updatedBanner.name,
                 expiresIn: 3600,
               };
-            const signedUrlData = await getSignedUrl(signedUrlPayload);
+            const signedUrlData = await getSignedUploadUrl(signedUrlPayload);
 
-            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file, updatedBanner.name);
+            await uploadFileToSignedUrl(signedUrlData.uploadUrl, file);
 
             const attachmentPayload = {
                 tenantName: user.tenantName,
@@ -233,7 +247,7 @@ const BannersPage = () => {
       fetchData(selectedSchool);
     } catch (error) {
       console.error("Error updating banner:", error);
-    }
+    } 
   }, [user, schools, rawBanners, fetchData, selectedSchool]);
 
   const handleDeleteBanner = React.useCallback(async (bannerId: string) => {
