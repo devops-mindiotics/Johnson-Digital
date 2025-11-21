@@ -43,6 +43,7 @@ interface EditTeacherFormProps {
 export function EditTeacherForm({ teacherId, onTeacherUpdated }: EditTeacherFormProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Teacher | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -58,6 +59,14 @@ export function EditTeacherForm({ teacherId, onTeacherUpdated }: EditTeacherForm
     }
   }, [open, teacherId]);
 
+  useEffect(() => {
+    if (formData) {
+      const { id, schoolId, userType, ...requiredFields } = formData;
+      const allFieldsFilled = Object.values(requiredFields).every(field => field !== '');
+      setIsFormValid(allFieldsFilled);
+    }
+  }, [formData]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!formData) return;
     const { name, value } = e.target;
@@ -66,7 +75,7 @@ export function EditTeacherForm({ teacherId, onTeacherUpdated }: EditTeacherForm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData) return;
+    if (!formData || !isFormValid) return;
     try {
       const { id, schoolId, userType, ...teacherData } = formData;
       await updateTeacher(teacherId, teacherData);
@@ -101,7 +110,7 @@ export function EditTeacherForm({ teacherId, onTeacherUpdated }: EditTeacherForm
                         </div>
                     )
                     })}
-                <Button type="submit">Save Changes</Button>
+                <Button type="submit" disabled={!isFormValid}>Save Changes</Button>
             </form>
         ) : <p>Loading...</p>}
       </DialogContent>

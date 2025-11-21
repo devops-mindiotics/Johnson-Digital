@@ -61,7 +61,7 @@ export function SidebarNav({ items, setSidebarOpen }: any) {
                           isActive={pathname.startsWith(child.href)}
                         >
                           <Link href={child.href} onClick={handleLinkClick}>
-                            <child.icon className="h-4 w-4" />
+                            <child.icon className="h-4 w-4 text-white" />
                             <span>{child.title}</span>
                           </Link>
                         </SidebarMenuSubButton>

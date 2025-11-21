@@ -168,6 +168,7 @@ const ClassDialog: React.FC<ClassDialogProps> = ({ isOpen, setIsOpen, onSave, in
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('active');
+  const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -181,8 +182,14 @@ const ClassDialog: React.FC<ClassDialogProps> = ({ isOpen, setIsOpen, onSave, in
     }
   }, [initialData]);
 
+  useEffect(() => {
+    setIsFormValid(!!(name && description && status));
+  }, [name, description, status]);
+
   const handleSave = () => {
-    onSave({ name, description, status });
+    if (isFormValid) {
+      onSave({ name, description, status });
+    }
   };
 
   return (
@@ -217,7 +224,7 @@ const ClassDialog: React.FC<ClassDialogProps> = ({ isOpen, setIsOpen, onSave, in
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave} disabled={!isFormValid}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

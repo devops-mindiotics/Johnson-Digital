@@ -9,25 +9,22 @@ export const getAllLessons = async (params: any = {}) => {
     try {
         const response = await apiClient.get(`/tenants/${tenantId}/masters/lessons`, { params });
         if (response.data && response.data.data) {
-            // Support for paginated response if 'records' is present
-            if (Array.isArray(response.data.data.records)) {
-                return response.data.data.records;
-            }
-            // Fallback for non-paginated or old structure
-            if (Array.isArray(response.data.data.lessons)) {
-                return response.data.data.lessons;
-            }
+            // Return the whole data object which includes lessons and meta
+            return response.data.data;
         }
-        return [];
+        // Fallback for unexpected response structure
+        return { lessons: [], meta: { pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } } };
     } catch (error) {
         console.error("Failed to fetch lessons:", error);
-        return [];
+        return { lessons: [], meta: { pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } } };
     }
 };
 
 export const getLessonsByClassIdAndSubjectId = async (classId: string, subjectId: string) => {
-    // Re-routing to the new generalized function to maintain backward compatibility
-    return getAllLessons({ classId, subjectId });
+    // This function is now deprecated in favor of calling getAllLessons with params,
+    // but we'll have it return the lessons array for any legacy code that might still use it.
+    const data = await getAllLessons({ classId, subjectId });
+    return data.lessons;
 };
 
 

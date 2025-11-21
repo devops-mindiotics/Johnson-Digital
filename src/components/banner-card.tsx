@@ -20,53 +20,54 @@ export const BannerCard: React.FC<BannerCardProps> = ({ banner, schools, updateB
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group">
       {banner.media && (
-        <div className="relative h-40 w-full rounded-t-md overflow-hidden">
+        <div className="relative h-32 w-full bg-gray-50 dark:bg-gray-800 rounded-t-md">
           <Image 
             src={banner.media} 
             alt={banner.name} 
             fill
             priority
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "contain" }} // Ensures entire image is visible
+            className="rounded-t-md"
           />
         </div>
       )}
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">{banner.name}</CardTitle>
+      <CardHeader className="p-2">
+        <CardTitle className="text-base font-semibold truncate" title={banner.name}>{banner.name}</CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="space-y-3">
+      <CardContent className="p-2 flex-grow space-y-1.5 text-xs">
+        <div>
+          <strong className="font-medium">Audience:</strong>
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {banner.targetAudience.split(', ').map(audience => (
+              <Badge key={audience} variant="secondary" className="text-xs px-1.5 py-0.5 font-normal">{audience}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <strong className="font-medium">Schools:</strong>
+          <p className="text-gray-600 truncate" title={banner.school || 'All Schools'}>{banner.school || 'All Schools'}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-x-2">
           <div>
-            <strong className="text-sm font-medium">Target Audience:</strong>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {banner.targetAudience.split(', ').map(audience => (
-                <Badge key={audience} variant="secondary">{audience}</Badge>
-              ))}
-            </div>
+            <strong className="font-medium">Start:</strong>
+            <p className="text-gray-600">{banner.startDate}</p>
           </div>
           <div>
-            <strong className="text-sm font-medium">Schools:</strong>
-            <p className="text-sm text-gray-700">{banner.school}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
-            <div>
-              <strong className="text-sm font-medium">Start Date:</strong>
-              <p className="text-sm text-gray-700">{banner.startDate}</p>
-            </div>
-            <div>
-              <strong className="text-sm font-medium">End Date:</strong>
-              <p className="text-sm text-gray-700">{banner.endDate}</p>
-            </div>
+            <strong className="font-medium">End:</strong>
+            <p className="text-gray-600">{banner.endDate}</p>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 mt-auto pt-4">
-        <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)}>
+      <CardFooter className="p-1.5 flex justify-end gap-1 bg-gray-50 dark:bg-gray-900/50">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsEditDialogOpen(true)}>
           <Pencil className="h-4 w-4" />
+          <span className="sr-only">Edit</span>
         </Button>
-        <Button variant="ghost" size="icon" onClick={() => deleteBanner(banner.id)}>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteBanner(banner.id)}>
           <Trash className="h-4 w-4 text-red-500" />
+          <span className="sr-only">Delete</span>
         </Button>
       </CardFooter>
       <EditBannerDialog

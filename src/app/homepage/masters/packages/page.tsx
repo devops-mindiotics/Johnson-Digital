@@ -184,6 +184,7 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
     const [name, setName] = useState(pkg?.name || '');
     const [description, setDescription] = useState(pkg?.description || '');
     const [status, setStatus] = useState(pkg?.status || 'active');
+    const [isFormValid, setIsFormValid] = useState(false);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -199,8 +200,14 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
         }
     }, [pkg, isOpen]);
 
+    React.useEffect(() => {
+        setIsFormValid(!!(name && description && status));
+    }, [name, description, status]);
+
     const handleSave = () => {
-        onSave({ ...pkg, name, description, status });
+        if (isFormValid) {
+            onSave({ ...pkg, name, description, status });
+        }
     };
 
     return (
@@ -235,7 +242,7 @@ const PackageDialog: React.FC<PackageDialogProps> = ({ isOpen, setIsOpen, pkg, o
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleSave} disabled={!isFormValid}>Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

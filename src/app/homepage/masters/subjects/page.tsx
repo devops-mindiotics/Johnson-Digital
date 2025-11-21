@@ -185,6 +185,7 @@ const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subjec
     const [name, setName] = useState(subject?.name || '');
     const [description, setDescription] = useState(subject?.description || '');
     const [status, setStatus] = useState(subject?.status || 'active');
+    const [isFormValid, setIsFormValid] = useState(false);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -200,8 +201,14 @@ const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subjec
         }
     }, [subject, isOpen]);
 
+    React.useEffect(() => {
+        setIsFormValid(!!(name && description && status));
+    }, [name, description, status]);
+
     const handleSave = () => {
-        onSave({ ...subject, name, description, status });
+        if (isFormValid) {
+            onSave({ ...subject, name, description, status });
+        }
     };
 
     return (
@@ -236,7 +243,7 @@ const SubjectDialog: React.FC<SubjectDialogProps> = ({ isOpen, setIsOpen, subjec
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleSave} disabled={!isFormValid}>Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

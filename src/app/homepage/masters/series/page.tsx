@@ -183,6 +183,7 @@ const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, 
     const [name, setName] = useState(series?.name || '');
     const [description, setDescription] = useState(series?.description || '');
     const [status, setStatus] = useState(series?.status || 'active');
+    const [isFormValid, setIsFormValid] = useState(false);
 
     React.useEffect(() => {
         if (isOpen) {
@@ -198,8 +199,14 @@ const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, 
         }
     }, [series, isOpen]);
 
+    React.useEffect(() => {
+        setIsFormValid(!!(name && description && status));
+    }, [name, description, status]);
+
     const handleSave = () => {
-        onSave({ ...series, name, description, status });
+        if (isFormValid) {
+            onSave({ ...series, name, description, status });
+        }
     };
 
     return (
@@ -234,7 +241,7 @@ const SeriesDialog: React.FC<SeriesDialogProps> = ({ isOpen, setIsOpen, series, 
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSave}>Save</Button>
+                    <Button onClick={handleSave} disabled={!isFormValid}>Save</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

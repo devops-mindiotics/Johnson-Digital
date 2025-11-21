@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
-import { getAllLessons, getLessonsByClassIdAndSubjectId, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
+import { getAllLessons, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,13 @@ interface Subject {
     name: string;
 }
 
+interface Pagination {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+}
+
 export default function MasterLessonsPage() {
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -62,8 +69,10 @@ export default function MasterLessonsPage() {
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
-  const [selectedClass, setSelectedClass] = useState<string>('all');
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string | undefined>(undefined);
+  const [selectedSubject, setSelectedSubject] = useState<string | undefined>(undefined);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
@@ -73,53 +82,31 @@ export default function MasterLessonsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedClass === 'all') {
-      fetchAllLessons();
-    } else {
-      fetchLessonsForClass(selectedClass);
-    }
-  }, [selectedClass]);
+    fetchLessons();
+  }, [currentPage, selectedClass, selectedSubject]);
 
-  useEffect(() => {
-    if (selectedClass !== 'all' && selectedSubject !== 'all') {
-      fetchLessonsForClassAndSubject(selectedClass, selectedSubject);
-    } else if (selectedClass !== 'all') {
-      fetchLessonsForClass(selectedClass);
-    }
-  }, [selectedSubject]);
-
-  const fetchAllLessons = async () => {
+  const fetchLessons = async () => {
     try {
-      const response = await getAllLessons();
-      setLessons(response);
-      setSubjects(allSubjects);
+      const params: any = { page: currentPage, limit: 20 };
+      if (selectedClass) params.classId = selectedClass;
+      if (selectedSubject) params.subjectId = selectedSubject;
+      
+      const { lessons: responseLessons, meta } = await getAllLessons(params);
+      setLessons(responseLessons);
+      setPagination(meta.pagination);
+
+      if (selectedClass) {
+        const subjectIds = [...new Set(responseLessons.map(lesson => lesson.subjectId))];
+        const uniqueSubjects = allSubjects.filter(subject => subjectIds.includes(subject.id));
+        setSubjects(uniqueSubjects);
+      } else {
+        setSubjects(allSubjects);
+      }
+
     } catch (error) {
       console.error('Failed to fetch lessons', error);
     }
   };
-
-  const fetchLessonsForClass = async (classId: string) => {
-    try {
-      const response = await getAllLessons({ classId });
-      setLessons(response);
-      const subjectIds = [...new Set(response.map(lesson => lesson.subjectId))];
-      const uniqueSubjects = allSubjects.filter(subject => subjectIds.includes(subject.id));
-      setSubjects(uniqueSubjects);
-      setSelectedSubject('all');
-    } catch (error) {
-      console.error('Failed to fetch lessons for class', error);
-    }
-  };
-
-  const fetchLessonsForClassAndSubject = async (classId: string, subjectId: string) => {
-    try {
-      const response = await getLessonsByClassIdAndSubjectId(classId, subjectId);
-      setLessons(response);
-    } catch (error) {
-      console.error('Failed to fetch lessons for class and subject', error);
-    }
-  };
-
 
   const fetchClasses = async () => {
     try {
@@ -134,10 +121,22 @@ export default function MasterLessonsPage() {
     try {
       const response = await getAllSubjects();
       setAllSubjects(response);
+      setSubjects(response)
     } catch (error) {
       console.error('Failed to fetch subjects', error);
     }
   };
+
+  const handleClassChange = (classId: string) => {
+    setSelectedClass(classId === 'all' ? undefined : classId);
+    setSelectedSubject(undefined);
+    setCurrentPage(1);
+  }
+
+  const handleSubjectChange = (subjectId: string) => {
+    setSelectedSubject(subjectId === 'all' ? undefined : subjectId);
+    setCurrentPage(1);
+  }
 
   const handleAdd = () => {
     setSelectedLesson(null);
@@ -152,11 +151,7 @@ export default function MasterLessonsPage() {
   const handleDelete = async (id: string) => {
     try {
       await deleteLesson(id);
-      if (selectedClass === 'all') {
-        fetchAllLessons();
-      } else {
-        fetchLessonsForClass(selectedClass);
-      }
+      fetchLessons();
     } catch (error) {
       console.error('Failed to delete lesson', error);
     }
@@ -172,11 +167,7 @@ export default function MasterLessonsPage() {
       } else {
         await createLesson({data: lessonData, meta});
       }
-      if (selectedClass === 'all') {
-        fetchAllLessons();
-      } else {
-        fetchLessonsForClass(selectedClass);
-      }
+      fetchLessons();
       setIsDialogOpen(false);
       setSelectedLesson(null);
     } catch (error) {
@@ -189,7 +180,7 @@ export default function MasterLessonsPage() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Lessons</CardTitle>
         <div className="flex items-center space-x-2">
-            <Select onValueChange={setSelectedClass} value={selectedClass}>
+            <Select onValueChange={handleClassChange} value={selectedClass || 'all'}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select a class" />
                 </SelectTrigger>
@@ -200,7 +191,7 @@ export default function MasterLessonsPage() {
                     ))}
                 </SelectContent>
             </Select>
-            <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+            <Select onValueChange={handleSubjectChange} value={selectedSubject || 'all'}>
                 <SelectTrigger>
                     <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
@@ -260,6 +251,23 @@ export default function MasterLessonsPage() {
           ))}
         </div>
       </CardContent>
+      {pagination && (
+        <CardFooter className="flex justify-center items-center space-x-2">
+            <Button 
+                onClick={() => setCurrentPage(p => p - 1)} 
+                disabled={currentPage === 1}
+            >
+                Previous
+            </Button>
+            <span>{`Page ${pagination.page} of ${pagination.totalPages}`}</span>
+            <Button 
+                onClick={() => setCurrentPage(p => p + 1)} 
+                disabled={currentPage === pagination.totalPages}
+            >
+                Next
+            </Button>
+        </CardFooter>
+      )}
 
       <LessonDialog
         isOpen={isDialogOpen}
@@ -288,6 +296,7 @@ const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, 
   const [classId, setClassId] = useState('');
   const [subjectId, setSubjectId] = useState('');
   const [status, setStatus] = useState('active');
+  const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -305,8 +314,14 @@ const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, 
     }
   }, [initialData]);
 
+  useEffect(() => {
+    setIsFormValid(!!(name && description && classId && subjectId && status));
+  }, [name, description, classId, subjectId, status]);
+
   const handleSave = () => {
-    onSave({ name, description, classId, subjectId, status });
+    if (isFormValid) {
+      onSave({ name, description, classId, subjectId, status });
+    }
   };
 
   return (
@@ -367,7 +382,7 @@ const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, 
           <DialogClose asChild>
             <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleSave} disabled={!isFormValid}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

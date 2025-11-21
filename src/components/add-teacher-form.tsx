@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,13 @@ export function AddTeacherForm({ onTeacherAdded }: AddTeacherFormProps) {
     expiryDate: '',
     schoolId: '' // This will be fetched from context
   });
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  useEffect(() => {
+    const { schoolId, ...requiredFields } = formData;
+    const allFieldsFilled = Object.values(requiredFields).every(field => field !== '');
+    setIsFormValid(allFieldsFilled);
+  }, [formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -48,12 +55,14 @@ export function AddTeacherForm({ onTeacherAdded }: AddTeacherFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await createTeacher(formData);
-      onTeacherAdded();
-      setOpen(false);
-    } catch (error) {
-      console.error("Failed to create teacher", error);
+    if (isFormValid) {
+      try {
+        await createTeacher(formData);
+        onTeacherAdded();
+        setOpen(false);
+      } catch (error) {
+        console.error("Failed to create teacher", error);
+      }
     }
   };
 
@@ -81,7 +90,7 @@ export function AddTeacherForm({ onTeacherAdded }: AddTeacherFormProps) {
                 </div>
             )
             })}
-          <Button type="submit">Create Teacher</Button>
+          <Button type="submit" disabled={!isFormValid}>Create Teacher</Button>
         </form>
       </DialogContent>
     </Dialog>
