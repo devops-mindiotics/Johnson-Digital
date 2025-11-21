@@ -67,7 +67,7 @@ export default function ClassesPage() {
                 if (userRole === SUPERADMIN || userRole === TENANTADMIN) {
                     console.log("Fetching schools for admin...");
                     const schoolsData = await getAllSchools(user.tenantId);
-                    setSchools(schoolsData || []);
+                    setSchools(schoolsData.records || []);
                     console.log("Schools fetched:", schoolsData);
                 }
 

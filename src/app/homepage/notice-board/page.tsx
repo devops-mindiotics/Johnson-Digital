@@ -59,7 +59,7 @@ export default function NoticeBoardPage() {
       if ((userRole === SUPERADMIN || userRole === TENANTADMIN) && user?.tenantId) {
         try {
           const schoolData = await getAllSchools(user.tenantId);
-          setSchools(Array.isArray(schoolData) ? schoolData : []);
+          setSchools(schoolData.records || []);
         } catch (error) {
           console.error("Failed to fetch schools:", error);
           setSchools([]);

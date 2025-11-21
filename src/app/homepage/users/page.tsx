@@ -56,12 +56,11 @@ export default function UsersPage() {
 
       if (!authUser) {
         console.log("UsersPage: Aborting fetch, authUser is still not available.");
-        // No need to setLoading(false) here, the initial state is already true and will be handled finally.
         return;
       }
 
       const tenantId = getTenantId(authUser);
-      const role = getUserRole(authUser); // This is the primary, active role
+      const role = getUserRole(authUser);
 
       console.log(`UsersPage: Resolved TenantID: ${tenantId}, Role: ${role}`);
 
@@ -76,22 +75,20 @@ export default function UsersPage() {
       console.log("UsersPage: Starting data fetch...");
 
       try {
-        // Step 1: Fetch schools if the user is a Tenant Admin or Super Admin
         if (role === TENANTADMIN || role === SUPERADMIN) {
           console.log(`UsersPage: Fetching schools for tenant: ${tenantId}`);
           try {
             const schoolResult = await getAllSchools(tenantId);
             console.log("UsersPage: School fetch succeeded.", schoolResult);
-            setSchools(schoolResult ?? []);
+            setSchools(schoolResult.records ?? []);
           } catch (schoolError) {
             console.error("UsersPage: School fetch FAILED.", schoolError);
-            setSchools([]); // Ensure schools is an empty array on failure
+            setSchools([]);
           }
         } else {
-            setSchools([]); // Not an admin, no schools to fetch
+            setSchools([]);
         }
 
-        // Step 2: Fetch users based on role and selection
         console.log(`UsersPage: Preparing user fetch for role: ${role}`);
         let usersResult: { records: any[] } | null = null;
 
@@ -119,7 +116,7 @@ export default function UsersPage() {
       } catch (error: any) {
         console.error("UsersPage: An error occurred during the data fetching process.", error);
         setDebugInfo({ title: 'Failed to Fetch Data', message: error.message || 'An unknown error occurred.' });
-        setUsers([]); // Clear users on error
+        setUsers([]);
       } finally {
         setLoading(false);
         console.log("UsersPage: Fetch data process finished.");
@@ -127,10 +124,7 @@ export default function UsersPage() {
     };
 
     fetchData();
-  }, [authUser, selectedSchool, refreshKey]); // Dependencies are correct
-
-  // ... (rest of the component remains the same) ...
-
+  }, [authUser, selectedSchool, refreshKey]);
 
   const handleStatusChange = async () => {
     if (userToUpdate) {

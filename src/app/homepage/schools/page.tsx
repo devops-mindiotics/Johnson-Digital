@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,13 @@ import {
 import { getAllSchools, updateSchool } from "@/lib/api/schoolApi";
 import { useAuth } from "@/hooks/use-auth";
 
+interface Pagination {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+}
+
 export default function SchoolsPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -58,12 +66,15 @@ export default function SchoolsPage() {
   const [schoolToProcess, setSchoolToProcess] = useState<any | null>(null);
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
   const [processedSchoolName, setProcessedSchoolName] = useState("");
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchSchools = async (tenantId: string) => {
     try {
-      console.log("Fetching schools for tenantId:", tenantId);
-      const response = await getAllSchools(tenantId);
-      setSchools(response || []);
+      console.log("Fetching schools for tenantId:", tenantId, "page:", currentPage);
+      const response = await getAllSchools(tenantId, currentPage, 20);
+      setSchools(response.records || []);
+      setPagination(response.meta.pagination);
     } catch (err: any) {
       setError(err.message || "Failed to load schools");
     }
@@ -76,7 +87,7 @@ export default function SchoolsPage() {
     } else {
         console.log("Tenant ID not found in user object");
     }
-  }, [user]);
+  }, [user, currentPage]);
 
   const openDialog = (school: SetStateAction<any | null>) => {
     setSchoolToProcess(school);
@@ -302,6 +313,23 @@ export default function SchoolsPage() {
             ))}
           </div>
         </CardContent>
+        {pagination && pagination.totalPages > 1 && (
+            <CardFooter className="flex justify-center items-center space-x-2">
+                <Button 
+                    onClick={() => setCurrentPage(p => p - 1)} 
+                    disabled={currentPage === 1}
+                >
+                    Previous
+                </Button>
+                <span>{`Page ${pagination.page} of ${pagination.totalPages}`}</span>
+                <Button 
+                    onClick={() => setCurrentPage(p => p + 1)} 
+                    disabled={currentPage === pagination.totalPages}
+                >
+                    Next
+                </Button>
+            </CardFooter>
+        )}
       </Card>
 
       {/* ⚠️ Confirm Status Change */}

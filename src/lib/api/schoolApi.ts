@@ -20,20 +20,22 @@ export async function createSchool(
   }
 }
 
-export async function getAllSchools(tenantId: string): Promise<any[]> {
+export async function getAllSchools(tenantId: string, page?: number, limit?: number): Promise<any> {
   try {
-    const response = await apiClient.get(`/tenants/${tenantId}/schools`);
-    if (
-      response.data &&
-      response.data.data &&
-      Array.isArray(response.data.data.records)
-    ) {
-      return response.data.data.records;
+    const params = new URLSearchParams();
+    if (page) params.append('page', page.toString());
+    if (limit) params.append('limit', limit.toString());
+
+    const response = await apiClient.get(`/tenants/${tenantId}/schools`, { params });
+    
+    if (response.data && response.data.data) {
+      return response.data.data;
     }
-    return [];
+    
+    return { records: [], meta: { pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } } };
   } catch (err: any) {
     console.error("❌ getSchools error:", err.response?.data || err.message);
-    throw err;
+    return { records: [], meta: { pagination: { page: 1, limit: 20, totalItems: 0, totalPages: 1 } } };
   }
 }
 

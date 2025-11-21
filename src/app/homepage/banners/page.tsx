@@ -38,7 +38,7 @@ const BannersPage = () => {
     try {
       setLoading(true);
       const schoolData = await getAllSchools(user.tenantId);
-      const schoolRecords = schoolData?.data?.records || schoolData?.records || schoolData || [];
+      const schoolRecords = schoolData.records || [];
       const fetchedSchools = Array.isArray(schoolRecords)
         ? schoolRecords.map((school: any) => ({ id: school.id, name: school.schoolName }))
         : [];

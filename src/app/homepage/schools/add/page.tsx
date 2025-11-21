@@ -127,8 +127,8 @@ export default function AddSchoolPage() {
             getAllPackages(),
           ]);
 
-          if (schoolData && Array.isArray(schoolData)) {
-            setSchools(schoolData);
+          if (schoolData) {
+            setSchools(schoolData.records || []);
           } else {
             setSchools([]);
           }

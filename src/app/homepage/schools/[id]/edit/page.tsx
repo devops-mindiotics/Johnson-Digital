@@ -64,7 +64,7 @@ export default function Page() {
         }
         
         setSchool(schoolData);
-        setSchools(allSchools.filter(s => s.id !== id)); // Exclude the current school from the parent list
+        setSchools(allSchools.records.filter(s => s.id !== id)); // Exclude the current school from the parent list
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
         notFound(); // Show 404 if there's an error

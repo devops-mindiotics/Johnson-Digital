@@ -149,7 +149,7 @@ function AddUserPageForm() {
         const schoolData = await getAllSchools(tenantId);
         console.log("Fetched school data:", schoolData);
         if (schoolData) {
-          setSchools(schoolData);
+          setSchools(schoolData.records || []);
           if (userRole !== SUPERADMIN && userRole !== TENANTADMIN && userSchoolId) {
             console.log("Setting school for non-admin user:", userSchoolId);
             setSelectedSchool(userSchoolId);
