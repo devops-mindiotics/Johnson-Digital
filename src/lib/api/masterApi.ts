@@ -1,3 +1,4 @@
+
 'use client';
 
 import apiClient from "./client";
@@ -50,6 +51,33 @@ export async function getLessonsByClassIdSubjectId(classId: string, subjectId: s
         return [];
     } catch (err: any) {
         console.error("❌ getLessonsByClassIdSubjectId error:", err.response?.data || err.message);
+        throw err;
+    }
+}
+
+export async function getSubjectsByClassId(classId: string): Promise<any[]> {
+    try {
+        const { tenantId, token } = getContext();
+        if (!tenantId || !token) {
+            throw new Error("Context information not found, cannot fetch subjects.");
+        }
+
+        const response = await apiClient.get(
+            `/tenants/${tenantId}/masters/lessons/class/${classId}/subjects`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (response.data && response.data.data && Array.isArray(response.data.data.subjects)) {
+            return response.data.data.subjects;
+        }
+
+        return [];
+    } catch (err: any) {
+        console.error("❌ getSubjectsByClassId error:", err.response?.data || err.message);
         throw err;
     }
 }

@@ -83,10 +83,12 @@ export function HomepageHeader() {
   const displayClass = classDetails
     ? `${classDetails.className}${classDetails.sectionName && classDetails.sectionName !== 'No Sections' ? `, ${classDetails.sectionName}` : ''}`
     : '';
+  const schoolName = user?.schools?.[0]?.schoolName;
+
 
   return (
     <header className="flex h-auto shrink-0 items-center justify-between border-b px-4 md:px-6 py-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-1 items-center gap-2">
         <SidebarTrigger />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -106,7 +108,14 @@ export function HomepageHeader() {
           )}
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      
+      <div className="hidden md:flex flex-1 justify-center">
+        {schoolName && [SCHOOLADMIN, TEACHER, STUDENT].includes(userRole) && (
+            <p className="text-xl font-semibold text-[hsl(var(--sidebar-background))]">{schoolName}</p>
+        )}
+      </div>
+
+      <div className="flex flex-1 items-center justify-end gap-4">
         {userRole === STUDENT && (
           <>
             {/* Web view */}
@@ -218,7 +227,7 @@ export function HomepageHeader() {
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-64" align="end" forceMount>
+          <DropdownMenuContent className="w-auto" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-12 w-12">

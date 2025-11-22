@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getAllClasses, getAllSubjects } from '@/lib/api/masterApi';
+import { getAllClasses, getAllSubjects, getSubjectsByClassId } from '@/lib/api/masterApi';
 import { getAllLessons, deleteLesson, updateLesson, createLesson } from '@/lib/api/lessonApi';
 import {
   Dialog,
@@ -79,11 +79,24 @@ export default function MasterLessonsPage() {
   useEffect(() => {
     fetchClasses();
     fetchAllSubjects();
+    fetchLessons();
   }, []);
 
   useEffect(() => {
-    fetchLessons();
-  }, [currentPage, selectedClass, selectedSubject]);
+    if (selectedClass) {
+        getSubjectsByClassId(selectedClass)
+            .then(response => {
+                const formattedSubjects = response.map((s: any) => ({ id: s.subjectId, name: s.name }));
+                setSubjects(formattedSubjects);
+            })
+            .catch(err => {
+                console.error("Failed to fetch subjects for class:", err);
+                setSubjects([]);
+            });
+    } else {
+        setSubjects(allSubjects);
+    }
+}, [selectedClass, allSubjects]);
 
   const fetchLessons = async () => {
     try {
@@ -95,18 +108,16 @@ export default function MasterLessonsPage() {
       setLessons(responseLessons);
       setPagination(meta.pagination);
 
-      if (selectedClass) {
-        const subjectIds = [...new Set(responseLessons.map(lesson => lesson.subjectId))];
-        const uniqueSubjects = allSubjects.filter(subject => subjectIds.includes(subject.id));
-        setSubjects(uniqueSubjects);
-      } else {
-        setSubjects(allSubjects);
-      }
-
     } catch (error) {
       console.error('Failed to fetch lessons', error);
     }
   };
+
+  useEffect(() => {
+    if ((selectedClass && selectedSubject) || (!selectedClass && !selectedSubject)) {
+        fetchLessons();
+    }
+  }, [currentPage, selectedClass, selectedSubject]);
 
   const fetchClasses = async () => {
     try {
@@ -275,7 +286,7 @@ export default function MasterLessonsPage() {
         onSave={handleSave}
         initialData={selectedLesson}
         classes={classes}
-        subjects={allSubjects}
+        allSubjects={allSubjects}
       />
     </Card>
   );
@@ -287,16 +298,17 @@ interface LessonDialogProps {
   onSave: (data: Omit<Lesson, 'id'>) => void;
   initialData: Lesson | null;
   classes: Class[];
-  subjects: Subject[];
+  allSubjects: Subject[];
 }
 
-const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, initialData, classes, subjects }) => {
+const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, initialData, classes, allSubjects }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [classId, setClassId] = useState('');
   const [subjectId, setSubjectId] = useState('');
   const [status, setStatus] = useState('active');
   const [isFormValid, setIsFormValid] = useState(false);
+  const [dialogSubjects, setDialogSubjects] = useState<Subject[]>([]);
 
   useEffect(() => {
     if (initialData) {
@@ -313,6 +325,22 @@ const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, 
       setStatus('active');
     }
   }, [initialData]);
+
+  useEffect(() => {
+    if (classId) {
+        getSubjectsByClassId(classId)
+            .then(response => {
+                const formattedSubjects = response.map((s: any) => ({ id: s.subjectId, name: s.name }));
+                setDialogSubjects(formattedSubjects);
+            })
+            .catch(err => {
+                console.error("Failed to fetch subjects for class:", err);
+                setDialogSubjects([]);
+            });
+    } else {
+        setDialogSubjects(allSubjects);
+    }
+}, [classId, allSubjects]);
 
   useEffect(() => {
     setIsFormValid(!!(name && description && classId && subjectId && status));
@@ -359,7 +387,7 @@ const LessonDialog: React.FC<LessonDialogProps> = ({ isOpen, setIsOpen, onSave, 
                     <SelectValue placeholder="Select a subject" />
                 </SelectTrigger>
                 <SelectContent>
-                    {subjects.map(s => (
+                    {dialogSubjects.map(s => (
                         <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                     ))}
                 </SelectContent>

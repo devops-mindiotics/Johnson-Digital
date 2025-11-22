@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from 'next/navigation';
 import {
   Accordion,
@@ -14,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePdfViewer } from "@/hooks/use-pdf-viewer";
 import { getSignedViewUrl } from "@/lib/api/attachmentApi";
-import { getAllLessons } from "@/lib/api/masterApi";
 
 interface LessonContentClientPageProps {
   classId: string;
   subjectId: string;
-  subject: any[]; // Expecting the records array
+  subject: any[];
+  lessons: any[];
 }
 
 const iconComponents = {
@@ -29,13 +29,10 @@ const iconComponents = {
   default: FileText,
 };
 
-// This function processes the raw records and all lessons to create a structured chapter list.
 const processApiDataToChapters = (records: any[], allLessons: any[]) => {
-  if (!records || records.length === 0) {
-    console.log("[Debug] processApiDataToChapters: No records to process.");
+  if (!records || !allLessons) {
     return [];
   }
-  console.log("[Debug] processApiDataToChapters: Processing records:", { records, allLessons });
 
   const lessonTitleMap = new Map(allLessons.map(l => [l.id, l.name]));
   const chaptersMap = new Map();
@@ -49,7 +46,7 @@ const processApiDataToChapters = (records: any[], allLessons: any[]) => {
     }
 
     let type = 'default';
-    if (filename) { // Ensure filename is not null
+    if (filename) {
         const lowerFilename = filename.toLowerCase();
         if (lowerFilename.endsWith('.mp4')) {
           type = 'video/mp4';
@@ -62,83 +59,48 @@ const processApiDataToChapters = (records: any[], allLessons: any[]) => {
       id: attachmentId,
       title: name,
       type: type,
-      filename: filename // Pass filename for debugging if needed
+      filename: filename
     });
   });
 
-  const processedChapters = Array.from(chaptersMap.values());
-  console.log("[Debug] processApiDataToChapters: Processed chapters:", processedChapters);
-  return processedChapters;
+  return Array.from(chaptersMap.values());
 };
 
 export default function LessonContentClientPage({
   classId,
   subjectId,
-  subject, // This prop now contains the records from the API
+  subject,
+  lessons,
 }: LessonContentClientPageProps) {
 
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
   const { openPdf } = usePdfViewer();
   const searchParams = useSearchParams();
 
   const subjectName = searchParams.get('subjectName') || 'Subject Content';
 
-  // This useEffect will now only run when the `subject` prop changes.
-  // It handles processing the data, not fetching it.
-  useEffect(() => {
-    const processContent = async () => {
-      console.log("[Debug] Client Component: Received `subject` prop with records:", subject);
-      if (!subject || subject.length === 0) {
-        console.log("[Debug] Client Component: No records to process. Setting chapters to empty array.");
-        setChapters([]);
-        return;
-      }
-
-      try {
-        // We still need to fetch all lessons to map lesson IDs to lesson names.
-        console.log("[Debug] Client Component: Fetching all lessons to map titles.");
-        const allLessons = await getAllLessons();
-        console.log("[Debug] Client Component: Fetched lessons:", allLessons);
-        
-        // The `subject` prop (which is `subjectContent.data.records`) is passed for processing.
-        const newChapters = processApiDataToChapters(subject, allLessons);
-        setChapters(newChapters);
-        console.log("[Debug] Client Component: Chapters state updated.", newChapters);
-
-      } catch (error) {
-        console.error("❌ LessonContentClientPage: Failed to fetch lessons or process content:", error);
-        setChapters([]); // Set to empty on error
-      }
-    };
-
-    processContent();
-    
-  }, [subject]); // Dependency array only contains `subject`
+  const chapters = useMemo(() => processApiDataToChapters(subject, lessons), [subject, lessons]);
 
   const getIcon = (type: string) => {
     return iconComponents[type as keyof typeof iconComponents] || iconComponents.default;
   };
 
  const handleResourceClick = async (resource: any) => {
-    setSelectedVideoUrl(null); // Reset video URL
+    setSelectedVideoUrl(null);
 
     const { id: attachmentId, type, title } = resource;
-    console.log(`[Debug] Resource clicked: ${title} (ID: ${attachmentId}, Type: ${type})`);
 
     try {
         const signedUrlResponse = await getSignedViewUrl(attachmentId);
 
         if (signedUrlResponse && signedUrlResponse.viewUrl) {
             const signedUrl = signedUrlResponse.viewUrl;
-            console.log(`[Debug] Obtained signed URL: ${signedUrl}`);
 
             if (type === 'video/mp4') {
                 setSelectedVideoUrl(signedUrl);
             } else if (type === 'application/pdf') {
                 openPdf(signedUrl, title);
             } else {
-                // Default action for other resource types
                 window.open(signedUrl, '_blank');
             }
         } else {
